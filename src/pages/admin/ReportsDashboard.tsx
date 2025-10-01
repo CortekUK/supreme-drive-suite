@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Download, TrendingUp, DollarSign, Car, Users } from "lucide-react";
+import { Download, TrendingUp, PoundSterling, Car, Users } from "lucide-react";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 
 interface ReportMetrics {
@@ -164,7 +164,7 @@ export default function ReportsDashboard() {
                 Avg: £{metrics.avgJobValue.toFixed(2)}
               </p>
             </div>
-            <DollarSign className="w-12 h-12 text-accent/50" />
+            <PoundSterling className="w-12 h-12 text-accent/50" />
           </div>
         </Card>
 
