@@ -46,7 +46,7 @@ const Index = () => {
       <EnhancedServiceHighlights />
       
       <section id="booking" className="py-24 bg-gradient-dark">
-        <div className="container mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-12 space-y-4">
             <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal">
               Book Your Journey
