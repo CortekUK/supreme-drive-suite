@@ -26,7 +26,7 @@ const services = [
 
 const EnhancedServiceHighlights = () => {
   return (
-    <section className="py-24 bg-gradient-to-b from-background/95 to-background">
+    <section className="py-24 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="text-center mb-20 space-y-6">
           <h2 className="text-5xl md:text-6xl font-display font-bold text-gradient-metal">
