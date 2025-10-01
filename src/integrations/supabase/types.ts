@@ -17,65 +17,87 @@ export type Database = {
       bookings: {
         Row: {
           additional_requirements: string | null
+          completed_at: string | null
+          confirmed_at: string | null
           created_at: string | null
           customer_email: string | null
           customer_name: string | null
           customer_phone: string | null
+          driver_id: string | null
           dropoff_location: string
           estimated_miles: number | null
           has_overnight_stop: boolean | null
           id: string
+          internal_notes: string | null
           is_long_drive: boolean | null
           luggage: number
           passengers: number
           pickup_date: string
           pickup_location: string
           pickup_time: string
+          route_notes: string | null
           status: string | null
           total_price: number | null
           vehicle_id: string | null
         }
         Insert: {
           additional_requirements?: string | null
+          completed_at?: string | null
+          confirmed_at?: string | null
           created_at?: string | null
           customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          driver_id?: string | null
           dropoff_location: string
           estimated_miles?: number | null
           has_overnight_stop?: boolean | null
           id?: string
+          internal_notes?: string | null
           is_long_drive?: boolean | null
           luggage: number
           passengers: number
           pickup_date: string
           pickup_location: string
           pickup_time: string
+          route_notes?: string | null
           status?: string | null
           total_price?: number | null
           vehicle_id?: string | null
         }
         Update: {
           additional_requirements?: string | null
+          completed_at?: string | null
+          confirmed_at?: string | null
           created_at?: string | null
           customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          driver_id?: string | null
           dropoff_location?: string
           estimated_miles?: number | null
           has_overnight_stop?: boolean | null
           id?: string
+          internal_notes?: string | null
           is_long_drive?: boolean | null
           luggage?: number
           passengers?: number
           pickup_date?: string
           pickup_location?: string
           pickup_time?: string
+          route_notes?: string | null
           status?: string | null
           total_price?: number | null
           vehicle_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bookings_vehicle_id_fkey"
             columns: ["vehicle_id"]
@@ -84,6 +106,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      drivers: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          is_available: boolean | null
+          license_number: string | null
+          name: string
+          phone: string | null
+          specializations: string[] | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_available?: boolean | null
+          license_number?: string | null
+          name: string
+          phone?: string | null
+          specializations?: string[] | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_available?: boolean | null
+          license_number?: string | null
+          name?: string
+          phone?: string | null
+          specializations?: string[] | null
+        }
+        Relationships: []
       }
       pricing_rules: {
         Row: {
