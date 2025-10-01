@@ -212,29 +212,34 @@ export default function EnhancedJobsDashboard() {
 
   const getStatusColor = (status: string | null) => {
     switch (status) {
-      case "new": return "bg-blue-500/20 text-blue-300 border-blue-500/30";
-      case "confirmed": return "bg-green-500/20 text-green-300 border-green-500/30";
-      case "in_progress": return "bg-yellow-500/20 text-yellow-300 border-yellow-500/30";
-      case "completed": return "bg-gray-500/20 text-gray-300 border-gray-500/30";
-      case "cancelled": return "bg-red-500/20 text-red-300 border-red-500/30";
-      default: return "bg-gray-500/20 text-gray-300 border-gray-500/30";
+      case "new": return "bg-primary/20 text-primary border-primary/30";
+      case "confirmed": return "bg-green-500/20 text-green-400 border-green-500/30";
+      case "in_progress": return "bg-amber-500/20 text-amber-400 border-amber-500/30";
+      case "completed": return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+      case "cancelled": return "bg-red-500/20 text-red-400 border-red-500/30";
+      default: return "bg-muted/20 text-muted-foreground border-muted/30";
     }
   };
 
   if (loading) return <div className="p-8">Loading...</div>;
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-display font-bold">Jobs Dashboard</h2>
-        <Button onClick={exportToCSV} variant="outline">
-          <Download className="w-4 h-4 mr-2" />
+        <div>
+          <h1 className="text-3xl font-display font-bold text-gradient-metal mb-2">
+            Jobs Management
+          </h1>
+          <p className="text-muted-foreground">Manage bookings and assignments</p>
+        </div>
+        <Button onClick={exportToCSV} variant="outline" className="gap-2">
+          <Download className="w-4 h-4" />
           Export CSV
         </Button>
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 bg-card rounded-lg">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 bg-card/50 rounded-lg border border-border/50 shadow-metal">
         <div className="relative">
           <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
           <Input
@@ -320,7 +325,7 @@ export default function EnhancedJobsDashboard() {
       </div>
 
       {/* Jobs Table */}
-      <div className="border rounded-lg overflow-hidden">
+      <div className="border border-border/50 rounded-lg overflow-hidden shadow-metal bg-card/50">
         <Table>
           <TableHeader>
             <TableRow>
@@ -343,7 +348,7 @@ export default function EnhancedJobsDashboard() {
               <TableRow 
                 key={booking.id} 
                 className="cursor-pointer hover:bg-muted/50"
-                onClick={() => navigate(`/admin/job/${booking.id}`)}
+                onClick={() => navigate(`/admin/jobs/${booking.id}`)}
               >
                 <TableCell>
                   <div className="font-medium">{format(new Date(booking.pickup_date), "MMM dd, yyyy")}</div>

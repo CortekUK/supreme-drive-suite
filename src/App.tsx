@@ -17,7 +17,6 @@ import Auth from "./pages/Auth";
 import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
 import GDPRConsent from "./components/GDPRConsent";
-import JobDetail from "./pages/admin/JobDetail";
 
 const queryClient = new QueryClient();
 
@@ -40,8 +39,7 @@ const App = () => (
           <Route path="/terms" element={<Terms />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/admin/job/:id" element={<JobDetail />} />
+          <Route path="/admin/*" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
