@@ -14,7 +14,209 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          additional_requirements: string | null
+          created_at: string | null
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          dropoff_location: string
+          estimated_miles: number | null
+          has_overnight_stop: boolean | null
+          id: string
+          is_long_drive: boolean | null
+          luggage: number
+          passengers: number
+          pickup_date: string
+          pickup_location: string
+          pickup_time: string
+          status: string | null
+          total_price: number | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          additional_requirements?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          dropoff_location: string
+          estimated_miles?: number | null
+          has_overnight_stop?: boolean | null
+          id?: string
+          is_long_drive?: boolean | null
+          luggage: number
+          passengers: number
+          pickup_date: string
+          pickup_location: string
+          pickup_time: string
+          status?: string | null
+          total_price?: number | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          additional_requirements?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          dropoff_location?: string
+          estimated_miles?: number | null
+          has_overnight_stop?: boolean | null
+          id?: string
+          is_long_drive?: boolean | null
+          luggage?: number
+          passengers?: number
+          pickup_date?: string
+          pickup_location?: string
+          pickup_time?: string
+          status?: string | null
+          total_price?: number | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pricing_rules: {
+        Row: {
+          created_at: string | null
+          fixed_amount: number | null
+          id: string
+          is_active: boolean | null
+          multiplier: number | null
+          rule_name: string
+          rule_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          fixed_amount?: number | null
+          id?: string
+          is_active?: boolean | null
+          multiplier?: number | null
+          rule_name: string
+          rule_type: string
+        }
+        Update: {
+          created_at?: string | null
+          fixed_amount?: number | null
+          id?: string
+          is_active?: boolean | null
+          multiplier?: number | null
+          rule_name?: string
+          rule_type?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          role: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          role?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          role?: string | null
+        }
+        Relationships: []
+      }
+      testimonials: {
+        Row: {
+          content: string
+          created_at: string | null
+          customer_name: string
+          customer_title: string | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          rating: number | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          customer_name: string
+          customer_title?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          rating?: number | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          customer_name?: string
+          customer_title?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          rating?: number | null
+        }
+        Relationships: []
+      }
+      vehicles: {
+        Row: {
+          base_price_per_mile: number
+          capacity: number
+          category: string
+          created_at: string | null
+          description: string | null
+          features: string[] | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          luggage_capacity: number
+          name: string
+          overnight_surcharge: number | null
+        }
+        Insert: {
+          base_price_per_mile: number
+          capacity: number
+          category: string
+          created_at?: string | null
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          luggage_capacity: number
+          name: string
+          overnight_surcharge?: number | null
+        }
+        Update: {
+          base_price_per_mile?: number
+          capacity?: number
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          luggage_capacity?: number
+          name?: string
+          overnight_surcharge?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
