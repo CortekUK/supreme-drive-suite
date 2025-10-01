@@ -37,11 +37,11 @@ const EnhancedHero = () => {
                 Call 0800 123 4567
               </Button>
             </a>
-            <Link to="/contact">
+            <a href="#booking">
               <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-primary/50 hover:bg-primary/10 hover-scale">
                 Book Online
               </Button>
-            </Link>
+            </a>
           </div>
 
           <p className="text-sm text-foreground/70 animate-fade-in-up animation-delay-400">

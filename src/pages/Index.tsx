@@ -43,7 +43,7 @@ const Index = () => {
       
       <EnhancedServiceHighlights />
       
-      <section className="py-20 bg-gradient-dark">
+      <section id="booking" className="py-20 bg-gradient-dark">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
             <BookingWidget />
