@@ -2,7 +2,6 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, Phone, X, Lock } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { FaWhatsapp } from "react-icons/fa";
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -69,11 +68,6 @@ const Navigation = () => {
                 0800 123 4567
               </Button>
             </a>
-            <a href="https://wa.me/447700900000" target="_blank" rel="noopener noreferrer">
-              <Button size="icon" className="rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg">
-                <FaWhatsapp className="w-5 h-5" />
-              </Button>
-            </a>
           </div>
 
           {/* Mobile Menu Button */}
@@ -98,12 +92,6 @@ const Navigation = () => {
                 <Button className="w-full gradient-accent shadow-glow">
                   <Phone className="w-4 h-4 mr-2" />
                   0800 123 4567
-                </Button>
-              </a>
-              <a href="https://wa.me/447700900000" target="_blank" rel="noopener noreferrer">
-                <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
-                  <FaWhatsapp className="w-4 h-4 mr-2" />
-                  WhatsApp
                 </Button>
               </a>
             </div>
