@@ -31,7 +31,6 @@ const Navigation = () => {
     path: "/contact",
     label: "Contact"
   }];
-
   return <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-metal">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
@@ -57,10 +56,7 @@ const Navigation = () => {
               </Button>
             </a>
             <a href="https://wa.me/447700900000" target="_blank" rel="noopener noreferrer" className="lg:flex hidden">
-              <Button variant="outline">
-                <MessageCircle className="w-4 h-4 mr-2" />
-                WhatsApp
-              </Button>
+              
             </a>
           </div>
 
