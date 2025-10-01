@@ -1,20 +1,16 @@
 import { Shield, Car, Clock, Award } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import serviceChauffeur from "@/assets/service-chauffeur.jpg";
-import serviceProtection from "@/assets/service-protection.jpg";
 
 const services = [
   {
     icon: Car,
     title: "Luxury Chauffeur",
     description: "Arrive in style with our premium fleet and professional drivers",
-    image: serviceChauffeur,
   },
   {
     icon: Shield,
     title: "Close Protection",
     description: "Discreet security services from experienced professionals",
-    image: serviceProtection,
   },
   {
     icon: Clock,
@@ -47,22 +43,9 @@ const EnhancedServiceHighlights = () => {
               key={service.title}
               className={`p-6 shadow-metal bg-card/50 backdrop-blur hover-lift transition-smooth animate-fade-in-up animation-delay-${index * 200}`}
             >
-              {service.image ? (
-                <div className="relative mb-6 rounded-lg overflow-hidden">
-                  <img
-                    src={service.image}
-                    alt={`Professional ${service.title.toLowerCase()} service with luxury vehicle and trained chauffeur`}
-                    className="w-full h-48 object-cover"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-                </div>
-              ) : (
-                <div className="mb-6 flex items-center justify-center w-16 h-16 rounded-full bg-accent/20">
-                  <service.icon className="w-8 h-8 text-accent" />
-                </div>
-              )}
+              <div className="mb-6 flex items-center justify-center w-16 h-16 rounded-full bg-accent/20">
+                <service.icon className="w-8 h-8 text-accent" />
+              </div>
               
               <h3 className="text-2xl font-display font-semibold mb-3 text-primary">
                 {service.title}
