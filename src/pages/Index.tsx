@@ -1,11 +1,12 @@
 import Navigation from "@/components/Navigation";
-import Hero from "@/components/Hero";
-import ServiceHighlights from "@/components/ServiceHighlights";
+import EnhancedHero from "@/components/EnhancedHero";
+import EnhancedServiceHighlights from "@/components/EnhancedServiceHighlights";
 import BookingWidget from "@/components/EnhancedBookingWidget";
-import TestimonialsCarousel from "@/components/TestimonialsCarousel";
+import EnhancedTestimonials from "@/components/EnhancedTestimonials";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import MobileActions from "@/components/MobileActions";
+import ScrollToTop from "@/components/ScrollToTop";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -38,9 +39,9 @@ const Index = () => {
         schema={businessSchema}
       />
       <Navigation />
-      <Hero />
+      <EnhancedHero />
       
-      <ServiceHighlights />
+      <EnhancedServiceHighlights />
       
       <section className="py-20 bg-gradient-dark">
         <div className="container mx-auto px-4">
@@ -50,7 +51,7 @@ const Index = () => {
         </div>
       </section>
 
-      <TestimonialsCarousel />
+      <EnhancedTestimonials />
 
       <section className="py-20">
         <div className="container mx-auto px-4 text-center">
@@ -62,12 +63,12 @@ const Index = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/contact">
-              <Button size="lg" className="gradient-accent shadow-glow">
+              <Button size="lg" className="gradient-accent shadow-glow hover-lift">
                 Get in Touch
               </Button>
             </Link>
             <Link to="/auth">
-              <Button size="lg" variant="outline" className="border-primary/50">
+              <Button size="lg" variant="outline" className="border-primary/50 hover-scale">
                 Admin Login
               </Button>
             </Link>
@@ -77,6 +78,7 @@ const Index = () => {
 
       <Footer />
       <MobileActions />
+      <ScrollToTop />
     </div>
   );
 };

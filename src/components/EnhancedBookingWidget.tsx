@@ -228,6 +228,8 @@ const EnhancedBookingWidget = () => {
               onChange={(e) => setFormData({ ...formData, pickupLocation: e.target.value })}
               placeholder="Enter pickup address"
               list="pickup-suggestions"
+              aria-label="Enter pickup location address"
+              aria-required="true"
               required
             />
           </div>
@@ -240,6 +242,8 @@ const EnhancedBookingWidget = () => {
               onChange={(e) => setFormData({ ...formData, dropoffLocation: e.target.value })}
               placeholder="Enter destination"
               list="dropoff-suggestions"
+              aria-label="Enter drop-off destination address"
+              aria-required="true"
               required
             />
           </div>
@@ -254,6 +258,8 @@ const EnhancedBookingWidget = () => {
               value={formData.pickupDate}
               onChange={(e) => setFormData({ ...formData, pickupDate: e.target.value })}
               min={new Date().toISOString().split('T')[0]}
+              aria-label="Select pickup date"
+              aria-required="true"
               required
             />
           </div>
@@ -265,6 +271,8 @@ const EnhancedBookingWidget = () => {
               type="time"
               value={formData.pickupTime}
               onChange={(e) => setFormData({ ...formData, pickupTime: e.target.value })}
+              aria-label="Select pickup time"
+              aria-required="true"
               required
             />
           </div>
@@ -274,7 +282,7 @@ const EnhancedBookingWidget = () => {
           <div className="space-y-2">
             <Label htmlFor="passengers">Passengers</Label>
             <Select value={formData.passengers} onValueChange={(value) => setFormData({ ...formData, passengers: value })}>
-              <SelectTrigger id="passengers">
+              <SelectTrigger id="passengers" aria-label="Select number of passengers">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -290,7 +298,7 @@ const EnhancedBookingWidget = () => {
           <div className="space-y-2">
             <Label htmlFor="luggage">Luggage Items</Label>
             <Select value={formData.luggage} onValueChange={(value) => setFormData({ ...formData, luggage: value })}>
-              <SelectTrigger id="luggage">
+              <SelectTrigger id="luggage" aria-label="Select number of luggage items">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -312,6 +320,7 @@ const EnhancedBookingWidget = () => {
               onChange={(e) => setWaitTimeHours(parseInt(e.target.value) || 0)}
               min="0"
               placeholder="0"
+              aria-label="Enter wait time in hours"
             />
           </div>
         </div>
@@ -362,7 +371,7 @@ const EnhancedBookingWidget = () => {
             const vehicle = vehicles.find(v => v.id === value);
             setSelectedVehicle(vehicle || null);
           }}>
-            <SelectTrigger id="vehicle">
+            <SelectTrigger id="vehicle" aria-label="Select vehicle type">
               <SelectValue placeholder="Choose your vehicle" />
             </SelectTrigger>
             <SelectContent>
@@ -466,6 +475,8 @@ const EnhancedBookingWidget = () => {
               id="customerName"
               value={formData.customerName}
               onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+              aria-label="Enter your full name"
+              aria-required="true"
               required
             />
           </div>
@@ -478,6 +489,8 @@ const EnhancedBookingWidget = () => {
                 type="email"
                 value={formData.customerEmail}
                 onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
+                aria-label="Enter your email address"
+                aria-required="true"
                 required
               />
             </div>
@@ -489,6 +502,8 @@ const EnhancedBookingWidget = () => {
                 type="tel"
                 value={formData.customerPhone}
                 onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
+                aria-label="Enter your phone number"
+                aria-required="true"
                 required
               />
             </div>
