@@ -1,18 +1,14 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card } from "@/components/ui/card";
-
 const About = () => {
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <Navigation />
       
       <section className="pt-32 pb-20">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-6xl font-display font-bold mb-6 text-gradient-metal text-center">
-              About Supreme Drive
-            </h1>
+            <h1 className="text-5xl md:text-6xl font-display font-bold mb-6 text-gradient-metal text-center">About Supreme Style</h1>
             
             <Card className="p-8 md:p-12 shadow-metal bg-card/50 backdrop-blur mb-8">
               <h2 className="text-3xl font-display font-bold mb-6 text-primary">
@@ -92,8 +88,6 @@ const About = () => {
       </section>
 
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default About;
