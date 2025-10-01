@@ -1,10 +1,8 @@
 import { Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroCar from "@/assets/hero-car.png";
-
 const Hero = () => {
-  return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+  return <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
       <div className="absolute inset-0 gradient-dark opacity-90" />
       
       <div className="container mx-auto px-4 relative z-10">
@@ -19,11 +17,7 @@ const Hero = () => {
           </div>
 
           <div className="relative w-full max-w-2xl mx-auto my-12 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200">
-            <img
-              src={heroCar}
-              alt="Luxury vehicle line art"
-              className="w-full h-auto shadow-metal"
-            />
+            
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
@@ -43,8 +37,6 @@ const Hero = () => {
           </p>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default Hero;
