@@ -24,8 +24,8 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <GDPRConsent />
       <BrowserRouter>
+        <GDPRConsent />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/chauffeur-services" element={<ChauffeurServices />} />
