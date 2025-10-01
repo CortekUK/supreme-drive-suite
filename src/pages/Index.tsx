@@ -64,7 +64,6 @@ const Index = () => {
       <EnhancedTestimonials />
 
       <section className="py-24 bg-gradient-to-b from-background via-secondary/30 to-background relative overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(0_0%_15%)_0%,hsl(0_0%_7%)_50%,hsl(0_0%_15%)_100%)]" />
         <div className="absolute inset-0 bg-gradient-to-r from-accent/5 via-transparent to-accent/5" />
         
         <div className="container mx-auto px-4 text-center relative z-10">
