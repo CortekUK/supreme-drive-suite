@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Car, Users, Briefcase, PoundSterling, Moon } from "lucide-react";
 
 interface Vehicle {
   id: string;
@@ -259,48 +261,116 @@ const VehiclesManagement = () => {
         </Dialog>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {vehicles.map((vehicle) => (
-          <Card key={vehicle.id} className="p-6 shadow-metal">
-            <div className="space-y-3">
-              <div className="flex justify-between items-start">
-                <h3 className="text-xl font-display font-bold">{vehicle.name}</h3>
-                <span className={`text-xs px-2 py-1 rounded ${vehicle.is_active ? 'bg-green-500' : 'bg-gray-500'}`}>
-                  {vehicle.is_active ? 'Active' : 'Inactive'}
-                </span>
+          <Card 
+            key={vehicle.id} 
+            className="relative overflow-hidden min-h-[420px] flex flex-col transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] border-2 hover:border-amber-600/50"
+          >
+            {/* Status Badge - Top Right */}
+            <Badge 
+              variant={vehicle.is_active ? "default" : "secondary"}
+              className={`absolute top-4 right-4 z-10 rounded-full px-3 py-1 text-xs ${
+                vehicle.is_active 
+                  ? "bg-green-500/20 text-green-600 border border-green-500/30" 
+                  : "bg-gray-500/20 text-gray-600 border border-gray-500/30"
+              }`}
+            >
+              {vehicle.is_active ? "Active" : "Inactive"}
+            </Badge>
+
+            {/* Vehicle Thumbnail Banner */}
+            <div className="h-48 w-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+              <Car className="h-20 w-20 text-muted-foreground/30" />
+            </div>
+
+            {/* Card Content */}
+            <CardContent className="p-8 flex-1 flex flex-col space-y-4">
+              {/* Vehicle Name & Category */}
+              <div className="space-y-1">
+                <h3 className="text-2xl font-bold font-display">{vehicle.name}</h3>
+                <p className="text-sm text-amber-600 font-medium">{vehicle.category}</p>
+                {/* Gold Divider */}
+                <div className="h-px w-20 bg-gradient-to-r from-amber-600 to-transparent mt-2"></div>
               </div>
 
-              <p className="text-sm text-muted-foreground">{vehicle.category}</p>
-              <p className="text-sm">{vehicle.description}</p>
+              {/* Description */}
+              {vehicle.description && (
+                <p className="text-sm text-muted-foreground line-clamp-2">{vehicle.description}</p>
+              )}
 
-              <div className="grid grid-cols-2 gap-2 text-sm pt-3 border-t border-border">
-                <div>
-                  <p className="text-muted-foreground">Capacity</p>
+              {/* Details Grid */}
+              <div className="grid grid-cols-2 gap-3 flex-1">
+                <div className="p-3 rounded-md bg-muted/50 space-y-1">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Users className="h-3 w-3" />
+                    <span>Capacity</span>
+                  </div>
                   <p className="font-medium">{vehicle.capacity} passengers</p>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Luggage</p>
+
+                <div className="p-3 rounded-md bg-muted/50 space-y-1">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Briefcase className="h-3 w-3" />
+                    <span>Luggage</span>
+                  </div>
                   <p className="font-medium">{vehicle.luggage_capacity} items</p>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Price/Mile</p>
+
+                <div className="p-3 rounded-md bg-muted/50 space-y-1">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <PoundSterling className="h-3 w-3" />
+                    <span>Price/Mile</span>
+                  </div>
                   <p className="font-medium">£{vehicle.base_price_per_mile}</p>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Overnight</p>
-                  <p className="font-medium">£{vehicle.overnight_surcharge}</p>
+
+                <div className="p-3 rounded-md bg-muted/50 space-y-1">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Moon className="h-3 w-3" />
+                    <span>Overnight</span>
+                  </div>
+                  <p className="font-medium">
+                    {vehicle.overnight_surcharge > 0 ? `£${vehicle.overnight_surcharge}` : "N/A"}
+                  </p>
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-3">
-                <Button size="sm" variant="outline" onClick={() => handleEdit(vehicle)}>
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button size="sm" variant="destructive" onClick={() => handleDelete(vehicle.id)}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+              {/* Action Bar Footer */}
+              <div className="flex justify-end items-center gap-2 pt-4 border-t mt-auto">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleEdit(vehicle)}
+                      className="hover:border-amber-600/50 hover:text-amber-600"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Edit Vehicle</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleDelete(vehicle.id)}
+                      className="hover:border-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Remove Vehicle</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
-            </div>
+            </CardContent>
           </Card>
         ))}
       </div>
