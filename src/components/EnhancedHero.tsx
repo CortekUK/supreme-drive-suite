@@ -1,7 +1,7 @@
 import { Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import luxuryHero from "@/assets/luxury-hero.jpg";
+import rollsRoyceHero from "@/assets/rolls-royce-hero.jpg";
 
 const EnhancedHero = () => {
   return (
@@ -9,14 +9,14 @@ const EnhancedHero = () => {
       {/* Background Image */}
       <div className="absolute inset-0">
         <img 
-          src={luxuryHero}
-          alt="Premium luxury chauffeur service featuring elegant black vehicle with professional driver in executive setting"
-          className="w-full h-full object-cover"
+          src={rollsRoyceHero}
+          alt="Ultra-luxury Rolls-Royce chauffeur service at prestigious hotel entrance with professional executive transport"
+          className="w-full h-full object-cover object-center-left"
           loading="eager"
           fetchPriority="high"
           decoding="async"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background/40" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-transparent" />
       </div>
       
       <div className="container mx-auto px-4 relative z-10 pt-20">
