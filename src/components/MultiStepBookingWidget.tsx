@@ -588,9 +588,14 @@ const MultiStepBookingWidget = () => {
                               {vehicle.capacity}
                             </span>
                           </div>
-                          <p className={`font-semibold ${isRollsRoyce ? 'text-[#C5A572]' : 'text-accent'}`}>
-                            £{vehicle.base_price_per_mile.toFixed(2)}/mile
-                          </p>
+                          <div>
+                            <p className="font-semibold text-[#C5A572] text-lg">
+                              £{vehicle.base_price_per_mile.toFixed(2)}/mile
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Minimum 3 hours
+                            </p>
+                          </div>
                         </div>
 
                         {/* Key Features */}
@@ -782,24 +787,24 @@ const MultiStepBookingWidget = () => {
                       {priceBreakdown.isFixedRoute ? (
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Fixed Route</span>
-                          <span className="font-medium">£{priceBreakdown.basePrice.toFixed(2)}</span>
+                          <span className="font-medium text-[#C5A572]">£{priceBreakdown.basePrice.toFixed(2)}</span>
                         </div>
                       ) : (
                         <>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Mileage</span>
-                            <span className="font-medium">£{priceBreakdown.mileagePrice.toFixed(2)}</span>
+                            <span className="font-medium text-[#C5A572]">£{priceBreakdown.mileagePrice.toFixed(2)}</span>
                           </div>
                           {priceBreakdown.waitTimePrice > 0 && (
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Wait Time</span>
-                              <span className="font-medium">£{priceBreakdown.waitTimePrice.toFixed(2)}</span>
+                              <span className="font-medium text-[#C5A572]">£{priceBreakdown.waitTimePrice.toFixed(2)}</span>
                             </div>
                           )}
                           {priceBreakdown.overnightFee > 0 && (
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Overnight</span>
-                              <span className="font-medium">£{priceBreakdown.overnightFee.toFixed(2)}</span>
+                              <span className="font-medium text-[#C5A572]">£{priceBreakdown.overnightFee.toFixed(2)}</span>
                             </div>
                           )}
                         </>
@@ -808,14 +813,14 @@ const MultiStepBookingWidget = () => {
                       {priceBreakdown.extrasTotal > 0 && (
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Extras</span>
-                          <span className="font-medium">£{priceBreakdown.extrasTotal.toFixed(2)}</span>
+                          <span className="font-medium text-[#C5A572]">£{priceBreakdown.extrasTotal.toFixed(2)}</span>
                         </div>
                       )}
                       
                       <div className="border-t border-border pt-3 mt-3">
                         <div className="flex justify-between items-center">
                           <span className="text-lg font-semibold">Total</span>
-                          <span className="text-2xl font-bold text-accent">
+                          <span className="text-2xl font-bold text-[#C5A572]">
                             £{priceBreakdown.totalPrice.toFixed(2)}
                           </span>
                         </div>
