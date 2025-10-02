@@ -243,9 +243,8 @@ const MultiStepBookingWidget = () => {
     <Card className="p-8 bg-card/90 backdrop-blur-sm border-primary/30 shadow-metal">
       <div className="space-y-8">
         {/* Progress Indicator */}
-        <div className="flex mb-8">
-          <div className="flex items-center w-full">
-            {[1, 2, 3].map((step) => (
+        <div className="flex items-center w-full mb-8">
+          {[1, 2, 3].map((step) => (
               <div key={step} className="flex items-center flex-1">
                 <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all ${
                   currentStep >= step 
@@ -259,9 +258,8 @@ const MultiStepBookingWidget = () => {
                     currentStep > step ? 'bg-accent' : 'bg-muted'
                   }`} />
                 )}
-              </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
 
         {/* Step 1: Journey Details */}
