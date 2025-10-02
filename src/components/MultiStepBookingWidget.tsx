@@ -243,7 +243,7 @@ const MultiStepBookingWidget = () => {
     <Card className="p-8 bg-card/90 backdrop-blur-sm border-primary/30 shadow-metal">
       <div className="space-y-8">
         {/* Progress Indicator */}
-        <div className="flex justify-center mb-8">
+        <div className="mb-8">
           <div className="flex items-center w-full">
             {[1, 2, 3].map((step) => (
               <div key={step} className="flex items-center flex-1">
