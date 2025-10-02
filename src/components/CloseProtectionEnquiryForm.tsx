@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,15 +32,12 @@ const CloseProtectionEnquiryForm = () => {
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
+    control,
     formState: { errors },
     reset,
   } = useForm<EnquiryFormData>({
     resolver: zodResolver(enquirySchema),
   });
-
-  const serviceType = watch("serviceType");
 
   const onSubmit = async (data: EnquiryFormData) => {
     setIsSubmitting(true);
@@ -162,20 +159,23 @@ const CloseProtectionEnquiryForm = () => {
 
           <div className="space-y-2">
             <Label htmlFor="serviceType">Service Required *</Label>
-            <Select
-              value={serviceType}
-              onValueChange={(value) => setValue("serviceType", value as any)}
-            >
-              <SelectTrigger className="bg-background/50">
-                <SelectValue placeholder="Select service type" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-primary/20">
-                <SelectItem value="Event">Event Protection</SelectItem>
-                <SelectItem value="Travel">Travel Security</SelectItem>
-                <SelectItem value="Residential">Residential Protection</SelectItem>
-                <SelectItem value="Ongoing">Ongoing Security Detail</SelectItem>
-              </SelectContent>
-            </Select>
+            <Controller
+              name="serviceType"
+              control={control}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger className="bg-background/50">
+                    <SelectValue placeholder="Select service type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-primary/20">
+                    <SelectItem value="Event">Event Protection</SelectItem>
+                    <SelectItem value="Travel">Travel Security</SelectItem>
+                    <SelectItem value="Residential">Residential Protection</SelectItem>
+                    <SelectItem value="Ongoing">Ongoing Security Detail</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
             {errors.serviceType && (
               <p className="text-sm text-destructive">{errors.serviceType.message}</p>
             )}
