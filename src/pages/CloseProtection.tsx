@@ -68,7 +68,7 @@ const CloseProtection = () => {
       <Navigation />
       
       <UniversalHero
-        headline={<>Discreet. Professional.<br />Trusted.</>}
+        headline={<>Discreet.<br />Professional.<br />Trusted.</>}
         subheading="Elite close protection services tailored for high-profile clients"
         backgroundImage={protectionHero}
         backgroundAlt="Professional close protection security service"
