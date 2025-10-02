@@ -58,7 +58,7 @@ const CloseProtection = () => {
               Discreet. Professional.<br />Trusted.
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-              Elite close protection services tailored for high-profile clients worldwide.
+              Elite close protection services tailored for high-profile clients.
             </p>
             <Button 
               onClick={scrollToForm}
