@@ -54,7 +54,7 @@ const Navigation = () => {
 
           {/* Desktop Navigation - Center */}
           <div className="hidden xl:flex items-center justify-center flex-1 space-x-8">
-            {navLinks.map(link => <Link key={link.path} to={link.path} className={`text-sm font-medium transition-colors hover:text-primary px-2 ${isActive(link.path) ? "text-primary" : "text-muted-foreground"}`}>
+            {navLinks.map(link => <Link key={link.path} to={link.path} className={`text-sm font-medium transition-colors hover:text-primary px-2 whitespace-nowrap ${isActive(link.path) ? "text-primary" : "text-muted-foreground"}`}>
                 {link.label}
               </Link>)}
           </div>
