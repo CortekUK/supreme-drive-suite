@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Briefcase, Users, Car, DollarSign, TrendingUp, Clock, Shield } from "lucide-react";
+import { Briefcase, Users, Car, PoundSterling, TrendingUp, Clock, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 
@@ -115,7 +115,7 @@ export default function AdminDashboard() {
     {
       title: "Revenue This Week",
       value: `£${metrics.revenueThisWeek.toFixed(2)}`,
-      icon: DollarSign,
+      icon: PoundSterling,
       gradient: "from-amber-500/20 to-amber-500/5",
       iconColor: "text-amber-500",
     },
