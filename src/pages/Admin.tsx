@@ -11,6 +11,8 @@ import AdminPricing from "./AdminPricing";
 import AdminTestimonials from "./AdminTestimonials";
 import AdminSettings from "./AdminSettings";
 import JobDetail from "./admin/JobDetail";
+import PortfolioManagement from "./admin/PortfolioManagement";
+import PortfolioEditor from "./admin/PortfolioEditor";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -62,6 +64,9 @@ const Admin = () => {
         <Route path="/reports" element={<AdminReports />} />
         <Route path="/pricing" element={<AdminPricing />} />
         <Route path="/testimonials" element={<AdminTestimonials />} />
+        <Route path="/portfolio" element={<PortfolioManagement />} />
+        <Route path="/portfolio/new" element={<PortfolioEditor />} />
+        <Route path="/portfolio/edit/:id" element={<PortfolioEditor />} />
         <Route path="/settings" element={<AdminSettings />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>

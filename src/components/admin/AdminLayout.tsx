@@ -11,6 +11,7 @@ import {
   LogOut,
   Search,
   LayoutDashboard,
+  Image,
 } from "lucide-react";
 import {
   Sidebar,
@@ -46,6 +47,7 @@ const menuItems = [
   { title: "Jobs", url: "/admin/jobs", icon: Briefcase },
   { title: "Drivers", url: "/admin/drivers", icon: Users },
   { title: "Vehicles", url: "/admin/vehicles", icon: Car },
+  { title: "Portfolio", url: "/admin/portfolio", icon: Image },
   { title: "Reports", url: "/admin/reports", icon: BarChart3 },
   { title: "Pricing", url: "/admin/pricing", icon: CreditCard },
   { title: "Testimonials", url: "/admin/testimonials", icon: MessageSquare },

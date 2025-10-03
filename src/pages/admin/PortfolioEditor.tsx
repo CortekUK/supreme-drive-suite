@@ -1,0 +1,834 @@
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "@/hooks/use-toast";
+import {
+  ArrowLeft,
+  Save,
+  Eye,
+  Upload,
+  X,
+  Star,
+  GripVertical,
+  Image as ImageIcon,
+} from "lucide-react";
+import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
+interface PortfolioImage {
+  id?: string;
+  portfolio_id?: string;
+  image_url: string;
+  caption?: string;
+  alt_text: string;
+  display_order: number;
+  is_cover: boolean;
+  is_visible: boolean;
+}
+
+export default function PortfolioEditor() {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = !!id;
+
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  
+  // Form state
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [summary, setSummary] = useState("");
+  const [fullDescription, setFullDescription] = useState("");
+  const [serviceType, setServiceType] = useState("chauffeur");
+  const [vehicleUsed, setVehicleUsed] = useState("");
+  const [location, setLocation] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [duration, setDuration] = useState("");
+  const [specialRequirements, setSpecialRequirements] = useState("");
+  const [testimonialQuote, setTestimonialQuote] = useState("");
+  const [testimonialAuthor, setTestimonialAuthor] = useState("");
+  const [priceRange, setPriceRange] = useState("");
+  const [status, setStatus] = useState("draft");
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [isConfidential, setIsConfidential] = useState(false);
+  const [hidePrice, setHidePrice] = useState(false);
+  const [showOnChauffeurPage, setShowOnChauffeurPage] = useState(false);
+  const [showOnCloseProtectionPage, setShowOnCloseProtectionPage] = useState(false);
+
+  // Images state
+  const [images, setImages] = useState<PortfolioImage[]>([]);
+  const [editingImage, setEditingImage] = useState<PortfolioImage | null>(null);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (isEditMode) {
+      loadPortfolioItem();
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (!isEditMode && title && !slug) {
+      generateSlug(title);
+    }
+  }, [title]);
+
+  const loadPortfolioItem = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("portfolio")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+
+      setTitle(data.title);
+      setSlug(data.slug);
+      setSummary(data.summary);
+      setFullDescription(data.full_description || "");
+      setServiceType(data.service_type);
+      setVehicleUsed(data.vehicle_used || "");
+      setLocation(data.location);
+      setEventDate(data.event_date);
+      setDuration(data.duration || "");
+      setSpecialRequirements(data.special_requirements || "");
+      setTestimonialQuote(data.testimonial_quote || "");
+      setTestimonialAuthor(data.testimonial_author || "");
+      setPriceRange(data.price_range || "");
+      setStatus(data.status || "draft");
+      setIsFeatured(data.is_featured);
+      setIsConfidential(data.is_confidential || false);
+      setHidePrice(data.hide_price || false);
+      setShowOnChauffeurPage(data.show_on_chauffeur_page || false);
+      setShowOnCloseProtectionPage(data.show_on_close_protection_page || false);
+
+      loadImages();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadImages = async () => {
+    if (!id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("portfolio_images")
+        .select("*")
+        .eq("portfolio_id", id)
+        .order("display_order");
+
+      if (error) throw error;
+      setImages(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Error loading images",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const generateSlug = (text: string) => {
+    const newSlug = text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    setSlug(newSlug);
+  };
+
+  const handleImageUpload = async (files: FileList) => {
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    const uploadedImages: PortfolioImage[] = [];
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Validate file size (10MB max)
+        if (file.size > 10 * 1024 * 1024) {
+          toast({
+            title: "File too large",
+            description: `${file.name} exceeds 10MB limit`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        // Validate file type
+        if (!file.type.startsWith("image/")) {
+          toast({
+            title: "Invalid file type",
+            description: `${file.name} is not an image`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("portfolio-images")
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("portfolio-images")
+          .getPublicUrl(filePath);
+
+        uploadedImages.push({
+          image_url: publicUrl,
+          alt_text: file.name.replace(/\.[^/.]+$/, ""),
+          display_order: images.length + i,
+          is_cover: images.length === 0 && i === 0,
+          is_visible: true,
+        });
+      }
+
+      setImages([...images, ...uploadedImages]);
+      toast({
+        title: "Success",
+        description: `Uploaded ${uploadedImages.length} images`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSave = async (publish: boolean = false) => {
+    // Validation
+    if (!title || !slug || !summary || !serviceType || !location || !eventDate) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (summary.length < 155 || summary.length > 180) {
+      toast({
+        title: "Validation Error",
+        description: "Summary must be between 155-180 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (images.filter(img => img.is_cover).length === 0 && images.length > 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please mark one image as cover image",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const portfolioData = {
+        title,
+        slug,
+        summary,
+        full_description: fullDescription,
+        service_type: serviceType,
+        vehicle_used: vehicleUsed || null,
+        location,
+        event_date: eventDate,
+        duration: duration || null,
+        special_requirements: specialRequirements || null,
+        testimonial_quote: testimonialQuote || null,
+        testimonial_author: testimonialAuthor || null,
+        price_range: priceRange || null,
+        status: publish ? "published" : status,
+        is_featured: isFeatured,
+        is_confidential: isConfidential,
+        hide_price: hidePrice,
+        show_on_chauffeur_page: showOnChauffeurPage,
+        show_on_close_protection_page: showOnCloseProtectionPage,
+        last_edited_by: user?.id,
+        last_edited_at: new Date().toISOString(),
+        published_at: publish ? new Date().toISOString() : null,
+        cover_image_url: images.find(img => img.is_cover)?.image_url || images[0]?.image_url || "",
+        is_active: true,
+      };
+
+      let portfolioId = id;
+
+      if (isEditMode) {
+        const { error } = await supabase
+          .from("portfolio")
+          .update(portfolioData)
+          .eq("id", id);
+
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from("portfolio")
+          .insert(portfolioData)
+          .select()
+          .single();
+
+        if (error) throw error;
+        portfolioId = data.id;
+      }
+
+      // Save images
+      if (portfolioId) {
+        // Delete existing images if editing
+        if (isEditMode) {
+          await supabase
+            .from("portfolio_images")
+            .delete()
+            .eq("portfolio_id", portfolioId);
+        }
+
+        // Insert new images
+        if (images.length > 0) {
+          const imagesToInsert = images.map((img, index) => ({
+            portfolio_id: portfolioId,
+            image_url: img.image_url,
+            caption: img.caption || null,
+            alt_text: img.alt_text,
+            display_order: index,
+            is_cover: img.is_cover,
+            is_visible: img.is_visible,
+            uploaded_by: user?.id,
+          }));
+
+          const { error: imagesError } = await supabase
+            .from("portfolio_images")
+            .insert(imagesToInsert);
+
+          if (imagesError) throw imagesError;
+        }
+      }
+
+      toast({
+        title: "Success",
+        description: publish ? "Portfolio item published" : "Portfolio item saved as draft",
+      });
+
+      navigate("/admin/portfolio");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const summaryCharCount = summary.length;
+  const summaryValid = summaryCharCount >= 155 && summaryCharCount <= 180;
+
+  if (loading) {
+    return (
+      <div className="p-8 flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-8 max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/admin/portfolio")}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">
+              {isEditMode ? "Edit" : "New"} Case Study
+            </h1>
+            <p className="text-muted-foreground">
+              Create a portfolio showcase
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => handleSave(false)}
+            disabled={saving}
+          >
+            <Save className="mr-2 h-4 w-4" />
+            Save Draft
+          </Button>
+          <Button onClick={() => handleSave(true)} disabled={saving}>
+            <Eye className="mr-2 h-4 w-4" />
+            Publish
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Panel - Form */}
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="p-6 space-y-4">
+            <h2 className="text-xl font-semibold">Basic Information</h2>
+
+            <div className="space-y-2">
+              <Label htmlFor="title">
+                Title <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Royal Wedding Transportation"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="slug">
+                URL Slug <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="slug"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                placeholder="royal-wedding-transportation"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="summary">
+                Summary <span className="text-destructive">*</span>
+                <span
+                  className={`ml-2 text-sm ${
+                    summaryValid ? "text-muted-foreground" : "text-destructive"
+                  }`}
+                >
+                  ({summaryCharCount}/155-180 chars)
+                </span>
+              </Label>
+              <Textarea
+                id="summary"
+                value={summary}
+                onChange={(e) => setSummary(e.target.value)}
+                placeholder="Brief summary for SEO and preview cards"
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Full Description</Label>
+              <Textarea
+                id="description"
+                value={fullDescription}
+                onChange={(e) => setFullDescription(e.target.value)}
+                placeholder="Detailed project description"
+                rows={8}
+              />
+            </div>
+          </Card>
+
+          <Card className="p-6 space-y-4">
+            <h2 className="text-xl font-semibold">Classification</h2>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="serviceType">
+                  Service Type <span className="text-destructive">*</span>
+                </Label>
+                <Select value={serviceType} onValueChange={setServiceType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="chauffeur">Chauffeur</SelectItem>
+                    <SelectItem value="close_protection">
+                      Close Protection
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="vehicle">Vehicle Used</Label>
+                <Input
+                  id="vehicle"
+                  value={vehicleUsed}
+                  onChange={(e) => setVehicleUsed(e.target.value)}
+                  placeholder="e.g. Rolls-Royce Phantom"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="location">
+                  Location <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g. London, UK"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="eventDate">
+                  Event Date <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="eventDate"
+                  type="date"
+                  value={eventDate}
+                  onChange={(e) => setEventDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="duration">Duration</Label>
+              <Input
+                id="duration"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                placeholder="e.g. 3 hours, Full day"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="requirements">Special Requirements</Label>
+              <Textarea
+                id="requirements"
+                value={specialRequirements}
+                onChange={(e) => setSpecialRequirements(e.target.value)}
+                placeholder="Any special requirements or notes"
+                rows={3}
+              />
+            </div>
+          </Card>
+
+          <Card className="p-6 space-y-4">
+            <h2 className="text-xl font-semibold">Testimonial (Optional)</h2>
+
+            <div className="space-y-2">
+              <Label htmlFor="quote">Quote</Label>
+              <Textarea
+                id="quote"
+                value={testimonialQuote}
+                onChange={(e) => setTestimonialQuote(e.target.value)}
+                placeholder="Customer testimonial"
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="author">Author Name</Label>
+              <Input
+                id="author"
+                value={testimonialAuthor}
+                onChange={(e) => setTestimonialAuthor(e.target.value)}
+                placeholder="e.g. John Smith, CEO"
+              />
+            </div>
+          </Card>
+
+          <Card className="p-6 space-y-4">
+            <h2 className="text-xl font-semibold">Visibility & Features</h2>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Featured</Label>
+                <p className="text-sm text-muted-foreground">
+                  Show on homepage widget
+                </p>
+              </div>
+              <Switch checked={isFeatured} onCheckedChange={setIsFeatured} />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Confidential</Label>
+                <p className="text-sm text-muted-foreground">
+                  Apply blur to sensitive details
+                </p>
+              </div>
+              <Switch
+                checked={isConfidential}
+                onCheckedChange={setIsConfidential}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Hide Price</Label>
+                <p className="text-sm text-muted-foreground">
+                  Don't display pricing information
+                </p>
+              </div>
+              <Switch checked={hidePrice} onCheckedChange={setHidePrice} />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Show on Chauffeur Page</Label>
+                <p className="text-sm text-muted-foreground">
+                  Display in chauffeur services carousel
+                </p>
+              </div>
+              <Switch
+                checked={showOnChauffeurPage}
+                onCheckedChange={setShowOnChauffeurPage}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Show on Close Protection Page</Label>
+                <p className="text-sm text-muted-foreground">
+                  Display in close protection carousel
+                </p>
+              </div>
+              <Switch
+                checked={showOnCloseProtectionPage}
+                onCheckedChange={setShowOnCloseProtectionPage}
+              />
+            </div>
+
+            {!hidePrice && (
+              <div className="space-y-2">
+                <Label htmlFor="priceRange">Price Range</Label>
+                <Input
+                  id="priceRange"
+                  value={priceRange}
+                  onChange={(e) => setPriceRange(e.target.value)}
+                  placeholder="e.g. £1,500 - £3,000"
+                />
+              </div>
+            )}
+          </Card>
+        </div>
+
+        {/* Right Panel - Images */}
+        <div className="space-y-6">
+          <Card className="p-6 space-y-4">
+            <h2 className="text-xl font-semibold">Images</h2>
+
+            {/* Upload Zone */}
+            <div
+              className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
+              onClick={() => document.getElementById("image-upload")?.click()}
+            >
+              <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-sm text-muted-foreground mb-2">
+                Click to upload or drag and drop
+              </p>
+              <p className="text-xs text-muted-foreground">
+                JPG, PNG, WEBP up to 10MB
+              </p>
+              <input
+                id="image-upload"
+                type="file"
+                multiple
+                accept="image/*"
+                className="hidden"
+                onChange={(e) =>
+                  e.target.files && handleImageUpload(e.target.files)
+                }
+              />
+            </div>
+
+            {uploading && (
+              <p className="text-sm text-muted-foreground text-center">
+                Uploading...
+              </p>
+            )}
+
+            {/* Image Gallery */}
+            <div className="space-y-2">
+              {images.map((image, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 p-2 border rounded-lg hover:border-primary transition-colors"
+                >
+                  <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
+                  <img
+                    src={image.image_url}
+                    alt={image.alt_text}
+                    className="w-16 h-16 object-cover rounded"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {image.alt_text}
+                    </p>
+                    {image.caption && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {image.caption}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        const newImages = images.map((img, i) => ({
+                          ...img,
+                          is_cover: i === index,
+                        }));
+                        setImages(newImages);
+                      }}
+                    >
+                      <Star
+                        className={`h-4 w-4 ${
+                          image.is_cover
+                            ? "text-accent fill-accent"
+                            : "text-muted-foreground"
+                        }`}
+                      />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setEditingImage(image);
+                        setImageDialogOpen(true);
+                      }}
+                    >
+                      <ImageIcon className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setImages(images.filter((_, i) => i !== index));
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      {/* Image Edit Dialog */}
+      <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Image Details</DialogTitle>
+          </DialogHeader>
+          {editingImage && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Alt Text *</Label>
+                <Input
+                  value={editingImage.alt_text}
+                  onChange={(e) =>
+                    setEditingImage({
+                      ...editingImage,
+                      alt_text: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Caption</Label>
+                <Textarea
+                  value={editingImage.caption || ""}
+                  onChange={(e) =>
+                    setEditingImage({
+                      ...editingImage,
+                      caption: e.target.value,
+                    })
+                  }
+                  rows={3}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label>Visible</Label>
+                <Switch
+                  checked={editingImage.is_visible}
+                  onCheckedChange={(checked) =>
+                    setEditingImage({ ...editingImage, is_visible: checked })
+                  }
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setImageDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (editingImage) {
+                  const index = images.findIndex(
+                    (img) => img.image_url === editingImage.image_url
+                  );
+                  const newImages = [...images];
+                  newImages[index] = editingImage;
+                  setImages(newImages);
+                }
+                setImageDialogOpen(false);
+              }}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

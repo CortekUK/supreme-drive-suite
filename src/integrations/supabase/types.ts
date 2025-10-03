@@ -479,15 +479,24 @@ export type Database = {
           display_order: number | null
           duration: string | null
           event_date: string
+          full_description: string | null
           gallery_images: Json | null
+          hide_price: boolean | null
           id: string
           is_active: boolean | null
+          is_confidential: boolean | null
           is_featured: boolean | null
+          last_edited_at: string | null
+          last_edited_by: string | null
           location: string
           price_range: string | null
+          published_at: string | null
           service_type: string
+          show_on_chauffeur_page: boolean | null
+          show_on_close_protection_page: boolean | null
           slug: string
           special_requirements: string | null
+          status: string | null
           summary: string
           testimonial_author: string | null
           testimonial_quote: string | null
@@ -500,15 +509,24 @@ export type Database = {
           display_order?: number | null
           duration?: string | null
           event_date: string
+          full_description?: string | null
           gallery_images?: Json | null
+          hide_price?: boolean | null
           id?: string
           is_active?: boolean | null
+          is_confidential?: boolean | null
           is_featured?: boolean | null
+          last_edited_at?: string | null
+          last_edited_by?: string | null
           location: string
           price_range?: string | null
+          published_at?: string | null
           service_type: string
+          show_on_chauffeur_page?: boolean | null
+          show_on_close_protection_page?: boolean | null
           slug: string
           special_requirements?: string | null
+          status?: string | null
           summary: string
           testimonial_author?: string | null
           testimonial_quote?: string | null
@@ -521,15 +539,24 @@ export type Database = {
           display_order?: number | null
           duration?: string | null
           event_date?: string
+          full_description?: string | null
           gallery_images?: Json | null
+          hide_price?: boolean | null
           id?: string
           is_active?: boolean | null
+          is_confidential?: boolean | null
           is_featured?: boolean | null
+          last_edited_at?: string | null
+          last_edited_by?: string | null
           location?: string
           price_range?: string | null
+          published_at?: string | null
           service_type?: string
+          show_on_chauffeur_page?: boolean | null
+          show_on_close_protection_page?: boolean | null
           slug?: string
           special_requirements?: string | null
+          status?: string | null
           summary?: string
           testimonial_author?: string | null
           testimonial_quote?: string | null
@@ -537,6 +564,53 @@ export type Database = {
           vehicle_used?: string | null
         }
         Relationships: []
+      }
+      portfolio_images: {
+        Row: {
+          alt_text: string
+          caption: string | null
+          created_at: string | null
+          display_order: number
+          id: string
+          image_url: string
+          is_cover: boolean | null
+          is_visible: boolean | null
+          portfolio_id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          alt_text: string
+          caption?: string | null
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          image_url: string
+          is_cover?: boolean | null
+          is_visible?: boolean | null
+          portfolio_id: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          alt_text?: string
+          caption?: string | null
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          image_url?: string
+          is_cover?: boolean | null
+          is_visible?: boolean | null
+          portfolio_id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_images_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pricing_extras: {
         Row: {
