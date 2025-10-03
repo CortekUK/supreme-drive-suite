@@ -26,6 +26,9 @@ const Navigation = () => {
     path: "/close-protection",
     label: "Close Protection"
   }, {
+    path: "/portfolio",
+    label: "Portfolio"
+  }, {
     path: "/pricing",
     label: "Pricing"
   }, {

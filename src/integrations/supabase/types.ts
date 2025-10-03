@@ -472,6 +472,72 @@ export type Database = {
           },
         ]
       }
+      portfolio: {
+        Row: {
+          cover_image_url: string
+          created_at: string | null
+          display_order: number | null
+          duration: string | null
+          event_date: string
+          gallery_images: Json | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          location: string
+          price_range: string | null
+          service_type: string
+          slug: string
+          special_requirements: string | null
+          summary: string
+          testimonial_author: string | null
+          testimonial_quote: string | null
+          title: string
+          vehicle_used: string | null
+        }
+        Insert: {
+          cover_image_url: string
+          created_at?: string | null
+          display_order?: number | null
+          duration?: string | null
+          event_date: string
+          gallery_images?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          location: string
+          price_range?: string | null
+          service_type: string
+          slug: string
+          special_requirements?: string | null
+          summary: string
+          testimonial_author?: string | null
+          testimonial_quote?: string | null
+          title: string
+          vehicle_used?: string | null
+        }
+        Update: {
+          cover_image_url?: string
+          created_at?: string | null
+          display_order?: number | null
+          duration?: string | null
+          event_date?: string
+          gallery_images?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          location?: string
+          price_range?: string | null
+          service_type?: string
+          slug?: string
+          special_requirements?: string | null
+          summary?: string
+          testimonial_author?: string | null
+          testimonial_quote?: string | null
+          title?: string
+          vehicle_used?: string | null
+        }
+        Relationships: []
+      }
       pricing_extras: {
         Row: {
           created_at: string | null
