@@ -13,6 +13,7 @@ import AdminSettings from "./AdminSettings";
 import JobDetail from "./admin/JobDetail";
 import PortfolioManagement from "./admin/PortfolioManagement";
 import PortfolioEditor from "./admin/PortfolioEditor";
+import AnalyticsDashboard from "./admin/AnalyticsDashboard";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -57,6 +58,7 @@ const Admin = () => {
     <AdminLayout user={user}>
       <Routes>
         <Route path="/" element={<AdminDashboardPage />} />
+        <Route path="/analytics" element={<AnalyticsDashboard />} />
         <Route path="/jobs" element={<AdminJobs />} />
         <Route path="/jobs/:id" element={<JobDetail />} />
         <Route path="/drivers" element={<AdminDrivers />} />

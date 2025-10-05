@@ -12,6 +12,7 @@ import {
   Search,
   LayoutDashboard,
   Image,
+  TrendingUp,
 } from "lucide-react";
 import {
   Sidebar,
@@ -44,6 +45,7 @@ interface AdminLayoutProps {
 
 const menuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
+  { title: "Analytics", url: "/admin/analytics", icon: TrendingUp },
   { title: "Jobs", url: "/admin/jobs", icon: Briefcase },
   { title: "Drivers", url: "/admin/drivers", icon: Users },
   { title: "Vehicles", url: "/admin/vehicles", icon: Car },
