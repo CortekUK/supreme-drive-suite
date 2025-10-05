@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Car } from "lucide-react";
 import BookingConfirmation from "./BookingConfirmation";
 
 interface Vehicle {
@@ -19,6 +20,7 @@ interface Vehicle {
   luggage_capacity: number;
   base_price_per_mile: number;
   overnight_surcharge: number;
+  image_url: string | null;
 }
 
 const BookingWidget = () => {
@@ -288,30 +290,84 @@ const BookingWidget = () => {
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="vehicle">Select Vehicle</Label>
-          <Select onValueChange={(value) => {
-            const vehicle = vehicles.find(v => v.id === value);
-            setSelectedVehicle(vehicle || null);
-          }}>
-            <SelectTrigger id="vehicle">
-              <SelectValue placeholder="Choose your vehicle" />
-            </SelectTrigger>
-            <SelectContent>
-              {vehicles.map((vehicle) => (
-                <SelectItem key={vehicle.id} value={vehicle.id}>
-                  {vehicle.name} - £{vehicle.base_price_per_mile}/mile
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="space-y-4">
+          <Label className="text-lg font-semibold">Select Vehicle</Label>
+          <div className="grid md:grid-cols-2 gap-4">
+            {vehicles.map((vehicle) => (
+              <Card
+                key={vehicle.id}
+                className={`p-4 cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] ${
+                  selectedVehicle?.id === vehicle.id 
+                    ? 'border-accent bg-accent/10 shadow-md' 
+                    : 'border-border hover:border-accent/50'
+                }`}
+                onClick={() => setSelectedVehicle(vehicle)}
+              >
+                <div className="space-y-3">
+                  {/* Vehicle Image */}
+                  <div className="relative h-32 rounded-lg overflow-hidden bg-muted/50">
+                    {vehicle.image_url ? (
+                      <img 
+                        src={vehicle.image_url} 
+                        alt={vehicle.name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className={`${vehicle.image_url ? 'hidden' : 'flex'} absolute inset-0 flex-col items-center justify-center bg-muted/30 backdrop-blur-sm`}>
+                      <Car className="w-12 h-12 text-accent/40 mb-1" />
+                      <span className="text-xs text-muted-foreground/60">Image coming soon</span>
+                    </div>
+                  </div>
+
+                  {/* Vehicle Details */}
+                  <div>
+                    <h4 className="font-semibold text-base">{vehicle.name}</h4>
+                    <p className="text-xs text-muted-foreground">{vehicle.category}</p>
+                  </div>
+
+                  {/* Pricing */}
+                  <div className="flex items-center justify-between text-sm pt-2 border-t border-border/50">
+                    <span className="text-muted-foreground">
+                      {vehicle.capacity} passengers
+                    </span>
+                    <span className="font-semibold text-accent">
+                      £{vehicle.base_price_per_mile.toFixed(2)}/mile
+                    </span>
+                  </div>
+
+                  {/* Selected Indicator */}
+                  {selectedVehicle?.id === vehicle.id && (
+                    <div className="flex items-center gap-2 text-accent font-medium text-xs">
+                      ✓ Selected
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
 
         {selectedVehicle && (
           <Card className="p-4 bg-secondary/30">
             <div className="space-y-2">
-              <h4 className="font-semibold">{selectedVehicle.name}</h4>
-              <p className="text-sm text-muted-foreground">{selectedVehicle.description}</p>
+              <div className="flex items-center gap-3">
+                {selectedVehicle.image_url && (
+                  <img 
+                    src={selectedVehicle.image_url} 
+                    alt={selectedVehicle.name}
+                    className="w-16 h-16 object-cover rounded-lg"
+                  />
+                )}
+                <div className="flex-1">
+                  <h4 className="font-semibold">{selectedVehicle.name}</h4>
+                  <p className="text-sm text-muted-foreground">{selectedVehicle.description}</p>
+                </div>
+              </div>
               <div className="flex justify-between items-center pt-2 border-t border-border">
                 <span className="text-sm">Estimated Price:</span>
                 <span className="text-2xl font-display font-bold text-accent">

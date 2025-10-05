@@ -570,8 +570,8 @@ const MultiStepBookingWidget = () => {
                       )}
 
                       <div className="space-y-4">
-                        {/* Vehicle Icon/Image */}
-                        <div className={`flex items-center justify-center h-32 rounded-lg ${
+                        {/* Vehicle Image */}
+                        <div className={`relative flex items-center justify-center h-48 rounded-lg overflow-hidden ${
                           isRollsRoyce 
                             ? 'bg-gradient-to-br from-[#C5A572]/20 to-[#8B7355]/20' 
                             : 'bg-accent/5'
@@ -580,11 +580,18 @@ const MultiStepBookingWidget = () => {
                             <img 
                               src={vehicle.image_url} 
                               alt={vehicle.name}
-                              className="w-full h-full object-cover rounded-lg"
+                              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                              loading="lazy"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                              }}
                             />
-                          ) : (
-                            <Car className={`w-20 h-20 ${isRollsRoyce ? 'text-[#C5A572]' : 'text-accent'}`} />
-                          )}
+                          ) : null}
+                          <div className={`${vehicle.image_url ? 'hidden' : 'flex'} absolute inset-0 flex-col items-center justify-center bg-muted/30 backdrop-blur-sm`}>
+                            <Car className={`w-16 h-16 mb-2 ${isRollsRoyce ? 'text-[#C5A572]' : 'text-accent'} opacity-40`} />
+                            <span className="text-xs text-muted-foreground/70">Image coming soon</span>
+                          </div>
                         </div>
 
                         {/* Vehicle Details */}
