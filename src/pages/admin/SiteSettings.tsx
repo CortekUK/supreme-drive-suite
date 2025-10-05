@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Building2, Palette, Bell, Scale } from "lucide-react";
+import { logAuditEvent, generateFieldSummary } from "@/lib/auditLogger";
 
 // Validation schemas
 const companySchema = z.object({
@@ -134,21 +135,21 @@ export default function SiteSettings() {
     }
   };
 
-  const logAudit = async (section: string, changes: any) => {
-    await supabase.from("audit_logs").insert({
-      user_id: (await supabase.auth.getUser()).data.user?.id,
-      action: `Updated ${section}`,
-      table_name: "site_settings",
-      affected_entity_type: "Site Settings",
-      affected_entity_id: settingsId,
-      new_values: changes,
-    });
+  const getCurrentSettings = async () => {
+    const { data } = await supabase
+      .from("site_settings")
+      .select("*")
+      .eq("id", settingsId)
+      .single();
+    return data;
   };
 
   const saveCompany = async (data: CompanyData) => {
     if (!settingsId) return;
     
     try {
+      const before = await getCurrentSettings();
+      
       const { error } = await supabase
         .from("site_settings")
         .update(data)
@@ -156,7 +157,18 @@ export default function SiteSettings() {
 
       if (error) throw error;
 
-      await logAudit("Company & Contact", data);
+      const changedFields = Object.keys(data).filter(
+        key => JSON.stringify(before?.[key]) !== JSON.stringify(data[key as keyof CompanyData])
+      );
+      
+      await logAuditEvent({
+        action: "update",
+        entityType: "Site Settings",
+        entityId: settingsId,
+        summary: generateFieldSummary("Company & Contact", changedFields),
+        before: before ? Object.fromEntries(changedFields.map(k => [k, before[k]])) : {},
+        after: data,
+      });
       
       toast({
         title: "Settings saved successfully",
@@ -175,6 +187,8 @@ export default function SiteSettings() {
     if (!settingsId) return;
     
     try {
+      const before = await getCurrentSettings();
+      
       const { error } = await supabase
         .from("site_settings")
         .update(data)
@@ -182,7 +196,18 @@ export default function SiteSettings() {
 
       if (error) throw error;
 
-      await logAudit("Branding", data);
+      const changedFields = Object.keys(data).filter(
+        key => JSON.stringify(before?.[key]) !== JSON.stringify(data[key as keyof BrandingData])
+      );
+      
+      await logAuditEvent({
+        action: "update",
+        entityType: "Site Settings",
+        entityId: settingsId,
+        summary: generateFieldSummary("Branding", changedFields),
+        before: before ? Object.fromEntries(changedFields.map(k => [k, before[k]])) : {},
+        after: data,
+      });
       
       toast({
         title: "Settings saved successfully",
@@ -201,23 +226,38 @@ export default function SiteSettings() {
     if (!settingsId) return;
     
     try {
+      const before = await getCurrentSettings();
+      
       const emailArray = data.notification_emails
         .split(",")
         .map((e) => e.trim())
         .filter((e) => e.length > 0);
 
+      const updateData = {
+        notify_new_booking: data.notify_new_booking,
+        notify_new_enquiry: data.notify_new_enquiry,
+        notification_emails: emailArray,
+      };
+
       const { error } = await supabase
         .from("site_settings")
-        .update({
-          notify_new_booking: data.notify_new_booking,
-          notify_new_enquiry: data.notify_new_enquiry,
-          notification_emails: emailArray,
-        })
+        .update(updateData)
         .eq("id", settingsId);
 
       if (error) throw error;
 
-      await logAudit("Notifications", { ...data, notification_emails: emailArray });
+      const changedFields = Object.keys(updateData).filter(
+        key => JSON.stringify(before?.[key]) !== JSON.stringify(updateData[key as keyof typeof updateData])
+      );
+      
+      await logAuditEvent({
+        action: "update",
+        entityType: "Site Settings",
+        entityId: settingsId,
+        summary: generateFieldSummary("Notifications", changedFields),
+        before: before ? Object.fromEntries(changedFields.map(k => [k, before[k]])) : {},
+        after: updateData,
+      });
       
       toast({
         title: "Settings saved successfully",
@@ -236,6 +276,8 @@ export default function SiteSettings() {
     if (!settingsId) return;
     
     try {
+      const before = await getCurrentSettings();
+      
       const { error } = await supabase
         .from("site_settings")
         .update(data)
@@ -243,7 +285,18 @@ export default function SiteSettings() {
 
       if (error) throw error;
 
-      await logAudit("Legal & Footer", data);
+      const changedFields = Object.keys(data).filter(
+        key => JSON.stringify(before?.[key]) !== JSON.stringify(data[key as keyof LegalData])
+      );
+      
+      await logAuditEvent({
+        action: "update",
+        entityType: "Site Settings",
+        entityId: settingsId,
+        summary: generateFieldSummary("Legal & Footer", changedFields),
+        before: before ? Object.fromEntries(changedFields.map(k => [k, before[k]])) : {},
+        after: data,
+      });
       
       toast({
         title: "Settings saved successfully",

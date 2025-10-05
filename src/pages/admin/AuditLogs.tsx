@@ -15,19 +15,38 @@ import { format } from "date-fns";
 interface AuditLog {
   id: string;
   user_id: string;
-  user_email?: string;
+  admin_email?: string;
+  admin_name?: string;
   action: string;
   table_name: string;
   record_id: string | null;
   affected_entity_type: string | null;
   affected_entity_id: string | null;
+  summary: string | null;
   old_values: any;
   new_values: any;
   created_at: string;
 }
 
 const ITEMS_PER_PAGE = 20;
-const ENTITY_TYPES = ["All", "faqs", "testimonials", "vehicles", "portfolio", "pricing_extras", "fixed_routes", "bookings"];
+const ENTITY_TYPES = [
+  "All",
+  "Site Settings",
+  "FAQ",
+  "Testimonial",
+  "Vehicle",
+  "Driver",
+  "Booking",
+  "Portfolio",
+  "Pricing",
+  "faqs",
+  "testimonials",
+  "vehicles",
+  "portfolio",
+  "pricing_extras",
+  "fixed_routes",
+  "bookings"
+];
 const DATE_RANGES = [
   { label: "All time", value: "all" },
   { label: "Last 7 days", value: "7" },
@@ -52,22 +71,15 @@ const AuditLogs = () => {
     setLoading(true);
     
     const { data, error } = await supabase
-      .from("audit_logs")
-      .select(`
-        *,
-        profiles!audit_logs_user_id_fkey(email)
-      `)
+      .from("audit_logs_with_admin")
+      .select("*")
       .order("created_at", { ascending: false });
 
     if (error) {
       toast.error("Failed to load audit logs");
       console.error(error);
     } else {
-      const logsWithEmail = (data || []).map((log: any) => ({
-        ...log,
-        user_email: log.profiles?.email || "Unknown user"
-      }));
-      setLogs(logsWithEmail);
+      setLogs(data || []);
     }
     setLoading(false);
   };
@@ -83,13 +95,14 @@ const AuditLogs = () => {
   };
 
   const exportToCSV = () => {
-    const headers = ["Timestamp", "User", "Action", "Entity Type", "Entity ID"];
+    const headers = ["Timestamp", "User", "Action", "Entity Type", "Entity ID", "Summary"];
     const csvData = filteredLogs.map(log => [
       format(new Date(log.created_at), "dd MMM yyyy, HH:mm"),
-      log.user_email,
+      log.admin_email || "Unknown",
       log.action,
       log.affected_entity_type || log.table_name,
-      log.affected_entity_id || log.record_id || "N/A"
+      log.affected_entity_id || log.record_id || "N/A",
+      log.summary || log.action
     ]);
 
     const csvContent = [
@@ -118,8 +131,9 @@ const AuditLogs = () => {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (log) =>
-          log.user_email?.toLowerCase().includes(query) ||
-          log.action.toLowerCase().includes(query)
+          log.admin_email?.toLowerCase().includes(query) ||
+          log.action.toLowerCase().includes(query) ||
+          log.summary?.toLowerCase().includes(query)
       );
     }
 
@@ -156,12 +170,19 @@ const AuditLogs = () => {
 
   const getEntityBadgeColor = (entity: string) => {
     const colors: Record<string, string> = {
+      "Site Settings": "bg-primary/20 text-primary border-primary/30",
+      FAQ: "bg-blue-500/20 text-blue-300 border-blue-500/30",
       faqs: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+      Testimonial: "bg-purple-500/20 text-purple-300 border-purple-500/30",
       testimonials: "bg-purple-500/20 text-purple-300 border-purple-500/30",
+      Vehicle: "bg-green-500/20 text-green-300 border-green-500/30",
       vehicles: "bg-green-500/20 text-green-300 border-green-500/30",
+      Portfolio: "bg-orange-500/20 text-orange-300 border-orange-500/30",
       portfolio: "bg-orange-500/20 text-orange-300 border-orange-500/30",
+      Pricing: "bg-accent/20 text-accent border-accent/30",
       pricing_extras: "bg-accent/20 text-accent border-accent/30",
       fixed_routes: "bg-accent/20 text-accent border-accent/30",
+      Booking: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
       bookings: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
     };
     return colors[entity] || "bg-muted text-muted-foreground";
@@ -264,6 +285,7 @@ const AuditLogs = () => {
                   <TableHead>User</TableHead>
                   <TableHead>Action</TableHead>
                   <TableHead>Entity</TableHead>
+                  <TableHead>Summary</TableHead>
                   <TableHead className="text-right">Time</TableHead>
                 </TableRow>
               </TableHeader>
@@ -296,11 +318,20 @@ const AuditLogs = () => {
                               </CollapsibleTrigger>
                             )}
                           </TableCell>
-                          <TableCell className="font-medium text-foreground">
-                            {log.user_email}
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-foreground">
+                                {log.admin_name || "Unknown"}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {log.admin_email || "N/A"}
+                              </span>
+                            </div>
                           </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {log.action}
+                          <TableCell>
+                            <span className="text-sm capitalize text-muted-foreground">
+                              {log.action}
+                            </span>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -314,6 +345,17 @@ const AuditLogs = () => {
                               )}
                             </div>
                           </TableCell>
+                          <TableCell>
+                            {log.summary ? (
+                              <span className="text-sm text-muted-foreground">
+                                {log.summary}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground italic">
+                                No summary
+                              </span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right text-muted-foreground">
                             {format(new Date(log.created_at), "dd MMM yyyy, HH:mm")}
                           </TableCell>
@@ -321,17 +363,17 @@ const AuditLogs = () => {
                         {hasDetails && (
                           <CollapsibleContent asChild>
                             <TableRow className="border-border/50 bg-muted/20">
-                              <TableCell colSpan={5} className="py-4">
-                                <div className="space-y-3 px-4">
+                              <TableCell colSpan={6} className="py-4">
+                                <div className="grid grid-cols-2 gap-4 px-4">
                                   {log.old_values && (
                                     <div>
                                       <div className="flex items-center gap-2 mb-2">
                                         <FileText className="w-4 h-4 text-destructive" />
                                         <span className="text-sm font-medium text-destructive">
-                                          Previous values
+                                          Before
                                         </span>
                                       </div>
-                                      <pre className="text-xs bg-card/50 p-3 rounded border border-border/30 overflow-x-auto">
+                                      <pre className="text-xs bg-destructive/5 border border-destructive/20 p-3 rounded overflow-x-auto font-mono">
                                         {JSON.stringify(log.old_values, null, 2)}
                                       </pre>
                                     </div>
@@ -339,12 +381,12 @@ const AuditLogs = () => {
                                   {log.new_values && (
                                     <div>
                                       <div className="flex items-center gap-2 mb-2">
-                                        <FileText className="w-4 h-4 text-accent" />
-                                        <span className="text-sm font-medium text-accent">
-                                          New values
+                                        <FileText className="w-4 h-4 text-primary" />
+                                        <span className="text-sm font-medium text-primary">
+                                          After
                                         </span>
                                       </div>
-                                      <pre className="text-xs bg-card/50 p-3 rounded border border-border/30 overflow-x-auto">
+                                      <pre className="text-xs bg-primary/5 border border-primary/20 p-3 rounded overflow-x-auto font-mono">
                                         {JSON.stringify(log.new_values, null, 2)}
                                       </pre>
                                     </div>

@@ -25,6 +25,7 @@ export type Database = {
           new_values: Json | null
           old_values: Json | null
           record_id: string | null
+          summary: string | null
           table_name: string
           user_agent: string | null
           user_id: string | null
@@ -39,6 +40,7 @@ export type Database = {
           new_values?: Json | null
           old_values?: Json | null
           record_id?: string | null
+          summary?: string | null
           table_name: string
           user_agent?: string | null
           user_id?: string | null
@@ -53,6 +55,7 @@ export type Database = {
           new_values?: Json | null
           old_values?: Json | null
           record_id?: string | null
+          summary?: string | null
           table_name?: string
           user_agent?: string | null
           user_id?: string | null
@@ -945,6 +948,26 @@ export type Database = {
       }
     }
     Views: {
+      audit_logs_with_admin: {
+        Row: {
+          action: string | null
+          admin_email: string | null
+          admin_name: string | null
+          affected_entity_id: string | null
+          affected_entity_type: string | null
+          created_at: string | null
+          id: string | null
+          ip_address: unknown | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          summary: string | null
+          table_name: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       job_details: {
         Row: {
           additional_requirements: string | null
