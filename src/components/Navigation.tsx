@@ -51,9 +51,7 @@ const Navigation = () => {
               <span className="text-xl lg:text-2xl font-luxury font-semibold text-gradient-silver leading-tight whitespace-nowrap tracking-wide">
                 Travel in Supreme Style
               </span>
-              <div className="relative h-px w-full mt-1 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-accent to-transparent" />
-              </div>
+              <div className="h-0.5 w-full bg-accent/60 mt-1" />
             </div>
           </Link>
 
