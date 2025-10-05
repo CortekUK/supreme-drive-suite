@@ -6,7 +6,6 @@ import AdminDashboardPage from "./AdminDashboard";
 import AdminJobs from "./AdminJobs";
 import AdminDrivers from "./AdminDrivers";
 import AdminVehicles from "./AdminVehicles";
-import AdminReports from "./AdminReports";
 import AdminPricing from "./AdminPricing";
 import AdminTestimonials from "./AdminTestimonials";
 import AdminSettings from "./AdminSettings";
@@ -63,7 +62,6 @@ const Admin = () => {
         <Route path="/jobs/:id" element={<JobDetail />} />
         <Route path="/drivers" element={<AdminDrivers />} />
         <Route path="/vehicles" element={<AdminVehicles />} />
-        <Route path="/reports" element={<AdminReports />} />
         <Route path="/pricing" element={<AdminPricing />} />
         <Route path="/testimonials" element={<AdminTestimonials />} />
         <Route path="/portfolio" element={<PortfolioManagement />} />

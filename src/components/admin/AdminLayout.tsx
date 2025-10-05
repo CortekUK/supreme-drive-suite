@@ -4,7 +4,6 @@ import {
   Briefcase,
   Users,
   Car,
-  BarChart3,
   CreditCard,
   MessageSquare,
   Settings,
@@ -45,12 +44,11 @@ interface AdminLayoutProps {
 
 const menuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
-  { title: "Analytics", url: "/admin/analytics", icon: TrendingUp },
   { title: "Jobs", url: "/admin/jobs", icon: Briefcase },
-  { title: "Drivers", url: "/admin/drivers", icon: Users },
   { title: "Vehicles", url: "/admin/vehicles", icon: Car },
+  { title: "Drivers", url: "/admin/drivers", icon: Users },
   { title: "Portfolio", url: "/admin/portfolio", icon: Image },
-  { title: "Reports", url: "/admin/reports", icon: BarChart3 },
+  { title: "Analytics & Reports", url: "/admin/analytics", icon: TrendingUp },
   { title: "Pricing", url: "/admin/pricing", icon: CreditCard },
   { title: "Testimonials", url: "/admin/testimonials", icon: MessageSquare },
   { title: "Settings", url: "/admin/settings", icon: Settings },

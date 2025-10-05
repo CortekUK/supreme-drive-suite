@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, TrendingDown, DollarSign, Briefcase, Target, Users, Car } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { ReportsDataTable } from "@/components/admin/ReportsDataTable";
 
 const AnalyticsDashboard = () => {
   const [dateRange, setDateRange] = useState("30");
+  const [activeTab, setActiveTab] = useState("overview");
 
   // Demo data for KPIs
   const kpis = [
@@ -127,28 +129,50 @@ const AnalyticsDashboard = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal mb-2">
-                Analytics Overview
+                Analytics & Reports
               </h1>
               <p className="text-muted-foreground text-lg">
-                Performance insights across bookings, revenue, and operations
+                Performance insights and detailed operational data
               </p>
             </div>
-            <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="w-[180px] border-accent/30 focus:border-accent">
-                <SelectValue placeholder="Select period" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7">Last 7 days</SelectItem>
-                <SelectItem value="30">Last 30 days</SelectItem>
-                <SelectItem value="90">Last 90 days</SelectItem>
-                <SelectItem value="365">This Year</SelectItem>
-              </SelectContent>
-            </Select>
+            {activeTab === "overview" && (
+              <Select value={dateRange} onValueChange={setDateRange}>
+                <SelectTrigger className="w-[180px] border-accent/30 focus:border-accent">
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7">Last 7 days</SelectItem>
+                  <SelectItem value="30">Last 30 days</SelectItem>
+                  <SelectItem value="90">Last 90 days</SelectItem>
+                  <SelectItem value="365">This Year</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12 animate-fade-in animation-delay-200">
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-12">
+            <TabsTrigger 
+              value="overview"
+              className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-glow transition-all"
+            >
+              Overview
+            </TabsTrigger>
+            <TabsTrigger 
+              value="reports"
+              className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-glow transition-all"
+            >
+              Reports
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-12 mt-8">
+
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 animate-fade-in animation-delay-200">
           {kpis.map((kpi, index) => {
             const Icon = kpi.icon;
             return (
@@ -176,11 +200,11 @@ const AnalyticsDashboard = () => {
                 </CardContent>
               </Card>
             );
-          })}
-        </div>
+            })}
+            </div>
 
-        {/* Revenue & Jobs Trends */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12 animate-fade-in animation-delay-400">
+            {/* Revenue & Jobs Trends */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in animation-delay-400">
           <Card className="border-accent/20">
             <CardHeader>
               <CardTitle className="font-display text-2xl">Revenue Over Time</CardTitle>
@@ -239,12 +263,12 @@ const AnalyticsDashboard = () => {
                   />
                 </BarChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+            </div>
 
-        {/* Operations Overview */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12 animate-fade-in animation-delay-600">
+            {/* Operations Overview */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in animation-delay-600">
           {/* Job Type Breakdown */}
           <Card className="border-accent/20">
             <CardHeader>
@@ -347,12 +371,12 @@ const AnalyticsDashboard = () => {
                   <div className="text-xs text-muted-foreground">Based on 247 reviews</div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+            </div>
 
-        {/* Fleet Insights */}
-        <Card className="border-accent/20 mb-8 animate-fade-in">
+            {/* Fleet Insights */}
+            <Card className="border-accent/20 animate-fade-in">
           <CardHeader>
             <CardTitle className="font-display text-2xl">Fleet Insights</CardTitle>
             <CardDescription>Vehicle performance this month</CardDescription>
@@ -392,21 +416,17 @@ const AnalyticsDashboard = () => {
                     </tr>
                   ))}
                 </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                </table>
+              </div>
+            </CardContent>
+            </Card>
+          </TabsContent>
 
-        {/* Footer Link */}
-        <div className="text-center animate-fade-in">
-          <Link 
-            to="/admin/reports" 
-            className="inline-flex items-center gap-2 text-accent hover:text-accent/80 transition-colors text-sm font-medium group"
-          >
-            View Detailed Reports
-            <span className="group-hover:translate-x-1 transition-transform">→</span>
-          </Link>
-        </div>
+          {/* Reports Tab */}
+          <TabsContent value="reports" className="mt-8">
+            <ReportsDataTable />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
