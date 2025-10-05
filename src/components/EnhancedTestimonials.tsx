@@ -34,6 +34,8 @@ const EnhancedTestimonials = () => {
       .from("testimonials")
       .select("*")
       .eq("is_active", true)
+      .order("is_featured", { ascending: false })
+      .order("display_order", { ascending: true })
       .order("created_at", { ascending: false })
       .limit(6);
 
