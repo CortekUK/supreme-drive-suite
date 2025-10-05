@@ -8,9 +8,28 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Download, Search, Filter, Shield } from "lucide-react";
+import { 
+  Calendar as CalendarIcon, 
+  Download, 
+  Search, 
+  Shield, 
+  Car, 
+  MapPin, 
+  Clock, 
+  User, 
+  ChevronRight,
+  Plus,
+  X,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  MoreVertical
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Booking {
@@ -68,6 +87,27 @@ export default function EnhancedJobsDashboard() {
   const [sortField, setSortField] = useState<keyof Booking>("pickup_date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Get paginated bookings
+  const paginatedBookings = filteredBookings.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+  const totalPages = Math.ceil(filteredBookings.length / pageSize);
+
+  // Count active filters
+  const activeFilterCount = [
+    searchTerm !== "",
+    statusFilter !== "all",
+    serviceTypeFilter !== "all",
+    driverFilter !== "all",
+    vehicleFilter !== "all",
+    dateRange.from !== undefined
+  ].filter(Boolean).length;
+
   useEffect(() => {
     loadData();
   }, []);
@@ -83,6 +123,7 @@ export default function EnhancedJobsDashboard() {
 
   useEffect(() => {
     applyFilters();
+    setCurrentPage(1); // Reset to first page when filters change
   }, [bookings, searchTerm, statusFilter, serviceTypeFilter, driverFilter, vehicleFilter, dateRange, sortField, sortDirection]);
 
   const loadData = async () => {
@@ -241,226 +282,464 @@ export default function EnhancedJobsDashboard() {
     }
   };
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  const getStatusIcon = (status: string | null) => {
+    switch (status) {
+      case "new": return <AlertCircle className="w-3 h-3" />;
+      case "confirmed": return <CheckCircle2 className="w-3 h-3" />;
+      case "completed": return <CheckCircle2 className="w-3 h-3" />;
+      case "cancelled": return <XCircle className="w-3 h-3" />;
+      default: return <Clock className="w-3 h-3" />;
+    }
+  };
+
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setServiceTypeFilter("all");
+    setDriverFilter("all");
+    setVehicleFilter("all");
+    setDateRange({ from: undefined, to: undefined });
+    toast.success("Filters cleared");
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-display font-bold text-gradient-metal mb-2">
-            Jobs Management
-          </h1>
-          <p className="text-muted-foreground">Manage bookings and assignments</p>
+    <TooltipProvider>
+      <div className="space-y-6 animate-fade-in">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span className="hover:text-accent cursor-pointer transition-colors" onClick={() => navigate("/admin")}>
+            Dashboard
+          </span>
+          <ChevronRight className="w-4 h-4" />
+          <span className="text-foreground font-medium">Jobs Management</span>
         </div>
-        <Button onClick={exportToCSV} variant="outline" className="gap-2">
-          <Download className="w-4 h-4" />
-          Export CSV
-        </Button>
-      </div>
+
+        {/* Header */}
+        <div className="flex justify-between items-start gap-4">
+          <div>
+            <h1 className="text-3xl font-display font-bold text-gradient-metal mb-2">
+              Jobs Management
+            </h1>
+            <p className="text-muted-foreground">Manage bookings, drivers, and route assignments in real time.</p>
+          </div>
+          <div className="flex gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button onClick={exportToCSV} variant="outline" className="gap-2 hover:border-accent/40 transition-all">
+                  <Download className="w-4 h-4" />
+                  Export CSV
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Download job list for reporting</TooltipContent>
+            </Tooltip>
+            <Button 
+              onClick={() => navigate("/admin/jobs/new")} 
+              className="gap-2 bg-gradient-to-r from-accent/90 to-accent hover:from-accent hover:to-accent/90 shadow-[0_0_20px_rgba(244,197,66,0.3)] hover:shadow-[0_0_30px_rgba(244,197,66,0.4)] transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              Add New Job
+            </Button>
+          </div>
+        </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 p-4 bg-card/50 rounded-lg border border-border/50 shadow-metal">
-        <div className="relative">
-          <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
+      <div className="p-6 bg-card/50 rounded-lg border border-border/50 shadow-metal backdrop-blur-sm">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Filters</h3>
+            {activeFilterCount > 0 && (
+              <Badge className="bg-accent/20 text-accent border-accent/30 text-xs">
+                {activeFilterCount} active
+              </Badge>
+            )}
+          </div>
+          {activeFilterCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearAllFilters}
+              className="text-accent hover:text-accent/80 hover:bg-accent/10 gap-1 transition-all"
+            >
+              <X className="w-3 h-3" />
+              Clear All
+            </Button>
+          )}
         </div>
 
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="new">New</SelectItem>
-            <SelectItem value="in_review">In Review</SelectItem>
-            <SelectItem value="confirmed">Confirmed</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={serviceTypeFilter} onValueChange={setServiceTypeFilter}>
-          <SelectTrigger>
-            <SelectValue placeholder="Service Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Services</SelectItem>
-            <SelectItem value="chauffeur">Chauffeur</SelectItem>
-            <SelectItem value="close_protection">Close Protection</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={driverFilter} onValueChange={setDriverFilter}>
-          <SelectTrigger>
-            <SelectValue placeholder="Driver" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Drivers</SelectItem>
-            {drivers.map((d) => (
-              <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={vehicleFilter} onValueChange={setVehicleFilter}>
-          <SelectTrigger>
-            <SelectValue placeholder="Vehicle" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Vehicles</SelectItem>
-            {vehicles.map((v) => (
-              <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className={cn("justify-start text-left font-normal", !dateRange.from && "text-muted-foreground")}>
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {dateRange.from ? (
-                dateRange.to ? (
-                  <>
-                    {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
-                  </>
-                ) : (
-                  format(dateRange.from, "LLL dd, y")
-                )
-              ) : (
-                <span>Pick a date</span>
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by client, location, or vehicle..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={cn(
+                "pl-9 transition-all",
+                searchTerm && "border-accent/40 shadow-[0_0_10px_rgba(244,197,66,0.1)]"
               )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={dateRange.from}
-              selected={{ from: dateRange.from, to: dateRange.to }}
-              onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
-              numberOfMonths={2}
-              className="pointer-events-auto"
             />
-          </PopoverContent>
-        </Popover>
+          </div>
+
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className={cn("transition-all", statusFilter !== "all" && "border-accent/40")}>
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="new">New</SelectItem>
+              <SelectItem value="in_review">In Review</SelectItem>
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={serviceTypeFilter} onValueChange={setServiceTypeFilter}>
+            <SelectTrigger className={cn("transition-all", serviceTypeFilter !== "all" && "border-accent/40")}>
+              <SelectValue placeholder="Service Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Services</SelectItem>
+              <SelectItem value="chauffeur">Chauffeur</SelectItem>
+              <SelectItem value="close_protection">Close Protection</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={driverFilter} onValueChange={setDriverFilter}>
+            <SelectTrigger className={cn("transition-all", driverFilter !== "all" && "border-accent/40")}>
+              <SelectValue placeholder="Driver" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Drivers</SelectItem>
+              {drivers.map((d) => (
+                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={vehicleFilter} onValueChange={setVehicleFilter}>
+            <SelectTrigger className={cn("transition-all", vehicleFilter !== "all" && "border-accent/40")}>
+              <SelectValue placeholder="Vehicle" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Vehicles</SelectItem>
+              {vehicles.map((v) => (
+                <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline" 
+                className={cn(
+                  "justify-start text-left font-normal transition-all",
+                  !dateRange.from && "text-muted-foreground",
+                  dateRange.from && "border-accent/40"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dateRange.from ? (
+                  dateRange.to ? (
+                    <>
+                      {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
+                    </>
+                  ) : (
+                    format(dateRange.from, "LLL dd, y")
+                  )
+                ) : (
+                  <span>Pick a date</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={dateRange.from}
+                selected={{ from: dateRange.from, to: dateRange.to }}
+                onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
+                numberOfMonths={2}
+                className="pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
-      {/* Results count */}
-      <div className="text-sm text-muted-foreground">
-        Showing {filteredBookings.length} of {bookings.length} jobs
+      {/* Results summary */}
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, filteredBookings.length)} of {filteredBookings.length} jobs
+        </div>
+        <Select value={pageSize.toString()} onValueChange={(val) => setPageSize(Number(val))}>
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="5">Show 5</SelectItem>
+            <SelectItem value="10">Show 10</SelectItem>
+            <SelectItem value="20">Show 20</SelectItem>
+            <SelectItem value="50">Show 50</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Jobs Table */}
-      <div className="border border-border/50 rounded-lg overflow-hidden shadow-metal bg-card/50">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="cursor-pointer" onClick={() => handleSort("pickup_date")}>
-                Date {sortField === "pickup_date" && (sortDirection === "asc" ? "↑" : "↓")}
-              </TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Route</TableHead>
-              <TableHead>Service Type</TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort("status")}>
-                Status {sortField === "status" && (sortDirection === "asc" ? "↑" : "↓")}
-              </TableHead>
-              <TableHead>Driver</TableHead>
-              <TableHead>Vehicle</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredBookings.map((booking) => (
-              <TableRow 
-                key={booking.id} 
-                className="cursor-pointer hover:bg-muted/50"
-                onClick={() => navigate(`/admin/jobs/${booking.id}`)}
-              >
-                <TableCell>
-                  <div className="font-medium">{format(new Date(booking.pickup_date), "MMM dd, yyyy")}</div>
-                  <div className="text-sm text-muted-foreground">{booking.pickup_time}</div>
-                </TableCell>
-                <TableCell>
-                  <div className="font-medium">{booking.customer_name || "N/A"}</div>
-                  <div className="text-sm text-muted-foreground">{booking.customer_email}</div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm">{booking.pickup_location}</div>
-                  <div className="text-xs text-muted-foreground">→ {booking.dropoff_location}</div>
-                </TableCell>
-                <TableCell>
-                  {booking.service_type === "close_protection" ? (
-                    <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 gap-1">
-                      <Shield className="w-3 h-3" />
-                      Close Protection
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                      Chauffeur
-                    </Badge>
-                  )}
-                  {booking.priority === "high" && (
-                    <Badge className="ml-1 bg-red-500/20 text-red-400 border-red-500/30 text-xs">
-                      High Priority
-                    </Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Badge className={getStatusColor(booking.status)}>
-                    {booking.status || "new"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Select
-                    value={booking.driver_id || "none"}
-                    onValueChange={(value) => value !== "none" && assignDriver(booking.id, value)}
-                  >
-                    <SelectTrigger className="w-[150px]" onClick={(e) => e.stopPropagation()}>
-                      <SelectValue placeholder="Assign driver" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No driver</SelectItem>
-                      {drivers.map((d) => (
-                        <SelectItem key={d.id} value={d.id}>
-                          {d.name} {d.is_available && "✓"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  {vehicles.find((v) => v.id === booking.vehicle_id)?.name || "N/A"}
-                </TableCell>
-                <TableCell>£{booking.total_price?.toFixed(2) || "0.00"}</TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <Select
-                    value={booking.status || "new"}
-                    onValueChange={(value) => updateBookingStatus(booking.id, value)}
-                  >
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="confirmed">Confirmed</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <div className="border border-border/50 rounded-lg overflow-hidden shadow-metal bg-card/50 backdrop-blur-sm">
+        {filteredBookings.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 px-4">
+            <Search className="w-16 h-16 text-muted-foreground/50 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No jobs found</h3>
+            <p className="text-muted-foreground text-center mb-6">
+              No jobs match the selected criteria. Try adjusting your filters or creating a new booking.
+            </p>
+            <Button 
+              onClick={() => navigate("/admin/jobs/new")} 
+              className="gap-2 bg-gradient-to-r from-accent/90 to-accent hover:from-accent hover:to-accent/90"
+            >
+              <Plus className="w-4 h-4" />
+              New Job
+            </Button>
+          </div>
+        ) : (
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-b border-border/50">
+                  <TableHead className="cursor-pointer uppercase text-xs font-semibold tracking-wide hover:text-accent transition-colors" onClick={() => handleSort("pickup_date")}>
+                    Date {sortField === "pickup_date" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                  <TableHead className="uppercase text-xs font-semibold tracking-wide">Customer</TableHead>
+                  <TableHead className="uppercase text-xs font-semibold tracking-wide">Route</TableHead>
+                  <TableHead className="uppercase text-xs font-semibold tracking-wide">Service Type</TableHead>
+                  <TableHead className="cursor-pointer uppercase text-xs font-semibold tracking-wide hover:text-accent transition-colors" onClick={() => handleSort("status")}>
+                    Status {sortField === "status" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                  <TableHead className="uppercase text-xs font-semibold tracking-wide">Driver</TableHead>
+                  <TableHead className="uppercase text-xs font-semibold tracking-wide">Vehicle</TableHead>
+                  <TableHead className="uppercase text-xs font-semibold tracking-wide text-right">Price</TableHead>
+                  <TableHead className="uppercase text-xs font-semibold tracking-wide">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedBookings.map((booking, index) => (
+                <TableRow 
+                  key={booking.id} 
+                  className="cursor-pointer hover:bg-muted/30 transition-all hover:shadow-[0_0_20px_rgba(244,197,66,0.1)] group animate-fade-in"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                  onClick={() => navigate(`/admin/jobs/${booking.id}`)}
+                >
+                  <TableCell>
+                    <div className="flex items-start gap-2">
+                      <Clock className="w-4 h-4 text-muted-foreground mt-0.5 opacity-60" />
+                      <div>
+                        <div className="font-semibold text-foreground">{format(new Date(booking.pickup_date), "MMM dd, yyyy")}</div>
+                        <div className="text-xs text-muted-foreground">{booking.pickup_time}</div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-start gap-2">
+                      <User className="w-4 h-4 text-muted-foreground mt-0.5 opacity-60" />
+                      <div>
+                        <div className="font-semibold text-foreground">{booking.customer_name || "N/A"}</div>
+                        <div className="text-xs text-muted-foreground truncate max-w-[200px]">{booking.customer_email}</div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-start gap-2 max-w-[250px]">
+                      <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 opacity-60 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <div className="text-sm text-foreground truncate">{booking.pickup_location}</div>
+                        <div className="flex items-center gap-1 text-xs text-accent/80">
+                          <ChevronRight className="w-3 h-3" />
+                          <span className="truncate">{booking.dropoff_location}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      {booking.service_type === "close_protection" ? (
+                        <Badge className="bg-accent/20 text-accent border-accent/30 gap-1 w-fit shadow-[0_0_10px_rgba(244,197,66,0.2)]">
+                          <Shield className="w-3 h-3" />
+                          Close Protection
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 gap-1 w-fit">
+                          <Car className="w-3 h-3" />
+                          Chauffeur
+                        </Badge>
+                      )}
+                      {booking.priority === "high" && (
+                        <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs w-fit">
+                          High Priority
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge className={cn(getStatusColor(booking.status), "gap-1 cursor-help transition-all hover:scale-105")}>
+                          {getStatusIcon(booking.status)}
+                          {booking.status?.replace('_', ' ') || "new"}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {booking.status === "new" && "Awaiting confirmation"}
+                        {booking.status === "confirmed" && "Job confirmed and scheduled"}
+                        {booking.status === "in_progress" && "Currently in progress"}
+                        {booking.status === "completed" && "Job completed successfully"}
+                        {booking.status === "cancelled" && "Job cancelled"}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={booking.driver_id || "none"}
+                      onValueChange={(value) => value !== "none" && assignDriver(booking.id, value)}
+                    >
+                      <SelectTrigger 
+                        className="w-[150px] hover:border-accent/40 transition-all" 
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <SelectValue placeholder="No driver assigned" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none" className="text-muted-foreground italic">No driver</SelectItem>
+                        {drivers.map((d) => (
+                          <SelectItem key={d.id} value={d.id} className="flex items-center justify-between">
+                            <span>{d.name}</span>
+                            {d.is_available && <span className="text-green-400 ml-2">● Available</span>}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Car className="w-4 h-4 text-muted-foreground opacity-60" />
+                      <div>
+                        <div className="font-medium text-foreground">
+                          {vehicles.find((v) => v.id === booking.vehicle_id)?.name || "Not assigned"}
+                        </div>
+                        {booking.vehicle_id && (
+                          <div className="text-xs text-muted-foreground">
+                            {vehicles.find((v) => v.id === booking.vehicle_id)?.category}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className={cn(
+                      "font-semibold",
+                      booking.total_price && booking.total_price > 500 ? "text-accent" : "text-foreground"
+                    )}>
+                      £{booking.total_price?.toFixed(2) || "0.00"}
+                    </div>
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Select
+                      value={booking.status || "new"}
+                      onValueChange={(value) => updateBookingStatus(booking.id, value)}
+                    >
+                      <SelectTrigger className="w-[140px] hover:border-accent/40 transition-all">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="new">New</SelectItem>
+                        <SelectItem value="confirmed">Confirmed</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="border-t border-border/50 p-4">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      className={cn(
+                        "cursor-pointer hover:bg-accent/10 hover:text-accent transition-all",
+                        currentPage === 1 && "pointer-events-none opacity-50"
+                      )}
+                    />
+                  </PaginationItem>
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    if (
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page)}
+                            isActive={currentPage === page}
+                            className={cn(
+                              "cursor-pointer transition-all",
+                              currentPage === page
+                                ? "bg-accent/20 text-accent border-accent/40 shadow-[0_0_10px_rgba(244,197,66,0.2)]"
+                                : "hover:bg-accent/10 hover:text-accent"
+                            )}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    } else if (page === currentPage - 2 || page === currentPage + 2) {
+                      return (
+                        <PaginationItem key={page}>
+                          <span className="px-2 text-muted-foreground">...</span>
+                        </PaginationItem>
+                      );
+                    }
+                    return null;
+                  })}
+
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      className={cn(
+                        "cursor-pointer hover:bg-accent/10 hover:text-accent transition-all",
+                        currentPage === totalPages && "pointer-events-none opacity-50"
+                      )}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </>
+        )}
       </div>
     </div>
+    </TooltipProvider>
   );
 }
