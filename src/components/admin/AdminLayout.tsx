@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Briefcase,
@@ -12,6 +12,9 @@ import {
   LayoutDashboard,
   Image,
   TrendingUp,
+  Home,
+  BarChart2,
+  Tag,
 } from "lucide-react";
 import {
   Sidebar,
@@ -26,6 +29,9 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -42,22 +48,43 @@ interface AdminLayoutProps {
   user: any;
 }
 
-const menuItems = [
-  { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
-  { title: "Jobs", url: "/admin/jobs", icon: Briefcase },
-  { title: "Vehicles", url: "/admin/vehicles", icon: Car },
-  { title: "Drivers", url: "/admin/drivers", icon: Users },
-  { title: "Portfolio", url: "/admin/portfolio", icon: Image },
-  { title: "Analytics & Reports", url: "/admin/analytics", icon: TrendingUp },
-  { title: "Pricing", url: "/admin/pricing", icon: CreditCard },
-  { title: "Testimonials", url: "/admin/testimonials", icon: MessageSquare },
-  { title: "Settings", url: "/admin/settings", icon: Settings },
+interface NavItem {
+  label: string;
+  icon: any;
+  href: string;
+  badge?: number;
+  dividerBefore?: boolean;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { label: "Dashboard", icon: Home, href: "/admin" },
+  { label: "Jobs", icon: Briefcase, href: "/admin/jobs" },
+  { label: "Vehicles", icon: Car, href: "/admin/vehicles" },
+  { label: "Drivers", icon: Users, href: "/admin/drivers" },
+  { label: "Portfolio", icon: Image, href: "/admin/portfolio" },
+  { label: "Analytics & Reports", icon: BarChart2, href: "/admin/analytics" },
+  { label: "Pricing", icon: Tag, href: "/admin/pricing" },
+  { label: "Testimonials", icon: MessageSquare, href: "/admin/testimonials" },
+  { label: "Settings", icon: Settings, href: "/admin/settings", dividerBefore: true },
 ];
 
 function AdminSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { open } = useSidebar();
+  const [jobsCount, setJobsCount] = useState(0);
+
+  useEffect(() => {
+    loadJobsCount();
+  }, []);
+
+  const loadJobsCount = async () => {
+    const { count } = await supabase
+      .from("bookings")
+      .select("*", { count: "exact", head: true })
+      .in("status", ["new", "pending"]);
+    setJobsCount(count || 0);
+  };
 
   const isActive = (url: string) => {
     if (url === "/admin") {
@@ -66,9 +93,76 @@ function AdminSidebar() {
     return location.pathname.startsWith(url);
   };
 
+  const getNavItems = (): NavItem[] => {
+    return NAV_ITEMS.map((item) => {
+      if (item.href === "/admin/jobs") {
+        return { ...item, badge: jobsCount };
+      }
+      return item;
+    });
+  };
+
+  const renderNavItem = (item: NavItem) => {
+    const active = isActive(item.href);
+    const Icon = item.icon;
+
+    const button = (
+      <SidebarMenuButton
+        onClick={() => navigate(item.href)}
+        className={`
+          relative h-11 px-3
+          ${active 
+            ? "bg-primary/[0.14] text-primary border-l-[3px] border-primary font-medium" 
+            : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+          }
+          transition-all duration-200 cursor-pointer
+        `}
+        aria-current={active ? "page" : undefined}
+      >
+        <Icon className="h-5 w-5" />
+        {open && (
+          <>
+            <span className="ml-3 text-[13px]">{item.label}</span>
+            {item.badge !== undefined && item.badge > 0 && (
+              <Badge 
+                className="ml-auto h-5 min-w-[20px] px-1.5 bg-primary/20 text-primary text-xs font-medium"
+              >
+                {item.badge}
+              </Badge>
+            )}
+          </>
+        )}
+      </SidebarMenuButton>
+    );
+
+    if (!open) {
+      return (
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              {button}
+            </TooltipTrigger>
+            <TooltipContent side="right" className="font-medium">
+              {item.label}
+              {item.badge !== undefined && item.badge > 0 && (
+                <span className="ml-2 text-xs text-muted-foreground">({item.badge})</span>
+              )}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    return button;
+  };
+
   return (
-    <Sidebar className={open ? "w-64" : "w-16"} collapsible="icon">
-      <SidebarContent className="bg-card border-r border-border">
+    <Sidebar 
+      className={open ? "w-[260px]" : "w-[72px]"} 
+      collapsible="icon"
+      style={{ backgroundColor: "#0F1115" }}
+    >
+      <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="px-4 py-6">
             <h2 className="text-xl font-display font-bold text-foreground">
@@ -76,25 +170,20 @@ function AdminSidebar() {
             </h2>
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    onClick={() => navigate(item.url)}
-                    className={`
-                      ${isActive(item.url) 
-                        ? "bg-accent/20 text-accent border-l-4 border-accent font-medium" 
-                        : "text-foreground/70 hover:text-foreground hover:bg-muted"
-                      }
-                      transition-all duration-200
-                    `}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {open && <span className="ml-3">{item.title}</span>}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+            <nav aria-label="Admin navigation">
+              <SidebarMenu>
+                {getNavItems().map((item) => (
+                  <div key={item.href}>
+                    {item.dividerBefore && (
+                      <Separator className="my-2 bg-white/5" />
+                    )}
+                    <SidebarMenuItem>
+                      {renderNavItem(item)}
+                    </SidebarMenuItem>
+                  </div>
+                ))}
+              </SidebarMenu>
+            </nav>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
@@ -105,6 +194,14 @@ function AdminSidebar() {
 export default function AdminLayout({ children, user }: AdminLayoutProps) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Persist sidebar state
+  useEffect(() => {
+    const savedState = localStorage.getItem("admin-sidebar-collapsed");
+    if (savedState !== null) {
+      // State is managed by SidebarProvider
+    }
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -121,7 +218,7 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
   };
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full bg-background">
         <AdminSidebar />
         
