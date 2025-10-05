@@ -43,19 +43,30 @@ const EnhancedTestimonials = () => {
   if (testimonials.length === 0) return null;
 
   return (
-    <section className="py-20 bg-muted/30">
+    <section className="py-24 md:py-28 lg:py-32 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16 animate-fade-in-up">
+        <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-5xl font-display font-bold mb-4 text-gradient-metal">
             What Our Clients Say
           </h2>
+          <div className="flex items-center justify-center mt-6">
+            <div className="h-[1px] w-24 bg-gradient-to-r from-transparent via-accent to-transparent" />
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+        <div 
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto"
+          onMouseEnter={() => {
+            const interval = setInterval(() => {
+              setActiveIndex((current) => (current + 1) % testimonials.length);
+            }, 5000);
+            return () => clearInterval(interval);
+          }}
+        >
           {testimonials.map((testimonial, index) => (
             <Card
               key={testimonial.id}
-              className={`p-8 shadow-metal bg-card/50 backdrop-blur hover-lift transition-smooth flex flex-col ${
+              className={`p-8 shadow-metal bg-gradient-to-br from-card via-card to-secondary/20 backdrop-blur transition-all duration-500 hover:-translate-y-2 hover:shadow-glow flex flex-col ${
                 index === activeIndex ? 'ring-2 ring-accent/50' : ''
               }`}
               style={{
@@ -64,33 +75,39 @@ const EnhancedTestimonials = () => {
                 opacity: 0
               }}
             >
-              <div className="flex gap-1 mb-4">
+              <div className="flex gap-1 mb-6">
                 {[...Array(testimonial.rating || 5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 fill-accent text-accent" />
+                  <Star 
+                    key={i} 
+                    className="w-5 h-5 fill-accent text-accent drop-shadow-[0_0_8px_rgba(255,215,0,0.5)]" 
+                    aria-hidden="true"
+                  />
                 ))}
               </div>
 
-              <p className="text-foreground/90 mb-6 italic leading-relaxed min-h-[7rem] flex items-start">
+              <p className="text-foreground/90 mb-6 italic leading-relaxed min-h-[7rem] flex items-start text-base">
                 "{testimonial.content}"
               </p>
 
-              <div className="border-t border-border pt-4">
-                <p className="font-semibold text-primary">{testimonial.customer_name}</p>
+              <div className="border-t border-accent/20 pt-4 mt-auto">
+                <p className="font-semibold text-gradient-silver font-display text-lg">{testimonial.customer_name}</p>
                 {testimonial.customer_title && (
-                  <p className="text-sm text-muted-foreground">{testimonial.customer_title}</p>
+                  <p className="text-sm text-accent/80 uppercase tracking-wider mt-1">{testimonial.customer_title}</p>
                 )}
               </div>
             </Card>
           ))}
         </div>
 
-        <div className="flex justify-center gap-2 mt-8">
+        <div className="flex justify-center gap-3 mt-12">
           {testimonials.map((_, index) => (
             <button
               key={index}
               onClick={() => setActiveIndex(index)}
-              className={`w-3 h-3 rounded-full transition-all ${
-                index === activeIndex ? 'bg-accent w-8' : 'bg-muted'
+              className={`h-2 rounded-full transition-all duration-300 ${
+                index === activeIndex 
+                  ? 'bg-accent w-8 shadow-[0_0_10px_rgba(255,215,0,0.5)]' 
+                  : 'bg-muted-foreground/30 w-2 hover:bg-muted-foreground/50'
               }`}
               aria-label={`View testimonial ${index + 1}`}
             />
