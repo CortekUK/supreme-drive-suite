@@ -176,10 +176,7 @@ export default function SiteSettings() {
       });
       
       // Invalidate cache to refresh settings across all components
-      await queryClient.invalidateQueries({ queryKey: ["site-settings"] });
-      
-      // Reload settings to show fresh data
-      await loadSettings();
+      queryClient.invalidateQueries({ queryKey: ["site-settings"] });
       
       toast({
         title: "Settings saved successfully",
@@ -221,10 +218,7 @@ export default function SiteSettings() {
       });
       
       // Invalidate cache to refresh settings across all components
-      await queryClient.invalidateQueries({ queryKey: ["site-settings"] });
-      
-      // Reload settings to show fresh data
-      await loadSettings();
+      queryClient.invalidateQueries({ queryKey: ["site-settings"] });
       
       toast({
         title: "Settings saved successfully",
@@ -277,10 +271,7 @@ export default function SiteSettings() {
       });
       
       // Invalidate cache to refresh settings across all components
-      await queryClient.invalidateQueries({ queryKey: ["site-settings"] });
-      
-      // Reload settings to show fresh data
-      await loadSettings();
+      queryClient.invalidateQueries({ queryKey: ["site-settings"] });
       
       toast({
         title: "Settings saved successfully",
@@ -322,10 +313,7 @@ export default function SiteSettings() {
       });
       
       // Invalidate cache to refresh settings across all components
-      await queryClient.invalidateQueries({ queryKey: ["site-settings"] });
-      
-      // Reload settings to show fresh data
-      await loadSettings();
+      queryClient.invalidateQueries({ queryKey: ["site-settings"] });
       
       toast({
         title: "Settings saved successfully",
