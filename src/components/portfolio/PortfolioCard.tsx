@@ -30,7 +30,6 @@ export const PortfolioCard = ({ item }: PortfolioCardProps) => {
             loading="lazy"
             onError={(e) => {
               console.error("Failed to load portfolio image:", item.cover_image_url, "for item:", item.slug);
-              e.currentTarget.src = "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&h=600&fit=crop";
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500" />
