@@ -133,7 +133,7 @@ export default function AdminDashboard() {
       ).length;
 
       const activeDrivers = drivers.filter(
-        (d) => d.is_active && d.is_available
+        (d) => d.is_available
       ).length;
 
       const vehiclesInService = vehicles.filter(

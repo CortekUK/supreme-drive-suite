@@ -23,7 +23,6 @@ interface Driver {
   license_number: string;
   specializations: string[];
   is_available: boolean;
-  is_active: boolean;
 }
 
 const DriversManagement = () => {
@@ -45,7 +44,6 @@ const DriversManagement = () => {
     license_number: "",
     specializations: "",
     is_available: true,
-    is_active: true,
   });
 
   // Helper function to get initials from name
@@ -83,9 +81,9 @@ const DriversManagement = () => {
     // Status filter
     if (statusFilter !== "all") {
       if (statusFilter === "available") {
-        filtered = filtered.filter(d => d.is_available && d.is_active);
+        filtered = filtered.filter(d => d.is_available);
       } else if (statusFilter === "unavailable") {
-        filtered = filtered.filter(d => !d.is_available || !d.is_active);
+        filtered = filtered.filter(d => !d.is_available);
       }
     }
 
@@ -190,7 +188,6 @@ const DriversManagement = () => {
       license_number: driver.license_number || "",
       specializations: driver.specializations?.join(", ") || "",
       is_available: driver.is_available,
-      is_active: driver.is_active,
     });
     setDialogOpen(true);
   };
@@ -204,7 +201,6 @@ const DriversManagement = () => {
       license_number: "",
       specializations: "",
       is_available: true,
-      is_active: true,
     });
   };
 
@@ -368,28 +364,15 @@ const DriversManagement = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 p-4 bg-muted/30 rounded-lg border border-border/50">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="available" className="text-sm font-semibold cursor-pointer">
-                    Available for Jobs
-                  </Label>
-                  <Switch
-                    id="available"
-                    checked={formData.is_available}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_available: checked })}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="active" className="text-sm font-semibold cursor-pointer">
-                    Active Status
-                  </Label>
-                  <Switch
-                    id="active"
-                    checked={formData.is_active}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                  />
-                </div>
+              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border/50">
+                <Label htmlFor="available" className="text-sm font-semibold cursor-pointer">
+                  Available for Jobs
+                </Label>
+                <Switch
+                  id="available"
+                  checked={formData.is_available}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_available: checked })}
+                />
               </div>
 
               <div className="flex gap-3 pt-4">
@@ -503,13 +486,9 @@ const DriversManagement = () => {
               >
                 {/* Status Badge - Top Right */}
                 <div className="absolute top-4 right-4">
-                  {driver.is_available && driver.is_active ? (
+                  {driver.is_available ? (
                     <Badge className="rounded-full px-3 py-1 bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30 text-xs shadow-[0_0_10px_rgba(34,197,94,0.3)]">
                       🟢 Available
-                    </Badge>
-                  ) : !driver.is_active ? (
-                    <Badge className="rounded-full px-3 py-1 bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30 text-xs">
-                      🔴 Inactive
                     </Badge>
                   ) : (
                     <Badge className="rounded-full px-3 py-1 bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30 text-xs">
