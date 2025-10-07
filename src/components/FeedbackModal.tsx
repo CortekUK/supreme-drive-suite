@@ -56,7 +56,7 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
     try {
       const validated = feedbackSchema.parse(data);
 
-      const { error } = await supabase.from("feedback_submissions").insert({
+      const { error } = await (supabase as any).from("feedback_submissions").insert({
         customer_name: validated.customer_name,
         customer_email: validated.customer_email,
         customer_phone: validated.customer_phone || null,

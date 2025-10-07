@@ -52,7 +52,7 @@ export default function FeedbackManagement() {
 
   const loadFeedbacks = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("feedback_submissions")
       .select("*")
       .order("created_at", { ascending: false });
@@ -93,7 +93,7 @@ export default function FeedbackManagement() {
   };
 
   const updateStatus = async (id: string, status: string, notes?: string) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("feedback_submissions")
       .update({ status, admin_notes: notes || null })
       .eq("id", id);
@@ -138,7 +138,7 @@ export default function FeedbackManagement() {
       return;
     }
 
-    await supabase
+    await (supabase as any)
       .from("feedback_submissions")
       .update({
         status: "converted",
