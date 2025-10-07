@@ -67,11 +67,6 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
         would_recommend: validated.would_recommend,
       });
 
-      if (error) {
-        console.error('Feedback submission error:', error);
-        throw new Error(error.message || 'Failed to submit feedback');
-      }
-
       toast({
         title: "Thank you for your feedback!",
         description: "Your feedback has been submitted successfully.",
