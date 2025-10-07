@@ -12,17 +12,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, Phone, Mail, Shield, Car, Users, ChevronRight, Search, X } from "lucide-react";
-
-// Standard specialization categories
-const SPECIALIZATIONS = [
-  "Chauffeur",
-  "Close Protection",
-  "Executive",
-  "Long Distance",
-] as const;
 
 interface Driver {
   id: string;
@@ -51,7 +42,7 @@ const DriversManagement = () => {
     email: "",
     phone: "",
     license_number: "",
-    specializations: [] as string[],
+    specializations: "",
     is_available: true,
   });
 
@@ -96,10 +87,10 @@ const DriversManagement = () => {
       }
     }
 
-    // Role filter - exact match with standardized values
+    // Role filter
     if (roleFilter !== "all") {
       filtered = filtered.filter(driver =>
-        driver.specializations?.includes(roleFilter)
+        driver.specializations?.some(s => s.toLowerCase().includes(roleFilter.toLowerCase()))
       );
     }
 
@@ -131,13 +122,14 @@ const DriversManagement = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const specializationsArray = formData.specializations
+      .split(",")
+      .map(s => s.trim())
+      .filter(s => s);
+
     const driverData = {
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      license_number: formData.license_number,
-      specializations: formData.specializations,
-      is_available: formData.is_available,
+      ...formData,
+      specializations: specializationsArray,
     };
 
     if (editingDriver) {
@@ -194,7 +186,7 @@ const DriversManagement = () => {
       email: driver.email || "",
       phone: driver.phone || "",
       license_number: driver.license_number || "",
-      specializations: driver.specializations || [],
+      specializations: driver.specializations?.join(", ") || "",
       is_available: driver.is_available,
     });
     setDialogOpen(true);
@@ -207,7 +199,7 @@ const DriversManagement = () => {
       email: "",
       phone: "",
       license_number: "",
-      specializations: [],
+      specializations: "",
       is_available: true,
     });
   };
@@ -356,29 +348,19 @@ const DriversManagement = () => {
                 <p className="text-xs text-muted-foreground">Use format: UK-DRV-XXX</p>
               </div>
 
-              <div className="space-y-3">
-                <Label className="text-sm font-semibold">
-                  Specializations <span className="text-destructive">*</span>
+              <div className="space-y-2">
+                <Label htmlFor="specializations" className="text-sm font-semibold">
+                  Specializations <span className="text-muted-foreground text-xs">(comma-separated)</span>
                 </Label>
-                <ToggleGroup 
-                  type="multiple" 
+                <Input
+                  id="specializations"
                   value={formData.specializations}
-                  onValueChange={(value) => setFormData({ ...formData, specializations: value })}
-                  className="flex flex-wrap gap-2 justify-start"
-                >
-                  {SPECIALIZATIONS.map((spec) => (
-                    <ToggleGroupItem
-                      key={spec}
-                      value={spec}
-                      aria-label={`Toggle ${spec}`}
-                      className="data-[state=on]:bg-accent data-[state=on]:text-accent-foreground border-2 data-[state=on]:border-accent hover:bg-accent/10"
-                    >
-                      {spec}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
+                  onChange={(e) => setFormData({ ...formData, specializations: e.target.value })}
+                  className="focus-visible:ring-accent focus-visible:ring-2 transition-all"
+                  placeholder="Chauffeur, Close Protection, Executive Transport"
+                />
                 <p className="text-xs text-muted-foreground">
-                  Select all applicable specializations
+                  Common: Chauffeur, Close Protection, Executive, Long Distance
                 </p>
               </div>
 
@@ -454,9 +436,9 @@ const DriversManagement = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Roles</SelectItem>
-              {SPECIALIZATIONS.map((spec) => (
-                <SelectItem key={spec} value={spec}>{spec}</SelectItem>
-              ))}
+              <SelectItem value="chauffeur">Chauffeur</SelectItem>
+              <SelectItem value="close protection">Close Protection</SelectItem>
+              <SelectItem value="executive">Executive Transport</SelectItem>
             </SelectContent>
           </Select>
 
