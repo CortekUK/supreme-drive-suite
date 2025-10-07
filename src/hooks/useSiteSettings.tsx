@@ -64,7 +64,8 @@ export const useSiteSettings = () => {
       if (error) throw error;
       return data as SiteSettings | null;
     },
-    staleTime: 1000 * 30, // Cache for 30 seconds
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: "always", // Force refetch on component mount
   });
 
   return {
