@@ -721,7 +721,6 @@ const VehiclesManagement = () => {
           </AlertDialogContent>
         </AlertDialog>
       </div>
-    </div>
   );
 };
 
