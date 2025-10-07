@@ -62,7 +62,7 @@ const JobsDashboard = () => {
     if (driversRes.error) {
       toast.error("Failed to load drivers");
     } else {
-      setDrivers(driversRes.data || []);
+      setDrivers((driversRes.data || []) as any[]);
     }
 
     setLoading(false);

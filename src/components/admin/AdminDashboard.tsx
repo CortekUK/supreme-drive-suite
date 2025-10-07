@@ -125,7 +125,7 @@ export default function AdminDashboard() {
       ]);
 
       const bookings = bookingsRes.data || [];
-      const drivers = driversRes.data || [];
+      const drivers = (driversRes.data || []) as Array<{ is_available: boolean }>;
       const vehicles = vehiclesRes.data || [];
 
       const upcomingJobs = bookings.filter(

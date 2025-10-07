@@ -139,7 +139,7 @@ export default function EnhancedJobsDashboard() {
       if (vehiclesRes.error) throw vehiclesRes.error;
 
       setBookings(bookingsRes.data || []);
-      setDrivers(driversRes.data || []);
+      setDrivers((driversRes.data || []) as Array<{ id: string; name: string; is_available: boolean }>);
       setVehicles(vehiclesRes.data || []);
     } catch (error: any) {
       toast.error("Failed to load data: " + error.message);
