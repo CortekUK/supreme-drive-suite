@@ -175,6 +175,12 @@ const VehiclesManagement = () => {
           setUploading(false);
           return;
         }
+        
+        // Optimistic UI update
+        setVehicles(prev => prev.map(v => 
+          v.id === editingVehicle.id ? { ...v, ...vehicleData } : v
+        ));
+        
         toast.success("Vehicle updated successfully");
       } else {
         const { error } = await supabase.from("vehicles").insert(vehicleData);
@@ -189,7 +195,7 @@ const VehiclesManagement = () => {
 
       setDialogOpen(false);
       resetForm();
-      loadVehicles();
+      await loadVehicles();
     } catch (error) {
       toast.error("An error occurred");
       console.error(error);
@@ -574,9 +580,9 @@ const VehiclesManagement = () => {
 
                 {/* Vehicle Image */}
                 <div className="h-48 w-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
-                  {vehicle.image_url ? (
+                {vehicle.image_url ? (
                     <img
-                      src={vehicle.image_url}
+                      src={`${vehicle.image_url}?t=${lastUpdated.getTime()}`}
                       alt={vehicle.name}
                       className="w-full h-full object-cover"
                       loading="lazy"
