@@ -88,10 +88,16 @@ export default function SiteSettings() {
   const loadSettings = async () => {
     try {
       setLoading(true);
+      
+      // Force fresh data by using AbortController and ordering by updated_at
+      const abortController = new AbortController();
       const { data, error } = await supabase
         .from("site_settings")
         .select("*")
-        .maybeSingle();
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .abortSignal(abortController.signal)
+        .single();
 
       if (error) throw error;
 
