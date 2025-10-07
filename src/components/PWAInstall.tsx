@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Smartphone, Monitor, CheckCircle2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import QRCode from "qrcode";
 
@@ -96,7 +98,7 @@ const PWAInstall = () => {
           <div className="pwa-card">
             <div className="flex-1 text-center">
               <h3 className="text-2xl md:text-3xl font-display font-bold mb-2 text-foreground flex items-center justify-center gap-2">
-                <span className="text-accent">✓</span> App Installed
+                <CheckCircle2 className="h-6 w-6 text-accent" /> App Installed
               </h3>
               <p className="text-base text-muted-foreground">
                 Supreme Drive is installed on your device. Find it on your home screen for quick access.
@@ -149,60 +151,72 @@ const PWAInstall = () => {
 
             {showInstructions && (
               <div className="mt-6 p-5 rounded-lg bg-muted/30 border border-accent/20 animate-fade-in">
-                {isIOS ? (
-                  // iOS-specific instructions (simplified, no Android clutter)
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                      <span className="text-accent">📱</span> Install on iPhone
-                    </h4>
-                    <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
-                      <li>Tap the <strong className="text-foreground">Share</strong> button (⤴︎) at the bottom of Safari</li>
-                      <li>Scroll down and choose <strong className="text-foreground">Add to Home Screen</strong></li>
-                      <li>Tap <strong className="text-foreground">Add</strong> in the top right</li>
-                      <li>Find the Supreme Drive icon on your home screen</li>
-                    </ol>
-                  </div>
-                ) : isMobile ? (
-                  // Android-specific instructions
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                      <span className="text-accent">🤖</span> Install on Android
-                    </h4>
-                    <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
-                      <li>Tap <strong className="text-foreground">Install App</strong> button above or the menu ⋮</li>
-                      <li>Select <strong className="text-foreground">Add to Home screen</strong> or <strong className="text-foreground">Install</strong></li>
-                      <li>Confirm the installation</li>
-                    </ol>
-                  </div>
-                ) : (
-                  // Desktop instructions
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                      <span className="text-accent">💻</span> Install on Desktop
-                    </h4>
-                    {isSafari ? (
-                      <p className="text-sm text-muted-foreground">
-                        Safari on Mac doesn't support PWA installation. Please use <strong className="text-foreground">Chrome</strong> or <strong className="text-foreground">Edge</strong>, or scan the QR code with your phone.
-                      </p>
-                    ) : isChrome ? (
+                <Tabs defaultValue={isIOS ? "ios" : isAndroid ? "android" : "desktop"} className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="ios" className="flex items-center gap-2">
+                      <Smartphone className="h-4 w-4" />
+                      iPhone
+                    </TabsTrigger>
+                    <TabsTrigger value="android" className="flex items-center gap-2">
+                      <Smartphone className="h-4 w-4" />
+                      Android
+                    </TabsTrigger>
+                    <TabsTrigger value="desktop" className="flex items-center gap-2">
+                      <Monitor className="h-4 w-4" />
+                      Desktop
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="ios" className="mt-4">
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-3">Install on iPhone</h4>
                       <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
-                        <li>Click the <strong className="text-foreground">⋮</strong> menu (top right)</li>
-                        <li>Select <strong className="text-foreground">Install Supreme Drive</strong></li>
-                        <li>Click <strong className="text-foreground">Install</strong></li>
+                        <li>Tap the <strong className="text-foreground">Share</strong> button (⤴︎) at the bottom of Safari</li>
+                        <li>Scroll down and choose <strong className="text-foreground">Add to Home Screen</strong></li>
+                        <li>Tap <strong className="text-foreground">Add</strong> in the top right</li>
+                        <li>Find the Supreme Drive icon on your home screen</li>
                       </ol>
-                    ) : isEdge ? (
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="android" className="mt-4">
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-3">Install on Android</h4>
                       <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
-                        <li>Click the <strong className="text-foreground">⋯</strong> menu (top right)</li>
-                        <li>Go to <strong className="text-foreground">Apps</strong> → <strong className="text-foreground">Install this site as an app</strong></li>
-                        <li>Click <strong className="text-foreground">Install</strong></li>
+                        <li>Tap <strong className="text-foreground">Install App</strong> button above or the menu ⋮</li>
+                        <li>Select <strong className="text-foreground">Add to Home screen</strong> or <strong className="text-foreground">Install</strong></li>
+                        <li>Confirm the installation</li>
                       </ol>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        Look for an install option in your browser's menu, or scan the QR code with your phone for the best experience.
-                      </p>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="desktop" className="mt-4">
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-3">Install on Desktop</h4>
+                      {isSafari ? (
+                        <p className="text-sm text-muted-foreground">
+                          Safari on Mac doesn't support PWA installation. Please use <strong className="text-foreground">Chrome</strong> or <strong className="text-foreground">Edge</strong>, or scan the QR code with your phone.
+                        </p>
+                      ) : isChrome ? (
+                        <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
+                          <li>Click the <strong className="text-foreground">⋮</strong> menu (top right)</li>
+                          <li>Select <strong className="text-foreground">Install Supreme Drive</strong></li>
+                          <li>Click <strong className="text-foreground">Install</strong></li>
+                        </ol>
+                      ) : isEdge ? (
+                        <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
+                          <li>Click the <strong className="text-foreground">⋯</strong> menu (top right)</li>
+                          <li>Go to <strong className="text-foreground">Apps</strong> → <strong className="text-foreground">Install this site as an app</strong></li>
+                          <li>Click <strong className="text-foreground">Install</strong></li>
+                        </ol>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Look for an install option in your browser's menu, or scan the QR code with your phone for the best experience.
+                        </p>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </div>
             )}
           </div>
