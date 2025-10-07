@@ -113,8 +113,8 @@ function AdminSidebar() {
         className={`
           relative h-11 px-3
           ${active 
-            ? "bg-primary/[0.14] text-primary border-l-[3px] border-primary font-medium" 
-            : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+            ? "bg-amber-500/10 text-amber-400 border-l-[3px] border-amber-500 font-medium" 
+            : "text-muted-foreground hover:text-amber-300 hover:bg-amber-500/5"
           }
           transition-all duration-200 cursor-pointer
         `}
@@ -126,7 +126,7 @@ function AdminSidebar() {
             <span className="ml-3 text-[13px]">{item.label}</span>
             {item.badge !== undefined && item.badge > 0 && (
               <Badge 
-                className="ml-auto h-5 min-w-[20px] px-1.5 bg-primary/20 text-primary text-xs font-medium"
+                className="ml-auto h-5 min-w-[20px] px-1.5 bg-amber-500/20 text-amber-400 text-xs font-medium"
               >
                 {item.badge}
               </Badge>
