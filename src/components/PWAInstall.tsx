@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 import QRCode from "qrcode";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -10,11 +11,21 @@ interface BeforeInstallPromptEvent extends Event {
 const PWAInstall = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
-    // Generate QR code
-    if (canvasRef.current) {
+    // Check if app is already installed
+    const checkInstalled = () => {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+      setIsInstalled(isStandalone);
+    };
+    
+    checkInstalled();
+
+    // Generate QR code (only for desktop)
+    if (canvasRef.current && !isMobile) {
       const appUrl = 'https://travelinsupremestyle.cortek.io/';
       QRCode.toCanvas(
         canvasRef.current,
@@ -44,7 +55,7 @@ const PWAInstall = () => {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, []);
+  }, [isMobile]);
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
@@ -63,6 +74,26 @@ const PWAInstall = () => {
     }
   };
 
+  // If already installed, show success message
+  if (isInstalled) {
+    return (
+      <section className="py-10 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="pwa-card">
+            <div className="flex-1 text-center">
+              <h3 className="text-2xl md:text-3xl font-display font-bold mb-2 text-foreground flex items-center justify-center gap-2">
+                <span className="text-accent">✓</span> App Installed
+              </h3>
+              <p className="text-base text-muted-foreground">
+                Supreme Drive is installed on your device. Find it on your home screen for quick access.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-10 px-4">
       <div className="max-w-5xl mx-auto">
@@ -72,7 +103,9 @@ const PWAInstall = () => {
               Install Supreme Drive
             </h3>
             <p className="text-base text-muted-foreground mb-6">
-              Add our app to your home screen for faster booking and instant access.
+              {isMobile 
+                ? "Add our app to your home screen for faster booking and instant access."
+                : "Scan the QR code with your phone to install our app for faster booking."}
             </p>
 
             <div className="flex flex-wrap gap-3 mb-4">
@@ -120,18 +153,20 @@ const PWAInstall = () => {
             )}
           </div>
 
-          <div className="flex flex-col items-center gap-3 mt-6 sm:mt-0">
-            <canvas
-              ref={canvasRef}
-              width={144}
-              height={144}
-              className="rounded-lg border border-accent/20"
-              aria-label="QR code to open Supreme Drive"
-            />
-            <p className="text-xs text-muted-foreground text-center">
-              Scan to open on your phone
-            </p>
-          </div>
+          {!isMobile && (
+            <div className="flex flex-col items-center gap-3 mt-6 sm:mt-0">
+              <canvas
+                ref={canvasRef}
+                width={144}
+                height={144}
+                className="rounded-lg border border-accent/20"
+                aria-label="QR code to open Supreme Drive"
+              />
+              <p className="text-xs text-muted-foreground text-center">
+                Scan to open on your phone
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </section>
