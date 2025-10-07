@@ -16,6 +16,7 @@ import Terms from "./pages/Terms";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import FAQ from "./pages/FAQ";
+import AdminFeedback from "./pages/AdminFeedback";
 import Portfolio from "./pages/Portfolio";
 import PortfolioDetail from "./pages/PortfolioDetail";
 import NotFound from "./pages/NotFound";

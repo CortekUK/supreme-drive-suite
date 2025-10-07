@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Star, MessageSquareQuote, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
+import { FeedbackModal } from "@/components/FeedbackModal";
 
 interface Testimonial {
   id: string;
@@ -17,6 +17,7 @@ interface Testimonial {
 
 const Testimonials = () => {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 
   useEffect(() => {
     loadTestimonials();
@@ -142,21 +143,9 @@ const Testimonials = () => {
                 <Button 
                   size="lg" 
                   className="shadow-glow hover:shadow-[0_0_40px_rgba(255,215,0,0.4)] transition-all text-base px-10 py-6"
-                  asChild
+                  onClick={() => setFeedbackModalOpen(true)}
                 >
-                  <Link to="/contact">
-                    Submit Feedback
-                  </Link>
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline"
-                  className="text-base px-10 py-6 border-accent/30 hover:border-accent/50 hover:bg-accent/10"
-                  asChild
-                >
-                  <Link to="/">
-                    Book Your Journey
-                  </Link>
+                  Submit Feedback
                 </Button>
               </div>
             </Card>
@@ -165,6 +154,7 @@ const Testimonials = () => {
       </section>
 
       <Footer />
+      <FeedbackModal open={feedbackModalOpen} onOpenChange={setFeedbackModalOpen} />
     </div>
   );
 };

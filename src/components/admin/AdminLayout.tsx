@@ -67,6 +67,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Analytics & Reports", icon: BarChart2, href: "/admin/analytics" },
   { label: "Pricing", icon: Tag, href: "/admin/pricing" },
   { label: "Testimonials", icon: MessageSquare, href: "/admin/testimonials" },
+  { label: "Feedback", icon: MessageSquare, href: "/admin/feedback" },
   { label: "Settings", icon: Settings, href: "/admin/settings", dividerBefore: true },
 ];
 
