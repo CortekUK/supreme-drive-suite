@@ -264,6 +264,33 @@ export default function EnhancedJobsDashboard() {
     }
   };
 
+  const handleNavigationClick = async (bookingId: string, currentStatus: string | null, location: string, app: 'google' | 'waze' | 'apple') => {
+    try {
+      // Only update status if it's currently "new"
+      if (currentStatus === 'new') {
+        // Optimistic UI update
+        setBookings(prev => prev.map(b => 
+          b.id === bookingId ? { ...b, status: 'in_progress' } : b
+        ));
+
+        const { error } = await supabase
+          .from("bookings")
+          .update({ status: 'in_progress' })
+          .eq("id", bookingId);
+
+        if (error) throw error;
+        toast.success("Job status updated to In Progress");
+      }
+      
+      // Open navigation in new tab
+      window.open(getNavigationUrl(location, app), '_blank');
+    } catch (error: any) {
+      toast.error("Failed to update job status: " + error.message);
+      // Revert optimistic update on error
+      loadData();
+    }
+  };
+
   const exportToCSV = () => {
     const headers = ["Date", "Customer", "Pickup", "Dropoff", "Status", "Driver", "Vehicle", "Price"];
     const rows = filteredBookings.map((b) => [
@@ -601,7 +628,7 @@ export default function EnhancedJobsDashboard() {
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              window.open(getNavigationUrl(booking.pickup_location, 'google'), '_blank');
+                              handleNavigationClick(booking.id, booking.status, booking.pickup_location, 'google');
                             }}
                           >
                             Google Maps
@@ -609,7 +636,7 @@ export default function EnhancedJobsDashboard() {
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              window.open(getNavigationUrl(booking.pickup_location, 'waze'), '_blank');
+                              handleNavigationClick(booking.id, booking.status, booking.pickup_location, 'waze');
                             }}
                           >
                             Waze
@@ -617,7 +644,7 @@ export default function EnhancedJobsDashboard() {
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              window.open(getNavigationUrl(booking.pickup_location, 'apple'), '_blank');
+                              handleNavigationClick(booking.id, booking.status, booking.pickup_location, 'apple');
                             }}
                           >
                             Apple Maps

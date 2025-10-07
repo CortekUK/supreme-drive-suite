@@ -170,6 +170,29 @@ export default function JobDetail() {
     }
   };
 
+  const handleNavigationClick = async (location: string, app: 'google' | 'waze' | 'apple') => {
+    try {
+      // Only update status if it's currently "new"
+      if (job?.status === 'new') {
+        const { error } = await supabase
+          .from("bookings")
+          .update({ status: 'in_progress' })
+          .eq("id", id);
+
+        if (error) throw error;
+        toast.success("Job status updated to In Progress");
+        
+        // Reload job details to show updated status
+        await loadJobDetails();
+      }
+      
+      // Open navigation in new tab
+      window.open(getNavigationUrl(location, app), '_blank');
+    } catch (error: any) {
+      toast.error("Failed to update job status: " + error.message);
+    }
+  };
+
   const getStatusColor = (status: string | null) => {
     switch (status) {
       case "new": return "bg-blue-500/20 text-blue-300 border-blue-500/30";
@@ -383,17 +406,17 @@ export default function JobDetail() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40">
                       <DropdownMenuItem
-                        onClick={() => window.open(getNavigationUrl(job?.pickup_location || '', 'google'), '_blank')}
+                        onClick={() => handleNavigationClick(job?.pickup_location || '', 'google')}
                       >
                         Google Maps
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => window.open(getNavigationUrl(job?.pickup_location || '', 'waze'), '_blank')}
+                        onClick={() => handleNavigationClick(job?.pickup_location || '', 'waze')}
                       >
                         Waze
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => window.open(getNavigationUrl(job?.pickup_location || '', 'apple'), '_blank')}
+                        onClick={() => handleNavigationClick(job?.pickup_location || '', 'apple')}
                       >
                         Apple Maps
                       </DropdownMenuItem>
@@ -418,17 +441,17 @@ export default function JobDetail() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40">
                       <DropdownMenuItem
-                        onClick={() => window.open(getNavigationUrl(job?.dropoff_location || '', 'google'), '_blank')}
+                        onClick={() => handleNavigationClick(job?.dropoff_location || '', 'google')}
                       >
                         Google Maps
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => window.open(getNavigationUrl(job?.dropoff_location || '', 'waze'), '_blank')}
+                        onClick={() => handleNavigationClick(job?.dropoff_location || '', 'waze')}
                       >
                         Waze
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => window.open(getNavigationUrl(job?.dropoff_location || '', 'apple'), '_blank')}
+                        onClick={() => handleNavigationClick(job?.dropoff_location || '', 'apple')}
                       >
                         Apple Maps
                       </DropdownMenuItem>
