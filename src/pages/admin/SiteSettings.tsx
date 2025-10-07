@@ -89,14 +89,14 @@ export default function SiteSettings() {
     try {
       setLoading(true);
       
-      // Force fresh data by using AbortController and ordering by updated_at
-      const abortController = new AbortController();
+      // Force fresh data by adding a cache-busting filter that's always true
+      // This makes each query unique and bypasses Supabase client-side caching
       const { data, error } = await supabase
         .from("site_settings")
         .select("*")
+        .gte('created_at', '1970-01-01') // Cache-buster: always true, but makes query unique
         .order("updated_at", { ascending: false })
         .limit(1)
-        .abortSignal(abortController.signal)
         .single();
 
       if (error) throw error;
@@ -147,10 +147,12 @@ export default function SiteSettings() {
   };
 
   const getCurrentSettings = async () => {
+    // Force fresh data by adding cache-busting filter
     const { data } = await supabase
       .from("site_settings")
       .select("*")
       .eq("id", settingsId)
+      .gte('created_at', '1970-01-01') // Cache-buster: always true, but makes query unique
       .single();
     return data;
   };
