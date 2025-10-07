@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Briefcase, Users, Car, PoundSterling, TrendingUp, Clock, Shield, BarChart3, Plus, CheckCircle2, UserCheck, CreditCard, Gauge, Target, AlertCircle, ArrowRight, TrendingDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface DashboardMetrics {
   upcomingJobs: number;
@@ -292,10 +292,9 @@ export default function AdminDashboard() {
   }
 
   return (
-    <TooltipProvider>
-      <div className="space-y-8 pb-8">
-        {/* Header with Date/Time */}
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+    <div className="space-y-8 pb-8">
+      {/* Header with Date/Time */}
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
             <h1 className="text-4xl font-display font-bold text-gradient-metal mb-2">
               Dashboard
@@ -618,6 +617,6 @@ export default function AdminDashboard() {
           </Link>
         </Card>
       </div>
-    </TooltipProvider>
+    </div>
   );
 }

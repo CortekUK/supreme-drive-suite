@@ -30,7 +30,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -138,19 +138,17 @@ function AdminSidebar() {
 
     if (!open) {
       return (
-        <TooltipProvider delayDuration={0}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              {button}
-            </TooltipTrigger>
-            <TooltipContent side="right" className="font-medium">
-              {item.label}
-              {item.badge !== undefined && item.badge > 0 && (
-                <span className="ml-2 text-xs text-muted-foreground">({item.badge})</span>
-              )}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {button}
+          </TooltipTrigger>
+          <TooltipContent side="right" className="font-medium">
+            {item.label}
+            {item.badge !== undefined && item.badge > 0 && (
+              <span className="ml-2 text-xs text-muted-foreground">({item.badge})</span>
+            )}
+          </TooltipContent>
+        </Tooltip>
       );
     }
 
