@@ -616,7 +616,6 @@ export default function AdminDashboard() {
             </CardContent>
           </Link>
         </Card>
-      </div>
     </div>
   );
 }
