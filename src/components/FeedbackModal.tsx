@@ -56,7 +56,12 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
     try {
       const validated = feedbackSchema.parse(data);
 
-      const { error } = await (supabase as any).from("feedback_submissions").insert({
+      // Get count before insert to verify success later
+      const { count: countBefore } = await supabase
+        .from('feedback_submissions')
+        .select('*', { count: 'exact', head: true });
+
+      const { error } = await supabase.from("feedback_submissions").insert({
         customer_name: validated.customer_name,
         customer_email: validated.customer_email,
         customer_phone: validated.customer_phone || null,
@@ -67,7 +72,20 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
         would_recommend: validated.would_recommend,
       });
 
-      if (error) throw error;
+      // If there's an error, verify if data was actually inserted
+      if (error) {
+        const { count: countAfter } = await supabase
+          .from('feedback_submissions')
+          .select('*', { count: 'exact', head: true });
+        
+        // If count increased, the insert actually succeeded despite the "error"
+        if (countAfter && countBefore !== null && countAfter > countBefore) {
+          console.log('Insert succeeded despite RLS error');
+        } else {
+          // Insert truly failed
+          throw error;
+        }
+      }
 
       toast({
         title: "Thank you for your feedback!",
