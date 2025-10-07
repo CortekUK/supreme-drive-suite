@@ -64,7 +64,7 @@ export const useSiteSettings = () => {
       if (error) throw error;
       return data as SiteSettings | null;
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 30, // Cache for 30 seconds
   });
 
   return {

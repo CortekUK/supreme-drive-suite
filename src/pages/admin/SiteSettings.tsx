@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,7 @@ type LegalData = z.infer<typeof legalSchema>;
 
 export default function SiteSettings() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
   const [settingsId, setSettingsId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
@@ -172,6 +174,9 @@ export default function SiteSettings() {
         after: data,
       });
       
+      // Invalidate cache to refresh settings across all components
+      await queryClient.invalidateQueries({ queryKey: ["site-settings"] });
+      
       toast({
         title: "Settings saved successfully",
         description: "Company information has been updated.",
@@ -210,6 +215,9 @@ export default function SiteSettings() {
         before: before ? Object.fromEntries(changedFields.map(k => [k, before[k]])) : {},
         after: data,
       });
+      
+      // Invalidate cache to refresh settings across all components
+      await queryClient.invalidateQueries({ queryKey: ["site-settings"] });
       
       toast({
         title: "Settings saved successfully",
@@ -261,6 +269,9 @@ export default function SiteSettings() {
         after: updateData,
       });
       
+      // Invalidate cache to refresh settings across all components
+      await queryClient.invalidateQueries({ queryKey: ["site-settings"] });
+      
       toast({
         title: "Settings saved successfully",
         description: "Notification preferences have been updated.",
@@ -299,6 +310,9 @@ export default function SiteSettings() {
         before: before ? Object.fromEntries(changedFields.map(k => [k, before[k]])) : {},
         after: data,
       });
+      
+      // Invalidate cache to refresh settings across all components
+      await queryClient.invalidateQueries({ queryKey: ["site-settings"] });
       
       toast({
         title: "Settings saved successfully",
