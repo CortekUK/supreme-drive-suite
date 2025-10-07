@@ -82,9 +82,20 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
       onOpenChange(false);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        const fieldName = firstError.path[0] as string;
+        
+        const fieldLabels: Record<string, string> = {
+          customer_name: "Name",
+          customer_email: "Email",
+          rating: "Rating",
+          feedback_message: "Feedback message",
+          gdpr_consent: "Privacy policy consent",
+        };
+        
         toast({
-          title: "Validation Error",
-          description: error.errors[0].message,
+          title: "Please check your input",
+          description: `${fieldLabels[fieldName] || fieldName}: ${firstError.message}`,
           variant: "destructive",
         });
       } else {
