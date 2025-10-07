@@ -82,7 +82,7 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
       setWouldRecommend(true);
       setGdprConsent(false);
       e.currentTarget.reset();
-      onOpenChange(false);
+      setTimeout(() => onOpenChange(false), 500);
     } catch (error) {
       if (error instanceof z.ZodError) {
         const firstError = error.errors[0];
