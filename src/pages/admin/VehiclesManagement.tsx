@@ -183,19 +183,25 @@ const VehiclesManagement = () => {
         
         toast.success("Vehicle updated successfully");
       } else {
-        const { error } = await supabase.from("vehicles").insert(vehicleData);
+        const { data, error } = await supabase
+          .from("vehicles")
+          .insert(vehicleData)
+          .select()
+          .single();
 
         if (error) {
           toast.error("Failed to create vehicle");
           setUploading(false);
           return;
         }
+        
+        // Optimistic UI update
+        setVehicles(prev => [...prev, data]);
         toast.success("Vehicle created successfully");
       }
 
       setDialogOpen(false);
       resetForm();
-      await loadVehicles();
     } catch (error) {
       toast.error("An error occurred");
       console.error(error);

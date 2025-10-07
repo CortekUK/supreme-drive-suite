@@ -163,7 +163,6 @@ const DriversManagement = () => {
 
     setDialogOpen(false);
     resetForm();
-    loadDrivers();
   };
 
   const handleDeleteClick = (driver: Driver) => {

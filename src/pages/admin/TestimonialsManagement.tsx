@@ -315,7 +315,6 @@ const TestimonialsManagement = () => {
 
     setDialogOpen(false);
     resetForm();
-    loadTestimonials();
   };
 
   const confirmDelete = (id: string) => {
