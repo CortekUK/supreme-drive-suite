@@ -280,26 +280,36 @@ const TestimonialsManagement = () => {
     }
 
     if (editingTestimonial) {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("testimonials")
         .update(formData)
-        .eq("id", editingTestimonial.id);
+        .eq("id", editingTestimonial.id)
+        .select()
+        .single();
 
       if (error) {
         toast.error("Failed to update testimonial");
         return;
       }
+      
+      // Optimistic UI update
+      setTestimonials(testimonials.map(t => t.id === editingTestimonial.id ? data : t));
       toast.success("Testimonial updated");
     } else {
       const maxOrder = testimonials.reduce((max, t) => Math.max(max, t.display_order || 0), 0);
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("testimonials")
-        .insert({ ...formData, display_order: maxOrder + 1 });
+        .insert({ ...formData, display_order: maxOrder + 1 })
+        .select()
+        .single();
 
       if (error) {
         toast.error("Failed to create testimonial");
         return;
       }
+      
+      // Optimistic UI update
+      setTestimonials([...testimonials, data]);
       toast.success("Testimonial added and visible on website");
     }
 

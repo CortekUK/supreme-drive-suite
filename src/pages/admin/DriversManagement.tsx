@@ -133,23 +133,31 @@ const DriversManagement = () => {
     };
 
     if (editingDriver) {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("drivers")
         .update(driverData)
-        .eq("id", editingDriver.id);
+        .eq("id", editingDriver.id)
+        .select()
+        .single();
 
       if (error) {
         toast.error("Failed to update driver");
         return;
       }
+      
+      // Optimistic UI update
+      setDrivers(drivers.map(d => d.id === editingDriver.id ? data : d));
       toast.success("Driver updated");
     } else {
-      const { error } = await supabase.from("drivers").insert(driverData);
+      const { data, error } = await supabase.from("drivers").insert(driverData).select().single();
 
       if (error) {
         toast.error("Failed to create driver");
         return;
       }
+      
+      // Optimistic UI update
+      setDrivers([...drivers, data]);
       toast.success("Driver created");
     }
 
