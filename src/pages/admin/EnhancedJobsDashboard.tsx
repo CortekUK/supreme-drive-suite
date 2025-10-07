@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { 
@@ -585,22 +586,44 @@ export default function EnhancedJobsDashboard() {
                           <span className="truncate">{booking.dropoff_location}</span>
                         </div>
                       </div>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent/10 hover:text-accent"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              window.open(getNavigationUrl(booking.pickup_location), '_blank');
-                            }}
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <Navigation className="w-4 h-4" />
                           </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Open in Google Maps</TooltipContent>
-                      </Tooltip>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(getNavigationUrl(booking.pickup_location, 'google'), '_blank');
+                            }}
+                          >
+                            Google Maps
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(getNavigationUrl(booking.pickup_location, 'waze'), '_blank');
+                            }}
+                          >
+                            Waze
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(getNavigationUrl(booking.pickup_location, 'apple'), '_blank');
+                            }}
+                          >
+                            Apple Maps
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </TableCell>
                   <TableCell>
