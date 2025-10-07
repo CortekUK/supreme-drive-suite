@@ -50,13 +50,15 @@ const VehiclesManagement = () => {
     image_url: null as string | null,
   });
 
-  // Removed auto-reload on mount to preserve optimistic updates
+  useEffect(() => {
+    loadVehicles();
+  }, []);
 
   const loadVehicles = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("vehicles")
-      .select("*")
+      .select("*", { count: 'exact', head: false })
       .order("name");
 
     if (error) {

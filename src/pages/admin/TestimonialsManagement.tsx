@@ -184,13 +184,15 @@ const TestimonialsManagement = () => {
     })
   );
 
-  // Removed auto-reload on mount to preserve optimistic updates
+  useEffect(() => {
+    loadTestimonials();
+  }, []);
 
   const loadTestimonials = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("testimonials")
-      .select("*")
+      .select("*", { count: 'exact', head: false })
       .order("display_order", { ascending: true });
 
     if (error) {

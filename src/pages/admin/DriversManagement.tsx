@@ -56,7 +56,9 @@ const DriversManagement = () => {
       .slice(0, 2);
   };
 
-  // Removed auto-reload on mount to preserve optimistic updates
+  useEffect(() => {
+    loadDrivers();
+  }, []);
 
   useEffect(() => {
     filterDrivers();
@@ -105,7 +107,7 @@ const DriversManagement = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("drivers")
-      .select("*")
+      .select("*", { count: 'exact', head: false })
       .order("name");
 
     if (error) {

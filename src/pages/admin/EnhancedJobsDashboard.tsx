@@ -108,8 +108,9 @@ export default function EnhancedJobsDashboard() {
     dateRange.from !== undefined
   ].filter(Boolean).length;
 
-  // Removed auto-reload on mount to preserve optimistic updates
-  // Data loads once when Admin component mounts
+  useEffect(() => {
+    loadData();
+  }, []);
 
   useEffect(() => {
     // Apply URL filters on mount
@@ -128,9 +129,9 @@ export default function EnhancedJobsDashboard() {
   const loadData = async () => {
     try {
       const [bookingsRes, driversRes, vehiclesRes] = await Promise.all([
-        supabase.from("bookings").select("*").order("created_at", { ascending: false }),
-        supabase.from("drivers").select("id, name, is_available").eq("is_available", true),
-        supabase.from("vehicles").select("id, name, category").eq("is_active", true),
+        supabase.from("bookings").select("*", { count: 'exact', head: false }).order("created_at", { ascending: false }),
+        supabase.from("drivers").select("id, name, is_available", { count: 'exact', head: false }).eq("is_available", true),
+        supabase.from("vehicles").select("id, name, category", { count: 'exact', head: false }).eq("is_active", true),
       ]);
 
       if (bookingsRes.error) throw bookingsRes.error;
