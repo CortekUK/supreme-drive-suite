@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ArrowLeft, MapPin, Clock, User, Car, Phone, Mail, FileText, Shield, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
@@ -49,12 +52,31 @@ export default function JobDetail() {
   const [loading, setLoading] = useState(true);
   const [routeNotes, setRouteNotes] = useState("");
   const [internalNotes, setInternalNotes] = useState("");
+  
+  // Form states for new job
+  const [serviceType, setServiceType] = useState("chauffeur");
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [pickupLocation, setPickupLocation] = useState("");
+  const [dropoffLocation, setDropoffLocation] = useState("");
+  const [pickupDate, setPickupDate] = useState("");
+  const [pickupTime, setPickupTime] = useState("");
+  const [passengers, setPassengers] = useState("1");
+  const [luggage, setLuggage] = useState("0");
+  const [additionalRequirements, setAdditionalRequirements] = useState("");
 
   useEffect(() => {
     if (id) loadJobDetails();
   }, [id]);
 
   const loadJobDetails = async () => {
+    // Check if we're creating a new job
+    if (id === "new") {
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from("job_details")
@@ -80,6 +102,52 @@ export default function JobDetail() {
       navigate("/admin");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createJob = async () => {
+    try {
+      // Validation
+      if (!customerName || !customerEmail || !customerPhone) {
+        toast.error("Please fill in all customer information");
+        return;
+      }
+      if (!pickupLocation || !dropoffLocation) {
+        toast.error("Please fill in pickup and dropoff locations");
+        return;
+      }
+      if (!pickupDate || !pickupTime) {
+        toast.error("Please select pickup date and time");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("bookings")
+        .insert({
+          service_type: serviceType,
+          customer_name: customerName,
+          customer_email: customerEmail,
+          customer_phone: customerPhone,
+          pickup_location: pickupLocation,
+          dropoff_location: dropoffLocation,
+          pickup_date: pickupDate,
+          pickup_time: pickupTime,
+          passengers: parseInt(passengers),
+          luggage: parseInt(luggage),
+          additional_requirements: additionalRequirements || null,
+          route_notes: routeNotes || null,
+          internal_notes: internalNotes || null,
+          status: "new",
+          source: "manual",
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      toast.success("Job created successfully");
+      navigate("/admin/jobs");
+    } catch (error: any) {
+      toast.error("Failed to create job: " + error.message);
     }
   };
 
@@ -112,63 +180,227 @@ export default function JobDetail() {
   };
 
   if (loading) return <div className="p-8">Loading...</div>;
-  if (!job) return <div className="p-8">Job not found</div>;
+  
+  const isNewJob = id === "new";
+  
+  if (!isNewJob && !job) return <div className="p-8">Job not found</div>;
 
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/admin/jobs")}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-display font-bold">Job Details</h1>
-            <p className="text-muted-foreground">
-              {format(new Date(job.pickup_date), "MMMM dd, yyyy")} at {job.pickup_time}
-            </p>
+            <h1 className="text-3xl font-display font-bold">
+              {isNewJob ? "Create New Job" : "Job Details"}
+            </h1>
+            {!isNewJob && job && (
+              <p className="text-muted-foreground">
+                {format(new Date(job.pickup_date), "MMMM dd, yyyy")} at {job.pickup_time}
+              </p>
+            )}
           </div>
         </div>
-        <Badge className={getStatusColor(job.status)}>
-          {job.status || "new"}
-        </Badge>
+        {!isNewJob && job && (
+          <Badge className={getStatusColor(job.status)}>
+            {job.status || "new"}
+          </Badge>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Service Type - New Job Only */}
+        {isNewJob && (
+          <Card className="p-6 md:col-span-2">
+            <h3 className="text-xl font-semibold mb-4">Service Type</h3>
+            <Select value={serviceType} onValueChange={setServiceType}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="chauffeur">Chauffeur Service</SelectItem>
+                <SelectItem value="close_protection">Close Protection</SelectItem>
+              </SelectContent>
+            </Select>
+          </Card>
+        )}
+
         {/* Customer Information */}
         <Card className="p-6">
           <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <User className="w-5 h-5" />
             Customer Information
           </h3>
-          <div className="space-y-3">
-            <div>
-              <p className="text-sm text-muted-foreground">Name</p>
-              <p className="font-medium">{job.customer_name || "N/A"}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Email</p>
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-muted-foreground" />
-                <a href={`mailto:${job.customer_email}`} className="text-accent hover:underline">
-                  {job.customer_email || "N/A"}
-                </a>
+          {isNewJob ? (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="customerName">Name *</Label>
+                <Input
+                  id="customerName"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="Customer name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="customerEmail">Email *</Label>
+                <Input
+                  id="customerEmail"
+                  type="email"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  placeholder="customer@example.com"
+                />
+              </div>
+              <div>
+                <Label htmlFor="customerPhone">Phone *</Label>
+                <Input
+                  id="customerPhone"
+                  type="tel"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="+44 1234 567890"
+                />
               </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Phone</p>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-muted-foreground" />
-                <a href={`tel:${job.customer_phone}`} className="text-accent hover:underline">
-                  {job.customer_phone || "N/A"}
-                </a>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm text-muted-foreground">Name</p>
+                <p className="font-medium">{job?.customer_name || "N/A"}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Email</p>
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-muted-foreground" />
+                  <a href={`mailto:${job?.customer_email}`} className="text-accent hover:underline">
+                    {job?.customer_email || "N/A"}
+                  </a>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Phone</p>
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-muted-foreground" />
+                  <a href={`tel:${job?.customer_phone}`} className="text-accent hover:underline">
+                    {job?.customer_phone || "N/A"}
+                  </a>
+                </div>
               </div>
             </div>
-          </div>
+          )}
+        </Card>
+
+        {/* Trip Details */}
+        <Card className="p-6">
+          <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <MapPin className="w-5 h-5" />
+            Trip Details
+          </h3>
+          {isNewJob ? (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="pickupLocation">Pickup Location *</Label>
+                <Input
+                  id="pickupLocation"
+                  value={pickupLocation}
+                  onChange={(e) => setPickupLocation(e.target.value)}
+                  placeholder="Enter pickup address"
+                />
+              </div>
+              <div>
+                <Label htmlFor="dropoffLocation">Dropoff Location *</Label>
+                <Input
+                  id="dropoffLocation"
+                  value={dropoffLocation}
+                  onChange={(e) => setDropoffLocation(e.target.value)}
+                  placeholder="Enter dropoff address"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="pickupDate">Pickup Date *</Label>
+                  <Input
+                    id="pickupDate"
+                    type="date"
+                    value={pickupDate}
+                    onChange={(e) => setPickupDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="pickupTime">Pickup Time *</Label>
+                  <Input
+                    id="pickupTime"
+                    type="time"
+                    value={pickupTime}
+                    onChange={(e) => setPickupTime(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="passengers">Passengers</Label>
+                  <Input
+                    id="passengers"
+                    type="number"
+                    min="1"
+                    value={passengers}
+                    onChange={(e) => setPassengers(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="luggage">Luggage</Label>
+                  <Input
+                    id="luggage"
+                    type="number"
+                    min="0"
+                    value={luggage}
+                    onChange={(e) => setLuggage(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm text-muted-foreground">Pickup</p>
+                <p className="font-medium">{job?.pickup_location}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Dropoff</p>
+                <p className="font-medium">{job?.dropoff_location}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Passengers</p>
+                  <p className="font-medium">{job?.passengers}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Luggage</p>
+                  <p className="font-medium">{job?.luggage}</p>
+                </div>
+              </div>
+              {job?.distance_miles && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Distance</p>
+                  <p className="font-medium">{job.distance_miles} miles</p>
+                </div>
+              )}
+              {job?.duration_minutes && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Duration</p>
+                  <p className="font-medium">{Math.floor(job.duration_minutes / 60)}h {job.duration_minutes % 60}m</p>
+                </div>
+              )}
+            </div>
+          )}
         </Card>
 
         {/* Security Brief - for Close Protection jobs */}
-        {job.service_type === "close_protection" && job.protection_details && (
+        {!isNewJob && job?.service_type === "close_protection" && job.protection_details && (
           <Card className="p-6 border-amber-500/30 bg-amber-500/5">
             <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <Shield className="w-5 h-5 text-amber-500" />
@@ -228,55 +460,27 @@ export default function JobDetail() {
           </Card>
         )}
 
-        {/* Trip Details - for Chauffeur jobs */}
-        {job.service_type !== "close_protection" && (
-          <Card className="p-6">
-          <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <MapPin className="w-5 h-5" />
-            Trip Details
-          </h3>
-          <div className="space-y-3">
-            <div>
-              <p className="text-sm text-muted-foreground">Pickup</p>
-              <p className="font-medium">{job.pickup_location}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Dropoff</p>
-              <p className="font-medium">{job.dropoff_location}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Passengers</p>
-                <p className="font-medium">{job.passengers}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Luggage</p>
-                <p className="font-medium">{job.luggage}</p>
-              </div>
-            </div>
-            {job.distance_miles && (
-              <div>
-                <p className="text-sm text-muted-foreground">Distance</p>
-                <p className="font-medium">{job.distance_miles} miles</p>
-              </div>
-            )}
-            {job.duration_minutes && (
-              <div>
-                <p className="text-sm text-muted-foreground">Duration</p>
-                <p className="font-medium">{Math.floor(job.duration_minutes / 60)}h {job.duration_minutes % 60}m</p>
-              </div>
-            )}
-          </div>
-        </Card>
+        {/* Additional Requirements - New Job Only */}
+        {isNewJob && (
+          <Card className="p-6 md:col-span-2">
+            <h3 className="text-xl font-semibold mb-4">Additional Requirements</h3>
+            <Textarea
+              value={additionalRequirements}
+              onChange={(e) => setAdditionalRequirements(e.target.value)}
+              placeholder="Any special requests or requirements..."
+              className="min-h-[100px]"
+            />
+          </Card>
         )}
 
-        {/* Driver Assignment */}
+        {/* Driver Assignment - Existing Job Only */}
+        {!isNewJob && (
         <Card className="p-6">
           <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <User className="w-5 h-5" />
             Assigned Driver
           </h3>
-          {job.driver_name ? (
+          {job?.driver_name ? (
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-muted-foreground">Name</p>
@@ -299,14 +503,16 @@ export default function JobDetail() {
             <p className="text-muted-foreground">No driver assigned</p>
           )}
         </Card>
+        )}
 
-        {/* Vehicle Assignment */}
+        {/* Vehicle Assignment - Existing Job Only */}
+        {!isNewJob && (
         <Card className="p-6">
           <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <Car className="w-5 h-5" />
             Assigned Vehicle
           </h3>
-          {job.vehicle_name ? (
+          {job?.vehicle_name ? (
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-muted-foreground">Vehicle</p>
@@ -321,8 +527,10 @@ export default function JobDetail() {
             <p className="text-muted-foreground">No vehicle assigned</p>
           )}
         </Card>
+        )}
 
-        {/* Price Breakdown */}
+        {/* Price Breakdown - Existing Job Only */}
+        {!isNewJob && job && (
         <Card className="p-6 md:col-span-2">
           <h3 className="text-xl font-semibold mb-4">Price Breakdown</h3>
           <div className="space-y-2">
@@ -344,9 +552,10 @@ export default function JobDetail() {
             )}
           </div>
         </Card>
+        )}
 
-        {/* Additional Requirements */}
-        {job.additional_requirements && (
+        {/* Additional Requirements - Existing Job Only */}
+        {!isNewJob && job?.additional_requirements && (
           <Card className="p-6 md:col-span-2">
             <h3 className="text-xl font-semibold mb-4">Additional Requirements</h3>
             <p className="text-muted-foreground whitespace-pre-wrap">{job.additional_requirements}</p>
@@ -381,8 +590,8 @@ export default function JobDetail() {
         </Card>
 
         <div className="md:col-span-2">
-          <Button onClick={saveNotes} className="w-full">
-            Save Notes
+          <Button onClick={isNewJob ? createJob : saveNotes} className="w-full">
+            {isNewJob ? "Create Job" : "Save Notes"}
           </Button>
         </div>
       </div>
