@@ -15,7 +15,7 @@ const PWAInstall = () => {
   useEffect(() => {
     // Generate QR code
     if (canvasRef.current) {
-      const appUrl = window.location.origin + '/';
+      const appUrl = 'https://travelinsupremestyle.cortek.io/';
       QRCode.toCanvas(
         canvasRef.current,
         appUrl,
