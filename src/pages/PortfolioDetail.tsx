@@ -59,13 +59,12 @@ const PortfolioDetail = () => {
       if (error) throw error;
       setItem(data);
 
-      // Fetch gallery images from portfolio_images table
+      // Fetch gallery images from portfolio_images table (including cover)
       const { data: images } = await supabase
         .from("portfolio_images")
         .select("*")
         .eq("portfolio_id", data.id)
         .eq("is_visible", true)
-        .eq("is_cover", false)
         .order("display_order", { ascending: true });
 
       setGalleryImages(images || []);
