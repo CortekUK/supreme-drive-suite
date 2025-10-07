@@ -297,10 +297,10 @@ export default function AdminDashboard() {
         {/* Header with Date/Time */}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-display font-bold text-gradient-metal mb-2">
+            <h1 className="text-3xl font-display font-bold text-gradient-metal mb-2">
               Dashboard
             </h1>
-            <p className="text-muted-foreground text-lg">
+            <p className="text-muted-foreground">
               Your operational overview — live job, driver, and fleet status
             </p>
           </div>

@@ -412,8 +412,8 @@ const TestimonialsManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-display font-bold text-gradient-metal">Testimonials Management</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-3xl font-display font-bold text-gradient-metal mb-2">Testimonials Management</h1>
+          <p className="text-muted-foreground">
             Manage client testimonials displayed across the website
           </p>
         </div>

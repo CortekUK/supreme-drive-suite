@@ -310,13 +310,10 @@ const VehiclesManagement = () => {
 
         {/* Header */}
         <div className="flex justify-between items-start">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-display font-bold">Vehicles Management</h1>
-            <p className="text-base text-muted-foreground max-w-2xl">
+          <div>
+            <h1 className="text-3xl font-display font-bold text-gradient-metal mb-2">Vehicles Management</h1>
+            <p className="text-muted-foreground">
               Maintain and manage your active vehicle fleet for bookings and operations.
-            </p>
-            <p className="text-xs text-muted-foreground/70">
-              Last updated: {lastUpdated.toLocaleTimeString()}
             </p>
           </div>
           

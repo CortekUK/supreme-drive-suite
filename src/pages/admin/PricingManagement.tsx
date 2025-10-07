@@ -108,8 +108,8 @@ const PricingManagement = () => {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-display font-bold text-gradient-metal">Pricing Management</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-3xl font-display font-bold text-gradient-metal mb-2">Pricing Management</h1>
+          <p className="text-muted-foreground">
             Manage service pricing, extras, and vehicle rates for automated booking calculations.
           </p>
         </div>

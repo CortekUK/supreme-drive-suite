@@ -285,18 +285,13 @@ export default function PortfolioManagement() {
 
       {/* Header */}
       <div className="flex justify-between items-start">
-        <div className="space-y-2">
-          <h1 className="text-4xl font-display font-bold text-gradient-metal">
+        <div>
+          <h1 className="text-3xl font-display font-bold text-gradient-metal mb-2">
             Portfolio Management
           </h1>
-          <p className="text-base text-muted-foreground">
+          <p className="text-muted-foreground">
             Manage case studies and project showcases
           </p>
-          {lastUpdated && (
-            <p className="text-xs text-muted-foreground">
-              Last updated: {lastUpdated}
-            </p>
-          )}
         </div>
         <TooltipProvider>
           <Tooltip>

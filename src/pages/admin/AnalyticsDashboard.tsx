@@ -128,10 +128,10 @@ const AnalyticsDashboard = () => {
         <div className="mb-8 animate-fade-in">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal mb-2">
+              <h1 className="text-3xl font-display font-bold text-gradient-metal mb-2">
                 Analytics & Reports
               </h1>
-              <p className="text-muted-foreground text-lg">
+              <p className="text-muted-foreground">
                 Performance insights and detailed operational data
               </p>
             </div>

@@ -247,13 +247,10 @@ const DriversManagement = () => {
           </div>
           
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="space-y-2">
-              <h1 className="text-4xl font-display font-bold">Drivers Management</h1>
-              <p className="text-base text-muted-foreground">
+            <div>
+              <h1 className="text-3xl font-display font-bold text-gradient-metal mb-2">Drivers Management</h1>
+              <p className="text-muted-foreground">
                 Manage chauffeur and protection personnel with full control over availability and roles.
-              </p>
-              <p className="text-xs text-muted-foreground/70">
-                Last updated: {lastUpdated.toLocaleTimeString()}
               </p>
             </div>
             
