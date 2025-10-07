@@ -43,18 +43,21 @@ export const PortfolioGallery = ({ images }: PortfolioGalleryProps) => {
           <button
             key={index}
             onClick={() => openLightbox(index)}
-            className="relative aspect-square overflow-hidden rounded-lg group cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+            className="relative aspect-[16/9] overflow-hidden gallery-item group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             aria-label={`View image ${index + 1}: ${image.alt}`}
           >
             <img
               src={image.url}
               alt={image.alt}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+              className="w-full h-full object-cover"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-              <span className="text-sm font-medium">View</span>
-            </div>
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+            {image.caption && (
+              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <p className="text-white text-sm">{image.caption}</p>
+              </div>
+            )}
           </button>
         ))}
       </div>
@@ -62,7 +65,7 @@ export const PortfolioGallery = ({ images }: PortfolioGalleryProps) => {
       {/* Lightbox */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent
-          className="max-w-7xl w-full h-[90vh] p-0 bg-background/95 backdrop-blur-sm"
+          className="max-w-7xl w-full h-[90vh] p-0 bg-black/95 backdrop-blur-xl"
           onKeyDown={handleKeyDown}
         >
           <div className="relative w-full h-full flex items-center justify-center p-4">
@@ -70,7 +73,7 @@ export const PortfolioGallery = ({ images }: PortfolioGalleryProps) => {
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-4 right-4 z-10 bg-background/80 hover:bg-background"
+              className="absolute top-4 right-4 z-10 bg-black/50 hover:bg-black/70 focus-visible:ring-2 focus-visible:ring-accent"
               onClick={() => setLightboxOpen(false)}
               aria-label="Close gallery"
             >

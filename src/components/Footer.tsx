@@ -15,17 +15,17 @@ const Footer = () => {
             <h4 className="font-semibold mb-4">Services</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/chauffeur-services" className="text-sm text-muted-foreground hover:text-primary">
+                <Link to="/chauffeur-services" className="text-sm text-muted-foreground hover:text-accent transition-colors duration-200">
                   Chauffeur Services
                 </Link>
               </li>
               <li>
-                <Link to="/close-protection" className="text-sm text-muted-foreground hover:text-primary">
+                <Link to="/close-protection" className="text-sm text-muted-foreground hover:text-accent transition-colors duration-200">
                   Close Protection
                 </Link>
               </li>
               <li>
-                <Link to="/pricing" className="text-sm text-muted-foreground hover:text-primary">
+                <Link to="/pricing" className="text-sm text-muted-foreground hover:text-accent transition-colors duration-200">
                   Pricing
                 </Link>
               </li>
@@ -36,17 +36,17 @@ const Footer = () => {
             <h4 className="font-semibold mb-4">Company</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/about" className="text-sm text-muted-foreground hover:text-primary">
+                <Link to="/about" className="text-sm text-muted-foreground hover:text-accent transition-colors duration-200">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link to="/testimonials" className="text-sm text-muted-foreground hover:text-primary">
+                <Link to="/testimonials" className="text-sm text-muted-foreground hover:text-accent transition-colors duration-200">
                   Testimonials
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-sm text-muted-foreground hover:text-primary">
+                <Link to="/contact" className="text-sm text-muted-foreground hover:text-accent transition-colors duration-200">
                   Contact
                 </Link>
               </li>
@@ -77,10 +77,10 @@ const Footer = () => {
             © 2025 Supreme Drive Suite. All rights reserved.
           </p>
           <div className="flex gap-6">
-            <Link to="/privacy" className="text-sm text-muted-foreground hover:text-primary">
+            <Link to="/privacy" className="text-sm text-muted-foreground hover:text-accent transition-colors duration-200">
               Privacy Policy
             </Link>
-            <Link to="/terms" className="text-sm text-muted-foreground hover:text-primary">
+            <Link to="/terms" className="text-sm text-muted-foreground hover:text-accent transition-colors duration-200">
               Terms of Service
             </Link>
           </div>
