@@ -299,14 +299,6 @@ export default function PortfolioEditor() {
       return;
     }
 
-    if (summary.length < 155 || summary.length > 180) {
-      toast({
-        title: "Validation Error",
-        description: "Summary must be between 155-180 characters",
-        variant: "destructive",
-      });
-      return;
-    }
 
     if (images.filter(img => img.is_cover).length === 0 && images.length > 0) {
       toast({
@@ -418,7 +410,6 @@ export default function PortfolioEditor() {
   };
 
   const summaryCharCount = summary.length;
-  const summaryValid = summaryCharCount >= 155 && summaryCharCount <= 180;
 
   if (loading) {
     return (
@@ -554,12 +545,8 @@ export default function PortfolioEditor() {
             <div className="space-y-2">
               <Label htmlFor="summary">
                 Summary <span className="text-destructive">*</span>
-                <span
-                  className={`ml-2 text-sm ${
-                    summaryValid ? "text-muted-foreground" : "text-destructive"
-                  }`}
-                >
-                  ({summaryCharCount}/155-180 chars)
+                <span className="ml-2 text-sm text-muted-foreground">
+                  ({summaryCharCount} chars)
                 </span>
               </Label>
               <Textarea
