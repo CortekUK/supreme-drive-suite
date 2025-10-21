@@ -92,7 +92,10 @@ export default function BlockedDatesCalendar() {
     }
   };
 
-  const disabledDates = blockedDates.map(bd => new Date(bd.date));
+  const disabledDates = blockedDates.map(bd => {
+    const [year, month, day] = bd.date.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  });
 
   if (loading) {
     return (
@@ -179,7 +182,7 @@ export default function BlockedDatesCalendar() {
                 >
                   <div className="flex-1">
                     <p className="text-sm font-medium text-foreground">
-                      {format(new Date(blocked.date), "MMMM dd, yyyy")}
+                      {format(new Date(blocked.date + 'T00:00:00'), "MMMM dd, yyyy")}
                     </p>
                     {blocked.reason && (
                       <p className="text-xs text-muted-foreground mt-1">
