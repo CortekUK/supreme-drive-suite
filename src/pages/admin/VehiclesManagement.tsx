@@ -12,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Car, Users, Briefcase, PoundSterling, Moon, ChevronRight, Upload, X, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Car, Users, Briefcase, PoundSterling, Moon, ChevronRight, Upload, X, Loader2, RefreshCcw } from "lucide-react";
 
 interface Vehicle {
   id: string;
@@ -327,7 +327,7 @@ const VehiclesManagement = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button onClick={loadVehicles} variant="outline" className="gap-2">
-                  <Plus className="w-4 h-4" />
+                  <RefreshCcw className="w-4 h-4" />
                   Refresh
                 </Button>
               </TooltipTrigger>
@@ -676,7 +676,7 @@ const VehiclesManagement = () => {
                           variant="outline"
                           size="icon"
                           onClick={() => handleEdit(vehicle)}
-                          className="hover:border-accent/50 hover:text-accent transition-all hover:scale-110"
+                          className="hover:border-accent/50 hover:text-accent hover:text-white transition-all hover:scale-110"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>

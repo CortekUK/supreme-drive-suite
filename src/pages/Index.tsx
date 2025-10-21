@@ -13,8 +13,21 @@ import ScrollToTop from "@/components/ScrollToTop";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import PWAInstall from "@/components/PWAInstall";
+import { useEffect } from "react";
 
 const Index = () => {
+  // Handle hash scrolling on page load
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      const element = document.querySelector(hash);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+    }
+  }, []);
   const businessSchema = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",

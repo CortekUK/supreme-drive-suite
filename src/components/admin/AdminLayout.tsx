@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Briefcase,
@@ -16,6 +16,7 @@ import {
   BarChart2,
   Tag,
   RefreshCw,
+  CalendarX,
 } from "lucide-react";
 import {
   Sidebar,
@@ -43,7 +44,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import BlockedDatesModal from "./BlockedDatesModal";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import NotificationBell from "./NotificationBell";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -197,6 +200,15 @@ function AdminSidebar() {
 export default function AdminLayout({ children, user }: AdminLayoutProps) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any>({
+    bookings: [],
+    drivers: [],
+    vehicles: [],
+  });
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showBlockedDatesModal, setShowBlockedDatesModal] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   // Persist sidebar state
   useEffect(() => {
@@ -205,6 +217,75 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
       // State is managed by SidebarProvider
     }
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Debounced search
+  useEffect(() => {
+    const performSearch = async () => {
+      if (searchQuery.trim().length < 2) {
+        setSearchResults({ bookings: [], drivers: [], vehicles: [] });
+        setShowSearchResults(false);
+        return;
+      }
+
+      setSearchLoading(true);
+      setShowSearchResults(true);
+
+      try {
+        const searchTerm = `%${searchQuery.toLowerCase()}%`;
+
+        // Search Bookings (limit 5)
+        const { data: bookings } = await supabase
+          .from("bookings")
+          .select("id, customer_name, customer_email, pickup_location, pickup_date, status")
+          .or(`customer_name.ilike.${searchTerm},customer_email.ilike.${searchTerm},pickup_location.ilike.${searchTerm}`)
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        // Search Drivers (limit 5)
+        const { data: drivers } = await supabase
+          .from("drivers")
+          .select("id, name, email, phone")
+          .or(`name.ilike.${searchTerm},email.ilike.${searchTerm}`)
+          .limit(5);
+
+        // Search Vehicles (limit 5) - search both active and inactive
+        const { data: vehicles, error: vehiclesError } = await supabase
+          .from("vehicles")
+          .select("id, name, category, is_active")
+          .or(`name.ilike.${searchTerm},category.ilike.${searchTerm}`)
+          .limit(5);
+
+        if (vehiclesError) {
+          console.error("Vehicles search error:", vehiclesError);
+        }
+
+        setSearchResults({
+          bookings: bookings || [],
+          drivers: drivers || [],
+          vehicles: vehicles || [],
+        });
+      } catch (error) {
+        console.error("Search error:", error);
+      } finally {
+        setSearchLoading(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(performSearch, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -215,8 +296,8 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      toast.info(`Searching for: ${searchQuery}`);
-      // Implement global search logic here
+      navigate(`/admin/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery("");
     }
   };
 
@@ -231,29 +312,174 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="h-screen flex w-full bg-background overflow-hidden">
         <AdminSidebar />
-        
-        <div className="flex-1 flex flex-col">
+
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
           {/* Top Bar */}
-          <header className="sticky top-0 z-40 border-b border-border/50 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+          <header className="z-40 border-b border-border/50 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 flex-shrink-0">
             <div className="flex h-16 items-center gap-4 px-6">
               <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
               
-              <form onSubmit={handleSearch} className="flex-1 max-w-md">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Search jobs, drivers, vehicles..."
-                    className="pl-10 bg-background/50"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-              </form>
+              <div ref={searchRef} className="flex-1 max-w-md relative">
+                <form onSubmit={handleSearch}>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="search"
+                      placeholder="Search jobs, drivers, vehicles..."
+                      className="pl-10 pr-4 bg-background/50"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => searchQuery.length >= 2 && setShowSearchResults(true)}
+                    />
+                  </div>
+                </form>
+
+                {/* Search Results Dropdown */}
+                {showSearchResults && (
+                  <div className="absolute top-full mt-2 w-full bg-card border border-border rounded-lg shadow-lg max-h-[500px] overflow-auto z-50">
+                    {searchLoading ? (
+                      <div className="p-4 text-center">
+                        <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-accent border-r-transparent"></div>
+                        <p className="mt-2 text-sm text-muted-foreground">Searching...</p>
+                      </div>
+                    ) : (
+                      <>
+                        {searchResults.bookings.length === 0 &&
+                         searchResults.drivers.length === 0 &&
+                         searchResults.vehicles.length === 0 ? (
+                          <div className="p-4 text-center text-muted-foreground">
+                            <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">No results found</p>
+                          </div>
+                        ) : (
+                          <>
+                            {/* Bookings Results */}
+                            {searchResults.bookings.length > 0 && (
+                              <div className="border-b border-border">
+                                <div className="px-4 py-2 bg-muted/50 font-semibold text-sm flex items-center gap-2">
+                                  <Briefcase className="w-4 h-4 text-amber-500" />
+                                  Bookings
+                                </div>
+                                {searchResults.bookings.map((booking: any) => (
+                                  <button
+                                    key={booking.id}
+                                    onClick={() => {
+                                      navigate(`/admin/jobs/${booking.id}`);
+                                      setShowSearchResults(false);
+                                      setSearchQuery("");
+                                    }}
+                                    className="w-full px-4 py-3 hover:bg-muted/50 text-left transition-colors flex items-start gap-3 border-b border-border/50 last:border-0"
+                                  >
+                                    <Briefcase className="w-4 h-4 mt-1 text-amber-500 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="font-medium text-sm">{booking.customer_name}</div>
+                                      <div className="text-xs text-muted-foreground truncate">
+                                        {booking.pickup_location} • {booking.pickup_date}
+                                      </div>
+                                    </div>
+                                    <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'} className="text-xs">
+                                      {booking.status}
+                                    </Badge>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Drivers Results */}
+                            {searchResults.drivers.length > 0 && (
+                              <div className="border-b border-border">
+                                <div className="px-4 py-2 bg-muted/50 font-semibold text-sm flex items-center gap-2">
+                                  <Users className="w-4 h-4 text-blue-500" />
+                                  Drivers
+                                </div>
+                                {searchResults.drivers.map((driver: any) => (
+                                  <button
+                                    key={driver.id}
+                                    onClick={() => {
+                                      navigate('/admin/drivers');
+                                      setShowSearchResults(false);
+                                      setSearchQuery("");
+                                    }}
+                                    className="w-full px-4 py-3 hover:bg-muted/50 text-left transition-colors flex items-start gap-3 border-b border-border/50 last:border-0"
+                                  >
+                                    <Users className="w-4 h-4 mt-1 text-blue-500 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="font-medium text-sm">{driver.name}</div>
+                                      <div className="text-xs text-muted-foreground truncate">{driver.email}</div>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Vehicles Results */}
+                            {searchResults.vehicles.length > 0 && (
+                              <div>
+                                <div className="px-4 py-2 bg-muted/50 font-semibold text-sm flex items-center gap-2">
+                                  <Car className="w-4 h-4 text-green-500" />
+                                  Vehicles
+                                </div>
+                                {searchResults.vehicles.map((vehicle: any) => (
+                                  <button
+                                    key={vehicle.id}
+                                    onClick={() => {
+                                      navigate('/admin/vehicles');
+                                      setShowSearchResults(false);
+                                      setSearchQuery("");
+                                    }}
+                                    className="w-full px-4 py-3 hover:bg-muted/50 text-left transition-colors flex items-start gap-3 border-b border-border/50 last:border-0"
+                                  >
+                                    <Car className="w-4 h-4 mt-1 text-green-500 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="font-medium text-sm">{vehicle.name}</div>
+                                      <div className="text-xs text-muted-foreground">{vehicle.category}</div>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* View All Results */}
+                            <button
+                              onClick={() => {
+                                navigate(`/admin/search?q=${encodeURIComponent(searchQuery)}`);
+                                setShowSearchResults(false);
+                                setSearchQuery("");
+                              }}
+                              className="w-full px-4 py-3 bg-muted/30 hover:bg-muted/50 text-center text-sm font-medium text-accent transition-colors"
+                            >
+                              View all results →
+                            </button>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
 
               <div className="ml-auto flex items-center gap-3">
+                <NotificationBell />
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowBlockedDatesModal(true)}
+                      className="h-9 gap-2 px-3"
+                    >
+                      <CalendarX className="h-4 w-4" />
+                      <span className="hidden md:inline text-sm">Block Dates</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Manage Blocked Booking Dates</p>
+                  </TooltipContent>
+                </Tooltip>
+
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -293,11 +519,17 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-6 overflow-y-auto">
             {children}
           </main>
         </div>
       </div>
+
+      {/* Blocked Dates Modal */}
+      <BlockedDatesModal
+        open={showBlockedDatesModal}
+        onOpenChange={setShowBlockedDatesModal}
+      />
     </SidebarProvider>
   );
 }

@@ -32,6 +32,15 @@ interface Vehicle {
   image_url?: string;
 }
 
+interface ServiceInclusion {
+  id: string;
+  title: string;
+  icon_name: string;
+  category: 'standard' | 'premium';
+  display_order: number;
+  is_active: boolean;
+}
+
 const getVehicleIcon = (category: string) => {
   const lower = category.toLowerCase();
   if (lower.includes('ultra') || lower.includes('luxury')) return Crown;
@@ -39,11 +48,23 @@ const getVehicleIcon = (category: string) => {
   return Car;
 };
 
+// Map icon names to actual icon components
+const getIconComponent = (iconName: string) => {
+  const icons: Record<string, any> = {
+    User, Fuel, Droplets, Wifi, Plane, Shield,
+    Clock, Phone, GlassWater, Sparkles, Car,
+    Crown, CarFront
+  };
+  return icons[iconName] || User;
+};
+
 const Pricing = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [serviceInclusions, setServiceInclusions] = useState<ServiceInclusion[]>([]);
 
   useEffect(() => {
     loadVehicles();
+    loadServiceInclusions();
   }, []);
 
   const loadVehicles = async () => {
@@ -57,6 +78,21 @@ const Pricing = () => {
       setVehicles(data);
     }
   };
+
+  const loadServiceInclusions = async () => {
+    const { data, error } = await supabase
+      .from("service_inclusions")
+      .select("*")
+      .eq("is_active", true)
+      .order("category, display_order");
+
+    if (!error && data) {
+      setServiceInclusions(data);
+    }
+  };
+
+  const standardInclusions = serviceInclusions.filter(inc => inc.category === 'standard');
+  const premiumInclusions = serviceInclusions.filter(inc => inc.category === 'premium');
 
   return (
     <div className="min-h-screen bg-background">
@@ -201,26 +237,15 @@ const Pricing = () => {
                   <div className="h-[1px] w-20 bg-gradient-to-r from-accent to-transparent" />
                 </div>
                 <ul className="space-y-4">
-                  <li className="flex items-start gap-3 text-muted-foreground">
-                    <User className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
-                    <span>Professional chauffeur</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-muted-foreground">
-                    <Fuel className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
-                    <span>Fuel and insurance</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-muted-foreground">
-                    <Droplets className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
-                    <span>Complimentary water and refreshments</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-muted-foreground">
-                    <Wifi className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
-                    <span>WiFi and device charging</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-muted-foreground">
-                    <Plane className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
-                    <span>Flight tracking (airport transfers)</span>
-                  </li>
+                  {standardInclusions.map((inclusion) => {
+                    const IconComponent = getIconComponent(inclusion.icon_name);
+                    return (
+                      <li key={inclusion.id} className="flex items-start gap-3 text-muted-foreground">
+                        <IconComponent className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
+                        <span>{inclusion.title}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </Card>
 
@@ -233,38 +258,26 @@ const Pricing = () => {
                   <div className="h-[1px] w-20 bg-gradient-to-r from-accent to-transparent" />
                 </div>
                 <ul className="space-y-4">
-                  <li className="flex items-start gap-3 text-muted-foreground">
-                    <Shield className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
-                    <span>Close protection officer: from £500/day</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-muted-foreground">
-                    <Clock className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
-                    <span>Extended waiting time: £50/hour</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-muted-foreground">
-                    <Phone className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
-                    <span>Last-minute bookings: +25%</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-muted-foreground">
-                    <GlassWater className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
-                    <span>Champagne service: £75</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-muted-foreground">
-                    <Sparkles className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
-                    <span>Multiple stops: POA</span>
-                  </li>
+                  {premiumInclusions.map((inclusion) => {
+                    const IconComponent = getIconComponent(inclusion.icon_name);
+                    return (
+                      <li key={inclusion.id} className="flex items-start gap-3 text-muted-foreground">
+                        <IconComponent className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
+                        <span>{inclusion.title}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </Card>
             </div>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-              <Button size="lg" className="text-base px-8 py-6">
-                Book Your Journey
-              </Button>
-              <Button size="lg" variant="outline" className="text-base px-8 py-6 border-accent/30 hover:border-accent/50 hover:bg-accent/10">
-                Request a Quote for Add-ons
-              </Button>
+              <a href="/#booking">
+                <Button size="lg" className="text-base px-8 py-6">
+                  Book Your Journey
+                </Button>
+              </a>
             </div>
           </div>
 

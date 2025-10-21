@@ -332,12 +332,12 @@ const AuditLogs = () => {
                             </span>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Badge className={getEntityBadgeColor(entityType)}>
+                            <div className="flex items-center w-[180px] gap-2">
+                              <Badge className={`${getEntityBadgeColor(entityType)} hover:bg-transparent hover:cursor-pointer`}>
                                 {formatEntityName(entityType)}
                               </Badge>
                               {entityId && (
-                                <span className="text-xs text-muted-foreground font-mono">
+                                <span className="text-xs  text-muted-foreground font-mono">
                                   {entityId.substring(0, 8)}…
                                 </span>
                               )}

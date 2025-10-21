@@ -30,7 +30,8 @@ import {
   XCircle,
   AlertCircle,
   MoreVertical,
-  Navigation
+  Navigation,
+  RefreshCcw
 } from "lucide-react";
 import { cn, getNavigationUrl } from "@/lib/utils";
 
@@ -370,7 +371,7 @@ export default function EnhancedJobsDashboard() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button onClick={loadData} variant="outline" className="gap-2 hover:border-accent/40 transition-all">
-                  <Download className="w-4 h-4" />
+                  <RefreshCcw className="w-4 h-4" />
                   Refresh
                 </Button>
               </TooltipTrigger>
@@ -541,7 +542,7 @@ export default function EnhancedJobsDashboard() {
       </div>
 
       {/* Jobs Table */}
-      <div className="border border-border/50 rounded-lg overflow-hidden shadow-metal bg-card/50 backdrop-blur-sm">
+      <div className="border border-border/50 rounded-lg shadow-metal bg-card/50 backdrop-blur-sm">
         {filteredBookings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 px-4">
             <Search className="w-16 h-16 text-muted-foreground/50 mb-4" />
@@ -549,8 +550,8 @@ export default function EnhancedJobsDashboard() {
             <p className="text-muted-foreground text-center mb-6">
               No jobs match the selected criteria. Try adjusting your filters or creating a new booking.
             </p>
-            <Button 
-              onClick={() => navigate("/admin/jobs/new")} 
+            <Button
+              onClick={() => navigate("/admin/jobs/new")}
               className="gap-2 bg-gradient-to-r from-accent/90 to-accent hover:from-accent hover:to-accent/90"
             >
               <Plus className="w-4 h-4" />
@@ -559,16 +560,17 @@ export default function EnhancedJobsDashboard() {
           </div>
         ) : (
           <>
+            <div className="overflow-x-auto rounded-t-lg">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-b border-border/50">
-                  <TableHead className="cursor-pointer uppercase text-xs font-semibold tracking-wide hover:text-accent transition-colors" onClick={() => handleSort("pickup_date")}>
+                  <TableHead className="cursor-pointer uppercase text-xs font-semibold tracking-wide hover:text-accent transition-colors w-[220px]" onClick={() => handleSort("pickup_date")}>
                     Date {sortField === "pickup_date" && (sortDirection === "asc" ? "↑" : "↓")}
                   </TableHead>
                   <TableHead className="uppercase text-xs font-semibold tracking-wide">Customer</TableHead>
                   <TableHead className="uppercase text-xs font-semibold tracking-wide">Route</TableHead>
-                  <TableHead className="uppercase text-xs font-semibold tracking-wide">Service Type</TableHead>
-                  <TableHead className="cursor-pointer uppercase text-xs font-semibold tracking-wide hover:text-accent transition-colors" onClick={() => handleSort("status")}>
+                  <TableHead className="uppercase text-xs font-semibold tracking-wide w-[220px]">Service Type</TableHead>
+                  <TableHead className="cursor-pointer uppercase text-xs font-semibold tracking-wide hover:text-accent transition-colors w-[180px]" onClick={() => handleSort("status")}>
                     Status {sortField === "status" && (sortDirection === "asc" ? "↑" : "↓")}
                   </TableHead>
                   <TableHead className="uppercase text-xs font-semibold tracking-wide">Driver</TableHead>
@@ -586,7 +588,7 @@ export default function EnhancedJobsDashboard() {
                   onClick={() => navigate(`/admin/jobs/${booking.id}`)}
                 >
                   <TableCell>
-                    <div className="flex items-start gap-2">
+                    <div className="flex items-start gap-2 w-[140px]">
                       <Clock className="w-4 h-4 text-muted-foreground mt-0.5 opacity-60" />
                       <div>
                         <div className="font-semibold text-foreground">{format(new Date(booking.pickup_date), "MMM dd, yyyy")}</div>
@@ -654,29 +656,30 @@ export default function EnhancedJobsDashboard() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 w-[140px]">
                       {booking.service_type === "close_protection" ? (
-                        <Badge className="bg-accent/20 text-accent border-accent/30 gap-1 w-fit shadow-[0_0_10px_rgba(244,197,66,0.2)]">
+                        <Badge className="bg-accent/20 text-accent border-accent/30 gap-1 hover:bg-transparent w-fit shadow-[0_0_10px_rgba(244,197,66,0.2)]">
                           <Shield className="w-3 h-3" />
                           Close Protection
                         </Badge>
                       ) : (
-                        <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 gap-1 w-fit">
+                        <Badge className="bg-blue-500/20 hover:bg-transparent text-blue-400 border-blue-500/30 gap-1 w-fit">
                           <Car className="w-3 h-3" />
                           Chauffeur
                         </Badge>
                       )}
                       {booking.priority === "high" && (
-                        <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs w-fit">
+                        <Badge className="bg-red-500/20 hover:bg-transparent text-red-400 border-red-500/30 text-xs w-fit">
                           High Priority
                         </Badge>
                       )}
                     </div>
                   </TableCell>
                   <TableCell>
+                    <div className="w-[140px]">
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge className={cn(getStatusColor(booking.status), "gap-1 cursor-help transition-all hover:scale-105")}>
+                        <Badge className={cn(getStatusColor(booking.status), "gap-1 cursor-pointer hover:bg-transparent transition-all hover:scale-105")}>
                           {getStatusIcon(booking.status)}
                           {booking.status?.replace('_', ' ') || "new"}
                         </Badge>
@@ -687,8 +690,9 @@ export default function EnhancedJobsDashboard() {
                         {booking.status === "in_progress" && "Currently in progress"}
                         {booking.status === "completed" && "Job completed successfully"}
                         {booking.status === "cancelled" && "Job cancelled"}
-                      </TooltipContent>
-                    </Tooltip>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Select
@@ -756,6 +760,7 @@ export default function EnhancedJobsDashboard() {
               ))}
             </TableBody>
           </Table>
+            </div>
 
           {/* Pagination */}
           {totalPages > 1 && (

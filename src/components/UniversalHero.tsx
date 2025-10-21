@@ -46,10 +46,10 @@ const UniversalHero: React.FC<UniversalHeroProps> = ({
         size="lg"
         variant={isPrimary ? "default" : "outline"}
         className={cn(
-          "text-base md:text-lg px-6 md:px-8 py-3 md:py-4 font-semibold w-full sm:w-auto transition-all",
-          isPrimary 
-            ? "gradient-accent shadow-glow hover:shadow-glow hover:scale-105" 
-            : "border-2 border-white/40 bg-transparent text-white hover:bg-white/10 hover:border-white/60"
+          "text-base md:text-lg  px-6 md:px-8 py-3 md:py-4 font-semibold w-full sm:w-auto transition-all",
+          isPrimary
+            ? "gradient-accent  shadow-glow hover:shadow-glow hover:scale-105"
+            : "border-2 border-white bg-white/10 text-white backdrop-blur-sm hover:bg-white hover:text-black"
         )}
         onClick={cta.onClick}
       >
@@ -60,7 +60,7 @@ const UniversalHero: React.FC<UniversalHeroProps> = ({
 
     if (cta.href && !cta.onClick) {
       return (
-        <a href={cta.href} className="block sm:inline-block">
+        <a href={cta.href} className="block  sm:inline-block">
           {buttonContent}
         </a>
       );

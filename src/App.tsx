@@ -21,6 +21,8 @@ import Portfolio from "./pages/Portfolio";
 import PortfolioDetail from "./pages/PortfolioDetail";
 import NotFound from "./pages/NotFound";
 import GDPRConsent from "./components/GDPRConsent";
+import BookingSuccess from "./pages/BookingSuccess";
+import BookingCancelled from "./pages/BookingCancelled";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +49,8 @@ const App = () => (
           <Route path="/portfolio/:slug" element={<PortfolioDetail />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin/*" element={<Admin />} />
+          <Route path="/booking-success" element={<BookingSuccess />} />
+          <Route path="/booking-cancelled" element={<BookingCancelled />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

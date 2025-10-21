@@ -7,16 +7,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { 
-  ChevronRight, ChevronLeft, Check, 
-  Baby, Coffee, MapPin, UserCheck, 
+import {
+  ChevronRight, ChevronLeft, Check,
+  Baby, Coffee, MapPin, UserCheck,
   Car, Crown, TrendingUp, Users as GroupIcon,
-  Calculator, Shield, CheckCircle
+  Calculator, Shield, CheckCircle, CalendarIcon
 } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import BookingConfirmation from "./BookingConfirmation";
 import CloseProtectionModal from "./CloseProtectionModal";
+import LocationAutocomplete from "./LocationAutocomplete";
+import { stripePromise } from "@/config/stripe";
 
 interface Vehicle {
   id: string;
@@ -50,6 +56,8 @@ const MultiStepBookingWidget = () => {
   const [distanceOverride, setDistanceOverride] = useState(false);
   const [cpInterested, setCpInterested] = useState(false);
   const [showCPModal, setShowCPModal] = useState(false);
+  const [cpDetails, setCpDetails] = useState<any>(null);
+  const [blockedDates, setBlockedDates] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     pickupLocation: "",
@@ -69,9 +77,25 @@ const MultiStepBookingWidget = () => {
     customerPhone: ""
   });
 
+  const [locationCoords, setLocationCoords] = useState({
+    pickupLat: null as number | null,
+    pickupLon: null as number | null,
+    dropoffLat: null as number | null,
+    dropoffLon: null as number | null,
+  });
+
   useEffect(() => {
     loadData();
   }, []);
+
+  // Auto-calculate distance when both locations are selected
+  useEffect(() => {
+    const { pickupLat, pickupLon, dropoffLat, dropoffLon } = locationCoords;
+
+    if (pickupLat && pickupLon && dropoffLat && dropoffLon && !calculatedDistance) {
+      estimateDistance();
+    }
+  }, [locationCoords]);
 
   // Handle pre-filled service from Chauffeur Services page
   useEffect(() => {
@@ -99,11 +123,17 @@ const MultiStepBookingWidget = () => {
 
     const { data: extrasData } = await supabase
       .from("pricing_extras")
-      .select("*")
-      .eq("is_active", true);
+      .select("*");
+
+    const { data: blockedDatesData } = await supabase
+      .from("blocked_dates")
+      .select("date");
 
     if (vehiclesData) setVehicles(vehiclesData);
     if (extrasData) setExtras(extrasData);
+    if (blockedDatesData) {
+      setBlockedDates(blockedDatesData.map(d => d.date));
+    }
   };
 
   const calculatePriceBreakdown = () => {
@@ -137,7 +167,7 @@ const MultiStepBookingWidget = () => {
     try {
       const priceBreakdown = calculatePriceBreakdown();
       const selectedVehicle = vehicles.find((v) => v.id === formData.vehicleId);
-      
+
       const { data, error } = await supabase.from("bookings").insert({
         pickup_location: formData.pickupLocation,
         dropoff_location: formData.dropoffLocation,
@@ -154,32 +184,56 @@ const MultiStepBookingWidget = () => {
         customer_name: formData.customerName,
         customer_email: formData.customerEmail,
         customer_phone: formData.customerPhone,
-      });
+        payment_status: 'pending',
+        protection_details: cpDetails ? JSON.stringify(cpDetails) : null,
+      }).select().single();
 
       if (error) throw error;
 
-      // Generate reference using timestamp (no database read needed)
+      // Generate reference using timestamp
       const reference = `SDS-${Date.now().toString(36).toUpperCase()}`;
       setBookingReference(reference);
-      
-      // Store booking details for confirmation
-      const details = {
+
+      // Store booking details in localStorage for email and SMS after payment
+      const bookingDetails = {
         pickupLocation: formData.pickupLocation,
         dropoffLocation: formData.dropoffLocation,
         pickupDate: formData.pickupDate,
         pickupTime: formData.pickupTime,
         vehicleName: selectedVehicle?.name || "Selected Vehicle",
+        passengers: formData.passengers,
         totalPrice: priceBreakdown?.totalPrice.toFixed(2) || "0.00",
         customerName: formData.customerName,
         customerEmail: formData.customerEmail,
+        customerPhone: formData.customerPhone,
+        additionalRequirements: formData.additionalRequirements
       };
-      setBookingDetails(details);
-      
-      setShowConfirmation(true);
-      toast.success("Booking request submitted successfully!");
+      localStorage.setItem('pendingBooking', JSON.stringify(bookingDetails));
+
+      // Create Stripe Checkout Session
+      const { data: sessionData, error: functionError } = await supabase.functions.invoke('-create-checkout-session', {
+        body: {
+          bookingId: data.id,
+          customerEmail: formData.customerEmail,
+          customerName: formData.customerName,
+          totalAmount: priceBreakdown?.totalPrice || 0,
+        },
+      });
+
+      if (functionError) {
+        console.error("Edge Function error:", functionError);
+        throw new Error(functionError.message || 'Failed to create checkout session');
+      }
+
+      // Redirect to Stripe Checkout
+      if (sessionData?.url) {
+        window.location.href = sessionData.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
     } catch (error) {
-      toast.error("Failed to submit booking. Please try again.");
-      console.error("Booking error:", error);
+      toast.error("Failed to process payment. Please try again.");
+      console.error("Payment error:", error);
     } finally {
       setLoading(false);
     }
@@ -211,13 +265,63 @@ const MultiStepBookingWidget = () => {
     setCpInterested(false);
   };
 
-  const estimateDistance = () => {
-    // Placeholder distance calculator
-    // In production, integrate with Google Distance Matrix API or similar
-    const baseDistance = Math.floor(Math.random() * 50) + 10;
-    setCalculatedDistance(baseDistance);
-    setFormData({ ...formData, estimatedMiles: baseDistance.toString() });
-    toast.success(`Estimated distance: ${baseDistance} miles`);
+  // Calculate distance using Haversine formula (great-circle distance)
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 3958.8; // Earth's radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+    return Math.round(distance * 10) / 10; // Round to 1 decimal place
+  };
+
+  const estimateDistance = async () => {
+    const { pickupLat, pickupLon, dropoffLat, dropoffLon } = locationCoords;
+
+    if (!pickupLat || !pickupLon || !dropoffLat || !dropoffLon) {
+      toast.error("Please select both pickup and dropoff locations from the suggestions");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Use OSRM API for actual driving distance
+      const response = await fetch(
+        `https://router.project-osrm.org/route/v1/driving/${pickupLon},${pickupLat};${dropoffLon},${dropoffLat}?overview=false`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+
+        if (data.routes && data.routes.length > 0) {
+          // Distance is in meters, convert to miles
+          const distanceInMiles = Math.round((data.routes[0].distance / 1609.34) * 10) / 10;
+          const durationInMinutes = Math.round(data.routes[0].duration / 60);
+
+          setCalculatedDistance(distanceInMiles);
+          setFormData({ ...formData, estimatedMiles: distanceInMiles.toString() });
+          toast.success(`Driving distance: ${distanceInMiles} miles (approx. ${durationInMinutes} min)`);
+        } else {
+          throw new Error("No route found");
+        }
+      } else {
+        throw new Error("Failed to calculate route");
+      }
+    } catch (error) {
+      console.error("Error calculating driving distance:", error);
+
+      // Fallback to straight-line distance
+      const straightLineDistance = calculateDistance(pickupLat, pickupLon, dropoffLat, dropoffLon);
+      setCalculatedDistance(straightLineDistance);
+      setFormData({ ...formData, estimatedMiles: straightLineDistance.toString() });
+      toast.warning(`Estimated distance: ${straightLineDistance} miles (straight-line, route unavailable)`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getExtraIcon = (extraName: string) => {
@@ -305,10 +409,13 @@ const MultiStepBookingWidget = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="pickupLocation">Pickup Location</Label>
-                  <Input
+                  <LocationAutocomplete
                     id="pickupLocation"
                     value={formData.pickupLocation}
-                    onChange={(e) => setFormData({ ...formData, pickupLocation: e.target.value })}
+                    onChange={(value, lat, lon) => {
+                      setFormData({ ...formData, pickupLocation: value });
+                      setLocationCoords({ ...locationCoords, pickupLat: lat || null, pickupLon: lon || null });
+                    }}
                     placeholder="Enter pickup address"
                     className="p-4 focus-visible:ring-[#C5A572]"
                   />
@@ -316,10 +423,13 @@ const MultiStepBookingWidget = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="dropoffLocation">Drop-off Location</Label>
-                  <Input
+                  <LocationAutocomplete
                     id="dropoffLocation"
                     value={formData.dropoffLocation}
-                    onChange={(e) => setFormData({ ...formData, dropoffLocation: e.target.value })}
+                    onChange={(value, lat, lon) => {
+                      setFormData({ ...formData, dropoffLocation: value });
+                      setLocationCoords({ ...locationCoords, dropoffLat: lat || null, dropoffLon: lon || null });
+                    }}
                     placeholder="Enter destination"
                     className="p-4 focus-visible:ring-[#C5A572]"
                   />
@@ -327,13 +437,54 @@ const MultiStepBookingWidget = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="pickupDate">Pickup Date</Label>
-                  <Input
-                    id="pickupDate"
-                    type="date"
-                    value={formData.pickupDate}
-                    onChange={(e) => setFormData({ ...formData, pickupDate: e.target.value })}
-                    className="p-4 focus-visible:ring-[#C5A572]"
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal p-4 h-auto",
+                          !formData.pickupDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {formData.pickupDate ? (
+                          format(new Date(formData.pickupDate), "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={formData.pickupDate ? new Date(formData.pickupDate) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            const dateStr = format(date, "yyyy-MM-dd");
+                            if (blockedDates.includes(dateStr)) {
+                              toast.error("This date is not available for booking. Please select another date.");
+                              return;
+                            }
+                            setFormData({ ...formData, pickupDate: dateStr });
+                          }
+                        }}
+                        disabled={(date) => {
+                          const dateStr = format(date, "yyyy-MM-dd");
+                          return date < new Date(new Date().setHours(0, 0, 0, 0)) || blockedDates.includes(dateStr);
+                        }}
+                        initialFocus
+                        classNames={{
+                          day_selected: "bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                          day_disabled: "text-muted-foreground opacity-50 line-through",
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {blockedDates.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Dates with a strikethrough are not available for booking
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -350,28 +501,36 @@ const MultiStepBookingWidget = () => {
 
               {/* Distance Calculator */}
               {formData.pickupLocation && formData.dropoffLocation && (
-                <div className="flex items-center gap-3 p-4 bg-accent/5 border border-accent/20 rounded-lg">
-                  <Calculator className="w-5 h-5 text-accent" />
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 bg-accent/5 border border-accent/20 rounded-lg">
+                  <div className="flex items-center gap-3 flex-1">
+                    <Calculator className="w-5 h-5 text-accent flex-shrink-0" />
+                    {calculatedDistance && !distanceOverride ? (
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1">
+                        <span className="text-sm font-medium">Driving Distance:</span>
+                        <span className="text-lg font-bold text-accent">{calculatedDistance} miles</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Click calculate to get driving distance</span>
+                    )}
+                  </div>
+
                   {calculatedDistance && !distanceOverride ? (
-                    <>
-                      <span className="text-sm">Estimated: <span className="font-semibold text-accent">~{calculatedDistance} miles</span></span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDistanceOverride(true)}
-                        className="ml-auto"
-                      >
-                        Edit
-                      </Button>
-                    </>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDistanceOverride(true)}
+                      className="self-end sm:self-auto"
+                    >
+                      Edit
+                    </Button>
                   ) : (
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="default"
                       size="sm"
                       onClick={estimateDistance}
-                      className="ml-auto"
+                      className="gradient-accent self-end sm:self-auto"
                     >
                       Calculate Distance
                     </Button>
@@ -518,7 +677,7 @@ const MultiStepBookingWidget = () => {
                     >
                       {/* Badge */}
                       {badge && (
-                        <div className={`absolute top-4 right-4 flex items-center gap-1 px-3 py-1 rounded-full border text-xs font-semibold ${badge.color} bg-background/80 backdrop-blur-sm`}>
+                        <div className={`absolute z-10 top-4 right-4 flex items-center gap-1 px-3 py-1 rounded-full border text-xs font-semibold ${badge.color} bg-background/80 backdrop-blur-sm`}>
                           <badge.icon className="w-3 h-3" />
                           {badge.text}
                         </div>
@@ -844,6 +1003,18 @@ const MultiStepBookingWidget = () => {
           customerEmail={formData.customerEmail}
           customerPhone={formData.customerPhone}
           bookingDetails={`${formData.pickupLocation} → ${formData.dropoffLocation} on ${formData.pickupDate} at ${formData.pickupTime}`}
+          fullBookingData={{
+            pickupLocation: formData.pickupLocation,
+            dropoffLocation: formData.dropoffLocation,
+            pickupDate: formData.pickupDate,
+            pickupTime: formData.pickupTime,
+            vehicleName: vehicles.find(v => v.id === formData.vehicleId)?.name || 'Not selected',
+            passengers: formData.passengers,
+          }}
+          onSubmit={(details) => {
+            setCpDetails(details);
+            setCpInterested(true);
+          }}
         />
       </div>
     </Card>

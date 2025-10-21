@@ -96,10 +96,10 @@ const SortableTestimonialCard = ({ testimonial, onEdit, onDelete, onToggleActive
 
           <div className="flex gap-1.5 flex-wrap justify-end">
             {testimonial.is_featured && (
-              <Badge className="bg-accent/20 text-accent border-accent/30">Featured</Badge>
+              <Badge className="bg-accent/20 hover:bg-transparent hover:cursor-pointer text-accent border-accent/30">Featured</Badge>
             )}
             {!testimonial.is_active && (
-              <Badge variant="secondary">Inactive</Badge>
+              <Badge variant="secondary" className="hover:cursor-pointer">Inactive</Badge>
             )}
           </div>
         </div>

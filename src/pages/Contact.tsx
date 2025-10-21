@@ -14,6 +14,7 @@ import { Link } from "react-router-dom";
 import PWAInstall from "@/components/PWAInstall";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
 
 // UK phone validation regex (various UK formats)
 const ukPhoneRegex = /^(?:(?:\(?(?:0(?:0|11)\)?[\s-]?\(?|\+)44\)?[\s-]?(?:\(?0\)?[\s-]?)?)|(?:\(?0))(?:(?:\d{5}\)?[\s-]?\d{4,5})|(?:\d{4}\)?[\s-]?(?:\d{5}|\d{3}[\s-]?\d{3}))|(?:\d{3}\)?[\s-]?\d{3}[\s-]?\d{3,4})|(?:\d{2}\)?[\s-]?\d{4}[\s-]?\d{4}))(?:[\s-]?(?:x|ext\.?|\#)\d{3,4})?$/;
@@ -58,12 +59,25 @@ const Contact = () => {
       // Validate form data
       contactSchema.parse(formData);
 
-      // Simulate form submission (replace with actual API call)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      // Send email to admin using dedicated contact form function
+      const { error: emailError } = await supabase.functions.invoke('send-contact-email', {
+        body: {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          subject: formData.subject,
+          message: formData.message,
+          adminEmail: 'ilyasghulam32@gmail.com'
+        }
+      });
+
+      if (emailError) {
+        throw emailError;
+      }
+
       setSubmitStatus('success');
       toast.success("Thank you — your message has been sent. We'll respond shortly.");
-      
+
       // Reset form
       setFormData({
         name: "",
@@ -86,6 +100,7 @@ const Contact = () => {
       } else {
         setSubmitStatus('error');
         toast.error("Something went wrong. Please try again.");
+        console.error("Contact form error:", error);
       }
     } finally {
       setLoading(false);

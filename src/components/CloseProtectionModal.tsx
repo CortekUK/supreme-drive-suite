@@ -16,15 +16,26 @@ interface CloseProtectionModalProps {
   customerEmail?: string;
   customerPhone?: string;
   bookingDetails?: string;
+  fullBookingData?: {
+    pickupLocation?: string;
+    dropoffLocation?: string;
+    pickupDate?: string;
+    pickupTime?: string;
+    vehicleName?: string;
+    passengers?: string;
+  };
+  onSubmit?: (cpDetails: any) => void;
 }
 
-const CloseProtectionModal = ({ 
-  open, 
-  onOpenChange, 
-  customerName = "", 
-  customerEmail = "", 
+const CloseProtectionModal = ({
+  open,
+  onOpenChange,
+  customerName = "",
+  customerEmail = "",
   customerPhone = "",
-  bookingDetails = ""
+  bookingDetails = "",
+  fullBookingData,
+  onSubmit
 }: CloseProtectionModalProps) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -43,20 +54,56 @@ const CloseProtectionModal = ({
 
     setLoading(true);
     try {
-      // Note: This is a placeholder. In production, this would send to a dedicated CP enquiries table
-      // For now, we'll just show success and log the enquiry
-      console.log("CP Enquiry:", {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        threatLevel: formData.threatLevel || "Not Sure",
+      const cpDetails = {
+        interested: true,
+        customer_name: formData.name,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        threat_level: formData.threatLevel || "Not Sure",
         requirements: formData.requirements,
-        bookingContext: bookingDetails
+        submitted_at: new Date().toISOString()
+      };
+
+      // Send email to admin about close protection request
+      const adminEmail = 'ilyasghulam32@gmail.com'; // Replace with actual admin email
+
+      const emailData = {
+        customerEmail: adminEmail,
+        customerName: 'Admin',
+        bookingDetails: {
+          pickupLocation: fullBookingData?.pickupLocation || 'N/A',
+          dropoffLocation: fullBookingData?.dropoffLocation || 'N/A',
+          pickupDate: fullBookingData?.pickupDate || new Date().toLocaleDateString(),
+          pickupTime: fullBookingData?.pickupTime || new Date().toLocaleTimeString(),
+          vehicleName: fullBookingData?.vehicleName || 'Close Protection Request',
+          passengers: fullBookingData?.passengers || 'N/A',
+          totalPrice: 'TBD',
+          additionalRequirements: `
+            <strong>CLOSE PROTECTION REQUEST</strong><br/><br/>
+            <strong>Customer Name:</strong> ${formData.name}<br/>
+            <strong>Email:</strong> ${formData.email}<br/>
+            <strong>Phone:</strong> ${formData.phone}<br/>
+            <strong>Threat Level:</strong> ${formData.threatLevel || 'Not Sure'}<br/><br/>
+            <strong>Specific Requirements:</strong><br/>
+            ${formData.requirements || 'None specified'}
+          `
+        },
+        supportEmail: adminEmail
+      };
+
+      // Send email notification to admin
+      await supabase.functions.invoke('hyper-api', {
+        body: emailData
       });
 
-      toast.success("Close protection enquiry submitted! Our team will contact you shortly.");
+      // Pass details to parent component to include in booking
+      if (onSubmit) {
+        onSubmit(cpDetails);
+      }
+
+      toast.success("Close protection interest recorded! Our team will contact you shortly.");
       onOpenChange(false);
-      
+
       // Reset form
       setFormData({
         name: customerName,

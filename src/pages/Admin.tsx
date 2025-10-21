@@ -9,10 +9,12 @@ import AdminVehicles from "./AdminVehicles";
 import AdminPricing from "./AdminPricing";
 import AdminTestimonials from "./AdminTestimonials";
 import AdminSettings from "./AdminSettings";
+import AdminFeedback from "./AdminFeedback";
 import JobDetail from "./admin/JobDetail";
 import PortfolioManagement from "./admin/PortfolioManagement";
 import PortfolioEditor from "./admin/PortfolioEditor";
 import AnalyticsDashboard from "./admin/AnalyticsDashboard";
+import SearchResults from "./admin/SearchResults";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -57,6 +59,7 @@ const Admin = () => {
     <AdminLayout user={user}>
       <Routes>
         <Route path="/" element={<AdminDashboardPage />} />
+        <Route path="/search" element={<SearchResults />} />
         <Route path="/analytics" element={<AnalyticsDashboard />} />
         <Route path="/jobs" element={<AdminJobs />} />
         <Route path="/jobs/:id" element={<JobDetail />} />
@@ -67,6 +70,7 @@ const Admin = () => {
         <Route path="/portfolio" element={<PortfolioManagement />} />
         <Route path="/portfolio/new" element={<PortfolioEditor />} />
         <Route path="/portfolio/edit/:id" element={<PortfolioEditor />} />
+        <Route path="/feedback" element={<AdminFeedback />} />
         <Route path="/settings" element={<AdminSettings />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>

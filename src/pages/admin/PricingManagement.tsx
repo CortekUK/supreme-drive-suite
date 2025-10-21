@@ -15,7 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Search, RefreshCw, Package, MapPin, Car, ArrowUpDown } from "lucide-react";
+import { Plus, Edit, Trash2, Search, RefreshCw, Package, MapPin, Car, ArrowUpDown, List } from "lucide-react";
 
 type PricingExtra = {
   id: string;
@@ -26,6 +26,15 @@ type PricingExtra = {
   created_at: string;
 };
 
+type ServiceInclusion = {
+  id: string;
+  title: string;
+  icon_name: string;
+  category: 'standard' | 'premium';
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+};
 
 type Vehicle = {
   id: string;
@@ -39,6 +48,7 @@ type Vehicle = {
 const PricingManagement = () => {
   const [extras, setExtras] = useState<PricingExtra[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [serviceInclusions, setServiceInclusions] = useState<ServiceInclusion[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,13 +58,15 @@ const PricingManagement = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [extrasRes, vehiclesRes] = await Promise.all([
+      const [extrasRes, vehiclesRes, inclusionsRes] = await Promise.all([
         supabase.from("pricing_extras").select("*").order("extra_name"),
-        supabase.from("vehicles").select("*").eq("is_active", true).order("name")
+        supabase.from("vehicles").select("*").eq("is_active", true).order("name"),
+        supabase.from("service_inclusions").select("*").order("category, display_order")
       ]);
 
       if (extrasRes.data) setExtras(extrasRes.data);
       if (vehiclesRes.data) setVehicles(vehiclesRes.data);
+      if (inclusionsRes.data) setServiceInclusions(inclusionsRes.data);
     } catch (error) {
       toast.error("Failed to load pricing data");
     } finally {
@@ -117,19 +129,26 @@ const PricingManagement = () => {
       {/* Tabs */}
       <Tabs defaultValue="extras" className="space-y-6">
         <TabsList className="bg-card border border-border">
-          <TabsTrigger 
-            value="extras" 
+          <TabsTrigger
+            value="extras"
             className="data-[state=active]:bg-accent/10 data-[state=active]:text-accent data-[state=active]:border-b-2 data-[state=active]:border-accent"
           >
             <Package className="w-4 h-4 mr-2" />
             Pricing Extras
           </TabsTrigger>
-          <TabsTrigger 
+          <TabsTrigger
             value="vehicle-rates"
             className="data-[state=active]:bg-accent/10 data-[state=active]:text-accent data-[state=active]:border-b-2 data-[state=active]:border-accent"
           >
             <Car className="w-4 h-4 mr-2" />
             Vehicle Rates
+          </TabsTrigger>
+          <TabsTrigger
+            value="service-inclusions"
+            className="data-[state=active]:bg-accent/10 data-[state=active]:text-accent data-[state=active]:border-b-2 data-[state=active]:border-accent"
+          >
+            <List className="w-4 h-4 mr-2" />
+            Service Inclusions
           </TabsTrigger>
         </TabsList>
 
@@ -139,6 +158,10 @@ const PricingManagement = () => {
 
         <TabsContent value="vehicle-rates" className="space-y-4">
           <VehicleRates vehicles={vehicles} loadData={loadData} logAudit={logAudit} />
+        </TabsContent>
+
+        <TabsContent value="service-inclusions" className="space-y-4">
+          <ServiceInclusions serviceInclusions={serviceInclusions} loadData={loadData} logAudit={logAudit} />
         </TabsContent>
       </Tabs>
     </div>
@@ -581,7 +604,7 @@ const VehicleRates = ({ vehicles, loadData, logAudit }: {
                   </div>
                 </div>
                 
-                <Badge className="bg-accent/10 text-accent border-accent/20 w-full justify-center">
+                <Badge className="bg-accent/10 hover:bg-transparent hover:cursor-pointer text-accent border-accent/20 w-full justify-center">
                   Active
                 </Badge>
               </div>
@@ -589,6 +612,410 @@ const VehicleRates = ({ vehicles, loadData, logAudit }: {
           ))}
         </div>
       )}
+    </>
+  );
+};
+
+// ============= SERVICE INCLUSIONS TAB =============
+const ServiceInclusions = ({ serviceInclusions, loadData, logAudit }: {
+  serviceInclusions: ServiceInclusion[];
+  loadData: () => void;
+  logAudit: (action: string, tableName: string, recordId: string, oldValues: any, newValues: any) => Promise<void>;
+}) => {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<ServiceInclusion | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [formData, setFormData] = useState({
+    title: "",
+    icon_name: "",
+    category: "standard" as 'standard' | 'premium',
+    display_order: 0,
+    is_active: true
+  });
+
+  const availableIcons = [
+    'User', 'Fuel', 'Droplets', 'Wifi', 'Plane', 'Shield',
+    'Clock', 'Phone', 'GlassWater', 'Sparkles', 'Car',
+    'Crown', 'Package', 'MapPin'
+  ];
+
+  const filteredInclusions = useMemo(() => {
+    return serviceInclusions.filter(inclusion =>
+      inclusion.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      inclusion.category.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [serviceInclusions, searchQuery]);
+
+  const standardInclusions = useMemo(() =>
+    filteredInclusions.filter(inc => inc.category === 'standard'),
+    [filteredInclusions]
+  );
+
+  const premiumInclusions = useMemo(() =>
+    filteredInclusions.filter(inc => inc.category === 'premium'),
+    [filteredInclusions]
+  );
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const oldValues = editing ? { ...editing } : null;
+
+      if (editing) {
+        const { error } = await supabase
+          .from("service_inclusions")
+          .update(formData)
+          .eq("id", editing.id);
+
+        if (error) throw error;
+
+        await logAudit("UPDATE", "service_inclusions", editing.id, oldValues, formData);
+        toast.success("Service inclusion updated successfully");
+      } else {
+        const { data, error } = await supabase
+          .from("service_inclusions")
+          .insert(formData)
+          .select()
+          .single();
+
+        if (error) throw error;
+        if (data) await logAudit("INSERT", "service_inclusions", data.id, null, formData);
+
+        toast.success("Service inclusion added successfully");
+      }
+
+      setDialogOpen(false);
+      setEditing(null);
+      setFormData({ title: "", icon_name: "", category: "standard", display_order: 0, is_active: true });
+      loadData();
+    } catch (error) {
+      toast.error("Failed to save service inclusion");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deletingId) return;
+
+    try {
+      const inclusion = serviceInclusions.find(i => i.id === deletingId);
+      const { error } = await supabase
+        .from("service_inclusions")
+        .delete()
+        .eq("id", deletingId);
+
+      if (error) throw error;
+
+      await logAudit("DELETE", "service_inclusions", deletingId, inclusion, null);
+      toast.success("Service inclusion removed successfully");
+      loadData();
+    } catch (error) {
+      toast.error("Failed to delete service inclusion");
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeletingId(null);
+    }
+  };
+
+  const openEditDialog = (inclusion: ServiceInclusion) => {
+    setEditing(inclusion);
+    setFormData({
+      title: inclusion.title,
+      icon_name: inclusion.icon_name,
+      category: inclusion.category,
+      display_order: inclusion.display_order,
+      is_active: inclusion.is_active
+    });
+    setDialogOpen(true);
+  };
+
+  return (
+    <>
+      {/* Search and Add */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search service inclusions..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button
+              className="gradient-accent shadow-glow"
+              onClick={() => {
+                setEditing(null);
+                setFormData({ title: "", icon_name: "", category: "standard", display_order: 0, is_active: true });
+              }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Service
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{editing ? "Edit" : "Add"} Service Inclusion</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">
+                  Title <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="e.g., Professional chauffeur"
+                  required
+                  className="focus:ring-2 focus:ring-accent"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="icon_name">
+                  Icon <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={formData.icon_name}
+                  onValueChange={(value) => setFormData({ ...formData, icon_name: value })}
+                  required
+                >
+                  <SelectTrigger id="icon_name" className="focus:ring-2 focus:ring-accent">
+                    <SelectValue placeholder="Select an icon" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableIcons.map((icon) => (
+                      <SelectItem key={icon} value={icon}>
+                        {icon}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="category">
+                  Category <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value: 'standard' | 'premium') => setFormData({ ...formData, category: value })}
+                  required
+                >
+                  <SelectTrigger id="category" className="focus:ring-2 focus:ring-accent">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="standard">Standard Service</SelectItem>
+                    <SelectItem value="premium">Premium Add-ons</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="display_order">
+                  Display Order <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="display_order"
+                  type="number"
+                  min="0"
+                  value={formData.display_order}
+                  onChange={(e) => setFormData({ ...formData, display_order: e.target.value === '' ? 0 : parseInt(e.target.value) })}
+                  placeholder="0"
+                  required
+                  className="focus:ring-2 focus:ring-accent"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="is_active">Active</Label>
+                <Switch
+                  id="is_active"
+                  checked={formData.is_active}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button type="submit" className="flex-1 gradient-accent shadow-glow">
+                  Save
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Service Inclusions by Category */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Standard Service */}
+        <div className="space-y-4">
+          <h3 className="text-xl font-display font-semibold text-gradient-silver">Standard Service</h3>
+          {standardInclusions.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-sm text-muted-foreground">No standard services added yet</p>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {standardInclusions.map((inclusion) => (
+                <Card
+                  key={inclusion.id}
+                  className="p-4 hover-lift transition-all duration-300 border-border hover:border-accent/50"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 flex-1">
+                      <Badge variant="outline" className="text-xs">
+                        {inclusion.icon_name}
+                      </Badge>
+                      <span className="text-sm">{inclusion.title}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        #{inclusion.display_order}
+                      </Badge>
+                      {inclusion.is_active ? (
+                        <Badge className="bg-accent/10 hover:bg-transparent hover:cursor-pointer text-accent border-accent/20 text-xs">Active</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-muted-foreground hover:bg-transparent hover:cursor-pointer text-xs">Inactive</Badge>
+                      )}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => openEditDialog(inclusion)}
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Edit</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setDeletingId(inclusion.id);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Delete</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Premium Add-ons */}
+        <div className="space-y-4">
+          <h3 className="text-xl font-display font-semibold text-gradient-silver">Premium Add-ons</h3>
+          {premiumInclusions.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-sm text-muted-foreground">No premium add-ons added yet</p>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {premiumInclusions.map((inclusion) => (
+                <Card
+                  key={inclusion.id}
+                  className="p-4 hover-lift transition-all duration-300 border-border hover:border-accent/50"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 flex-1">
+                      <Badge variant="outline" className="text-xs hover:bg-transparent hover:cursor-pointer">
+                        {inclusion.icon_name}
+                      </Badge>
+                      <span className="text-sm">{inclusion.title}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        #{inclusion.display_order}
+                      </Badge>
+                      {inclusion.is_active ? (
+                        <Badge className="bg-accent/10 hover:bg-transparent hover:cursor-pointer text-accent border-accent/20 text-xs">Active</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-muted-foreground hover:bg-transparent hover:cursor-pointer text-xs">Inactive</Badge>
+                      )}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => openEditDialog(inclusion)}
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Edit</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setDeletingId(inclusion.id);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Delete</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this service inclusion?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The service inclusion will be permanently removed from the pricing page.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

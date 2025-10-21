@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Phone, Mail, Shield, Car, Users, ChevronRight, Search, X } from "lucide-react";
+import { Plus, Edit, Trash2, Phone, Mail, Shield, Car, Users, ChevronRight, Search, X, RefreshCcw } from "lucide-react";
 
 interface Driver {
   id: string;
@@ -258,7 +258,7 @@ const DriversManagement = () => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button onClick={loadDrivers} variant="outline" className="gap-2">
-                    <Plus className="w-4 h-4" />
+                    <RefreshCcw className="w-4 h-4" />
                     Refresh
                   </Button>
                 </TooltipTrigger>
@@ -497,11 +497,11 @@ const DriversManagement = () => {
                 {/* Status Badge - Top Right */}
                 <div className="absolute top-4 right-4">
                   {driver.is_available ? (
-                    <Badge className="rounded-full px-3 py-1 bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30 text-xs shadow-[0_0_10px_rgba(34,197,94,0.3)]">
+                    <Badge className="rounded-full hover:bg-transparent hover:cursor-pointer px-3 py-1 bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30 text-xs shadow-[0_0_10px_rgba(34,197,94,0.3)]">
                       🟢 Available
                     </Badge>
                   ) : (
-                    <Badge className="rounded-full px-3 py-1 bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30 text-xs">
+                    <Badge className="rounded-full hover:bg-transparent hover:cursor-pointer px-3 py-1 bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30 text-xs">
                       🔴 Unavailable
                     </Badge>
                   )}
@@ -554,7 +554,7 @@ const DriversManagement = () => {
                         return (
                           <Badge 
                             key={idx} 
-                            className={`rounded-full px-3 py-1 text-xs font-medium shadow-sm transition-all hover:scale-105 ${
+                            className={`rounded-full px-3 py-1 hover:bg-transparent hover:cursor-pointer text-xs font-medium shadow-sm transition-all hover:scale-105 ${
                               isCloseProtection
                                 ? 'bg-accent/20 text-accent border-accent/40 shadow-[0_0_10px_rgba(244,197,66,0.2)]' 
                                 : isChauffeur
