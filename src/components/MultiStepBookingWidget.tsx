@@ -185,6 +185,7 @@ const MultiStepBookingWidget = () => {
         customer_email: formData.customerEmail,
         customer_phone: formData.customerPhone,
         payment_status: 'pending',
+        service_type: cpInterested ? 'close_protection' : 'chauffeur',
         protection_details: cpDetails ? JSON.stringify(cpDetails) : null,
       }).select().single();
 

@@ -48,32 +48,7 @@ export default function AdminDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [activities] = useState<ActivityItem[]>([
-    {
-      id: "1",
-      icon: "completed",
-      description: "Job #214 completed – S-Class (London → Heathrow)",
-      timestamp: new Date(Date.now() - 5 * 60000),
-    },
-    {
-      id: "2",
-      icon: "driver",
-      description: "Driver James O. clocked in (Mayfair)",
-      timestamp: new Date(Date.now() - 12 * 60000),
-    },
-    {
-      id: "3",
-      icon: "payment",
-      description: "Invoice #2034 processed (£320)",
-      timestamp: new Date(Date.now() - 60 * 60000),
-    },
-    {
-      id: "4",
-      icon: "vehicle",
-      description: "Vehicle inspection completed – RR Phantom",
-      timestamp: new Date(Date.now() - 2 * 3600000),
-    },
-  ]);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
 
   const systemStatus: SystemStatus[] = [
     {
@@ -119,7 +94,7 @@ export default function AdminDashboard() {
       weekAgo.setDate(weekAgo.getDate() - 7);
 
       const [bookingsRes, driversRes, vehiclesRes] = await Promise.all([
-        supabase.from("bookings").select("status, total_price, created_at, service_type"),
+        supabase.from("bookings").select("*").order("created_at", { ascending: false }),
         supabase.from("drivers").select("is_available"),
         supabase.from("vehicles").select("is_active, service_status"),
       ]);
@@ -150,7 +125,7 @@ export default function AdminDashboard() {
       );
 
       const completedJobs = bookings.filter((b) => b.status === "completed").length;
-      const closeProtectionEnquiries = bookings.filter((b) => b.service_type === "close_protection" && b.status === "in_review").length;
+      const closeProtectionEnquiries = bookings.filter((b) => b.service_type === "close_protection").length;
 
       setMetrics({
         upcomingJobs,
@@ -161,11 +136,64 @@ export default function AdminDashboard() {
         completedJobs,
         closeProtectionEnquiries,
       });
+
+      // Load recent activities
+      loadRecentActivities(bookings);
     } catch (error) {
       console.error("Error loading metrics:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadRecentActivities = (bookings: any[]) => {
+    const recentActivities: ActivityItem[] = [];
+
+    // Get recent completed bookings
+    const completedBookings = bookings
+      .filter((b) => b.status === "completed")
+      .slice(0, 2);
+
+    completedBookings.forEach((booking) => {
+      recentActivities.push({
+        id: booking.id,
+        icon: "completed",
+        description: `Job completed – ${booking.customer_name || "Customer"} (${booking.pickup_location?.substring(0, 20)}... → ${booking.dropoff_location?.substring(0, 20)}...)`,
+        timestamp: new Date(booking.updated_at || booking.created_at),
+      });
+    });
+
+    // Get recent new bookings
+    const newBookings = bookings
+      .filter((b) => b.status === "new")
+      .slice(0, 2);
+
+    newBookings.forEach((booking) => {
+      recentActivities.push({
+        id: `new-${booking.id}`,
+        icon: "driver",
+        description: `New booking from ${booking.customer_name || "Customer"} on ${new Date(booking.pickup_date).toLocaleDateString()}`,
+        timestamp: new Date(booking.created_at),
+      });
+    });
+
+    // Get recent payments
+    const paidBookings = bookings
+      .filter((b) => b.payment_status === "paid")
+      .slice(0, 2);
+
+    paidBookings.forEach((booking) => {
+      recentActivities.push({
+        id: `payment-${booking.id}`,
+        icon: "payment",
+        description: `Payment received (£${booking.total_price?.toFixed(2) || "0.00"})`,
+        timestamp: new Date(booking.updated_at || booking.created_at),
+      });
+    });
+
+    // Sort by timestamp and take the 5 most recent
+    recentActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    setActivities(recentActivities.slice(0, 5));
   };
 
   const completionRate = metrics.totalJobs > 0 
@@ -239,6 +267,7 @@ export default function AdminDashboard() {
       iconColor: "text-accent",
       trend: metrics.upcomingJobsTrend,
       trendUp: true,
+      link: "/admin/jobs",
     },
     {
       title: "Active Drivers",
@@ -249,6 +278,7 @@ export default function AdminDashboard() {
       iconColor: "text-blue-400",
       trend: metrics.activeDriversTrend,
       trendUp: true,
+      link: "/admin/drivers",
     },
     {
       title: "Vehicles in Service",
@@ -259,6 +289,7 @@ export default function AdminDashboard() {
       iconColor: "text-green-400",
       trend: 0,
       trendUp: false,
+      link: "/admin/vehicles",
     },
     {
       title: "Revenue This Week",
@@ -269,6 +300,7 @@ export default function AdminDashboard() {
       iconColor: "text-accent",
       trend: metrics.revenueTrend,
       trendUp: true,
+      link: "/admin/analytics",
     },
     {
       title: "Close Protection Enquiries",
@@ -277,7 +309,7 @@ export default function AdminDashboard() {
       gradient: "from-accent/15 via-accent/8 to-transparent",
       iconBg: "bg-accent/10",
       iconColor: "text-accent",
-      link: "/admin/jobs?serviceType=close_protection&status=in_review",
+      link: "/admin/jobs?serviceType=close_protection",
       trend: 0,
       trendUp: false,
     },
@@ -448,14 +480,14 @@ export default function AdminDashboard() {
                         <Briefcase className="h-4 w-4 text-accent" />
                       </div>
                       <div className="text-left flex-1">
-                        <p className="font-medium text-sm">View All Jobs</p>
+                        <p className="font-medium text-sm group-hover:text-accent transition-colors">View All Jobs</p>
                         <p className="text-xs text-muted-foreground">Manage bookings</p>
                       </div>
                       <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </Button>
                   </Link>
                 </TooltipTrigger>
-                <TooltipContent>Assign drivers and track job progress</TooltipContent>
+                {/* <TooltipContent>Assign drivers and track job progress</TooltipContent> */}
               </Tooltip>
 
               <Tooltip>
@@ -469,14 +501,14 @@ export default function AdminDashboard() {
                         <Users className="h-4 w-4 text-blue-400" />
                       </div>
                       <div className="text-left flex-1">
-                        <p className="font-medium text-sm">Manage Drivers</p>
+                        <p className="font-medium text-sm group-hover:text-accent transition-colors">Manage Drivers</p>
                         <p className="text-xs text-muted-foreground">Update availability</p>
                       </div>
                       <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </Button>
                   </Link>
                 </TooltipTrigger>
-                <TooltipContent>Update driver schedules and availability</TooltipContent>
+                {/* <TooltipContent>Update driver schedules and availability</TooltipContent> */}
               </Tooltip>
 
               <Tooltip>
@@ -490,14 +522,14 @@ export default function AdminDashboard() {
                         <BarChart3 className="h-4 w-4 text-purple-400" />
                       </div>
                       <div className="text-left flex-1">
-                        <p className="font-medium text-sm">View Analytics</p>
+                        <p className="font-medium text-sm group-hover:text-accent transition-colors">View Analytics</p>
                         <p className="text-xs text-muted-foreground">Performance insights</p>
                       </div>
                       <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </Button>
                   </Link>
                 </TooltipTrigger>
-                <TooltipContent>Deep dive into analytics and reports</TooltipContent>
+                {/* <TooltipContent>Deep dive into analytics and reports</TooltipContent> */}
               </Tooltip>
 
               <div className="pt-2">
@@ -512,7 +544,7 @@ export default function AdminDashboard() {
                       </Button>
                     </Link>
                   </TooltipTrigger>
-                  <TooltipContent>Create a new booking</TooltipContent>
+                  {/* <TooltipContent>Create a new booking</TooltipContent> */}
                 </Tooltip>
               </div>
             </CardContent>

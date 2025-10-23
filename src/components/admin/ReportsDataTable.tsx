@@ -415,7 +415,9 @@ export const ReportsDataTable = () => {
                     <TableCell>{job.customer_name || "—"}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="font-normal">
-                        {job.service_type || "—"}
+                        {job.service_type
+                          ? job.service_type.charAt(0).toUpperCase() + job.service_type.slice(1).replace(/_/g, ' ')
+                          : "—"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
@@ -445,7 +447,9 @@ export const ReportsDataTable = () => {
                             : ""
                         }
                       >
-                        {job.status || "new"}
+                        {job.status
+                          ? job.status.charAt(0).toUpperCase() + job.status.slice(1).replace(/_/g, ' ')
+                          : "New"}
                       </Badge>
                     </TableCell>
                   </TableRow>

@@ -302,8 +302,29 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
   };
 
   const handleClearCache = () => {
+    // Save important data before clearing
+    const keysToPreserve = Object.keys(localStorage).filter(key =>
+      key.startsWith('sb-') ||
+      key.includes('supabase') ||
+      key.includes('cookie') ||
+      key.includes('consent') ||
+      key === 'admin-sidebar-collapsed'
+    );
+    const preservedData: Record<string, string> = {};
+    keysToPreserve.forEach(key => {
+      const value = localStorage.getItem(key);
+      if (value) preservedData[key] = value;
+    });
+
+    // Clear storage
     localStorage.clear();
     sessionStorage.clear();
+
+    // Restore preserved data
+    Object.entries(preservedData).forEach(([key, value]) => {
+      localStorage.setItem(key, value);
+    });
+
     toast.success("Cache cleared! Reloading...");
     setTimeout(() => {
       window.location.reload();
