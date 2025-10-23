@@ -59,11 +59,14 @@ const LocationAutocomplete = ({
     setLoading(true);
     try {
       // Using Photon API (powered by Komoot) - Free, no API key, better CORS support
+      // Biasing results to UK (lat: 54.5, lon: -2.0 is center of UK)
       const response = await fetch(
         `https://photon.komoot.io/api/?` +
         `q=${encodeURIComponent(inputValue)}&` +
-        `limit=5&` +
-        `lang=en`
+        `limit=10&` +
+        `lang=en&` +
+        `lat=54.5&` +
+        `lon=-2.0`
       );
 
       if (response.ok) {
@@ -81,9 +84,22 @@ const LocationAutocomplete = ({
           name: feature.properties.name || '',
           lat: feature.geometry.coordinates[1].toString(),
           lon: feature.geometry.coordinates[0].toString(),
+          country: feature.properties.country,
         }));
-        setSuggestions(results);
-        setShowSuggestions(results.length > 0);
+
+        // Sort results to prioritize UK addresses
+        const sortedResults = results.sort((a: any, b: any) => {
+          const aIsUK = a.country === 'United Kingdom' || a.country === 'UK';
+          const bIsUK = b.country === 'United Kingdom' || b.country === 'UK';
+
+          if (aIsUK && !bIsUK) return -1;
+          if (!aIsUK && bIsUK) return 1;
+          return 0;
+        });
+
+        // Limit to 5 results after sorting
+        setSuggestions(sortedResults.slice(0, 5));
+        setShowSuggestions(sortedResults.length > 0);
       } else {
         setSuggestions([]);
         setShowSuggestions(false);

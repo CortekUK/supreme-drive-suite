@@ -137,12 +137,16 @@ export default function BlockedDatesModal({ open, onOpenChange }: BlockedDatesMo
                 mode="range"
                 selected={dateRange}
                 onSelect={setDateRange}
-                disabled={disabledDates}
+                disabled={(date) => {
+                  const dateStr = format(date, "yyyy-MM-dd");
+                  return blockedDates.some(bd => bd.date === dateStr);
+                }}
                 className="rounded-md"
                 numberOfMonths={1}
                 classNames={{
                   day_selected: "bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
                   day_range_middle: "bg-accent/50 text-accent-foreground",
+                  day_disabled: "text-muted-foreground opacity-50 line-through decoration-red-500",
                 }}
               />
             </div>

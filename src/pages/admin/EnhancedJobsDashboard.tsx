@@ -681,7 +681,7 @@ export default function EnhancedJobsDashboard() {
                       <TooltipTrigger asChild>
                         <Badge className={cn(getStatusColor(booking.status), "gap-1 cursor-pointer hover:bg-transparent transition-all hover:scale-105")}>
                           {getStatusIcon(booking.status)}
-                          {booking.status?.replace('_', ' ') || "new"}
+                          {booking.status ? booking.status.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : "New"}
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent>

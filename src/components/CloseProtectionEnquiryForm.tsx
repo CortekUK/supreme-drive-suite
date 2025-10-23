@@ -8,8 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
-import { Lock, Loader2 } from "lucide-react";
+import { Lock, Loader2, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const enquirySchema = z.object({
   fullName: z.string().trim().min(2, "Full name is required").max(100),
@@ -85,6 +89,47 @@ const CloseProtectionEnquiryForm = () => {
         .single();
 
       if (error) throw error;
+
+      // Send confirmation email to admin
+      try {
+        await supabase.functions.invoke('hyper-api', {
+          body: {
+            customerEmail: 'ilyasghulam32@gmail.com', // Admin email
+            customerName: 'Admin - Close Protection',
+            bookingDetails: {
+              pickupLocation: data.primaryLocation,
+              dropoffLocation: data.secondaryLocation || 'N/A',
+              pickupDate: data.date,
+              pickupTime: data.startTime,
+              vehicleName: `Close Protection - ${data.serviceType}`,
+              passengers: data.agentsRequired || 1,
+              totalPrice: 'TBD (Quote Required)',
+              additionalRequirements: `
+                <strong>🛡️ CLOSE PROTECTION ENQUIRY</strong><br/><br/>
+                <strong>Customer Details:</strong><br/>
+                Name: ${data.fullName}<br/>
+                Email: ${data.email}<br/>
+                Phone: ${data.phone}<br/><br/>
+                <strong>Service Details:</strong><br/>
+                Service Type: ${data.serviceType}<br/>
+                Date: ${data.date}<br/>
+                Start Time: ${data.startTime}<br/>
+                Duration: ${data.durationHours} hours<br/>
+                Primary Location: ${data.primaryLocation}<br/>
+                ${data.secondaryLocation ? `Secondary Location: ${data.secondaryLocation}<br/>` : ''}
+                Agents Required: ${data.agentsRequired || 'Not specified'}<br/>
+                Risk Level: <strong>${data.riskLevel}</strong><br/><br/>
+                ${data.notes ? `<strong>Additional Notes:</strong><br/>${data.notes}<br/><br/>` : ''}
+                <strong>⚠️ This is a high-priority enquiry requiring immediate attention.</strong>
+              `
+            },
+            supportEmail: 'ilyasghulam32@gmail.com'
+          }
+        });
+      } catch (emailError) {
+        console.error('Error sending email:', emailError);
+        // Don't fail the submission if email fails
+      }
 
       // Generate a random reference number for tracking
       const refNumber = `CP${Date.now().toString().slice(-8)}`;
@@ -209,11 +254,45 @@ const CloseProtectionEnquiryForm = () => {
         <div className="grid md:grid-cols-3 gap-6">
           <div className="space-y-2">
             <Label htmlFor="date">Date *</Label>
-            <Input
-              id="date"
-              type="date"
-              {...register("date")}
-              className="bg-background/50"
+            <Controller
+              name="date"
+              control={control}
+              render={({ field }) => (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal bg-background/50",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {field.value ? (
+                        format(new Date(field.value), "PPP")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value ? new Date(field.value) : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          field.onChange(format(date, "yyyy-MM-dd"));
+                        }
+                      }}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      initialFocus
+                      classNames={{
+                        day_selected: "bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
             />
             {errors.date && (
               <p className="text-sm text-destructive">{errors.date.message}</p>

@@ -379,8 +379,18 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
                                         {booking.pickup_location} • {booking.pickup_date}
                                       </div>
                                     </div>
-                                    <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'} className="text-xs">
-                                      {booking.status}
+                                    <Badge
+                                      className={`text-xs font-medium ${
+                                        booking.status === 'new' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                        booking.status === 'in_progress' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                        booking.status === 'completed' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                        booking.status === 'confirmed' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
+                                        'bg-muted/50 text-muted-foreground'
+                                      }`}
+                                    >
+                                      {booking.status === 'in_progress' ? 'In Progress' :
+                                       booking.status === 'new' ? 'New' :
+                                       booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                                     </Badge>
                                   </button>
                                 ))}

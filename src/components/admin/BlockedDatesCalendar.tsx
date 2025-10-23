@@ -92,10 +92,10 @@ export default function BlockedDatesCalendar() {
     }
   };
 
-  const disabledDates = blockedDates.map(bd => {
-    const [year, month, day] = bd.date.split('-').map(Number);
-    return new Date(year, month - 1, day);
-  });
+  const isDateBlocked = (date: Date): boolean => {
+    const dateStr = format(date, "yyyy-MM-dd");
+    return blockedDates.some(bd => bd.date === dateStr);
+  };
 
   if (loading) {
     return (
@@ -131,8 +131,11 @@ export default function BlockedDatesCalendar() {
             mode="single"
             selected={selectedDate}
             onSelect={setSelectedDate}
-            disabled={disabledDates}
+            disabled={isDateBlocked}
             className="rounded-md border border-border/50"
+            classNames={{
+              day_disabled: "text-muted-foreground opacity-50 line-through decoration-red-500",
+            }}
           />
         </div>
 

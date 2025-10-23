@@ -39,8 +39,10 @@ export default function FeedbackManagement() {
   const [selectedFeedback, setSelectedFeedback] = useState<FeedbackSubmission | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [testimonialTitle, setTestimonialTitle] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
 
   useEffect(() => {
     loadFeedbacks();
@@ -171,7 +173,8 @@ export default function FeedbackManagement() {
       rejected: "destructive",
       converted: "outline",
     };
-    return <Badge variant={variants[status] || "default"}>{status}</Badge>;
+    const formattedStatus = status.charAt(0).toUpperCase() + status.slice(1);
+    return <Badge variant={variants[status] || "default"}>{formattedStatus}</Badge>;
   };
 
   return (
@@ -285,53 +288,20 @@ export default function FeedbackManagement() {
                           <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                         </div>
                       </TableCell>
-                      <TableCell>{feedback.service_type || "N/A"}</TableCell>
+                      <TableCell>{feedback.service_type ? feedback.service_type.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : "N/A"}</TableCell>
                       <TableCell>{getStatusBadge(feedback.status)}</TableCell>
                       <TableCell>{new Date(feedback.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedFeedback(feedback);
-                              setViewDialogOpen(true);
-                            }}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {feedback.status === "pending" && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => updateStatus(feedback.id, "approved")}
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedFeedback(feedback);
-                                  setConvertDialogOpen(true);
-                                }}
-                              >
-                                <MessageSquare className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  const notes = prompt("Rejection reason (optional):");
-                                  updateStatus(feedback.id, "rejected", notes || undefined);
-                                }}
-                              >
-                                <XCircle className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedFeedback(feedback);
+                            setViewDialogOpen(true);
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -385,8 +355,86 @@ export default function FeedbackManagement() {
                   <p>{selectedFeedback.admin_notes}</p>
                 </div>
               )}
+
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    updateStatus(selectedFeedback.id, "approved");
+                    setViewDialogOpen(false);
+                  }}
+                  className="gap-2"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Approve
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setViewDialogOpen(false);
+                    setRejectDialogOpen(true);
+                  }}
+                  className="gap-2"
+                >
+                  <XCircle className="h-4 w-4" />
+                  Reject
+                </Button>
+                <Button
+                  onClick={() => {
+                    setViewDialogOpen(false);
+                    setConvertDialogOpen(true);
+                  }}
+                  className="gap-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Convert to Testimonial
+                </Button>
+              </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Feedback</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for rejecting this feedback (optional).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="rejection_reason">Rejection Reason (Optional)</Label>
+              <Textarea
+                id="rejection_reason"
+                placeholder="Enter reason for rejection..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => {
+                setRejectDialogOpen(false);
+                setRejectionReason("");
+              }}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (selectedFeedback) {
+                    updateStatus(selectedFeedback.id, "rejected", rejectionReason || undefined);
+                  }
+                  setRejectDialogOpen(false);
+                  setRejectionReason("");
+                }}
+              >
+                Reject Feedback
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 

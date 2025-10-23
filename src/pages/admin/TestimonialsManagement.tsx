@@ -95,6 +95,15 @@ const SortableTestimonialCard = ({ testimonial, onEdit, onDelete, onToggleActive
           </div>
 
           <div className="flex gap-1.5 flex-wrap justify-end">
+            {(() => {
+              const now = new Date();
+              const createdAt = new Date(testimonial.created_at);
+              const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+              const isNew = hoursDiff < 24; // Show "New" badge for 24 hours
+              return isNew && (
+                <Badge className="bg-blue-500/20 hover:bg-transparent text-blue-400 border-blue-500/30">New</Badge>
+              );
+            })()}
             {testimonial.is_featured && (
               <Badge className="bg-accent/20 hover:bg-transparent hover:cursor-pointer text-accent border-accent/30">Featured</Badge>
             )}
@@ -166,7 +175,7 @@ const TestimonialsManagement = () => {
   const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive" | "featured">("all");
-  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "display" | "rating">("display");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "display" | "rating">("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const [formData, setFormData] = useState({
     customer_name: "",
@@ -193,7 +202,7 @@ const TestimonialsManagement = () => {
     const { data, error } = await supabase
       .from("testimonials")
       .select("*", { count: 'exact', head: false })
-      .order("display_order", { ascending: true });
+      .order("created_at", { ascending: false });
 
     if (error) {
       toast.error("Failed to load testimonials");
