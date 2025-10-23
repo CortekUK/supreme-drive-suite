@@ -13,9 +13,12 @@ import ScrollToTop from "@/components/ScrollToTop";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import PWAInstall from "@/components/PWAInstall";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
+  const [testimonialStats, setTestimonialStats] = useState({ avgRating: "5.0", count: "0" });
+
   // Handle hash scrolling on page load
   useEffect(() => {
     const hash = window.location.hash;
@@ -28,6 +31,23 @@ const Index = () => {
       }
     }
   }, []);
+
+  // Load real testimonial data
+  useEffect(() => {
+    const loadTestimonialStats = async () => {
+      const { data, error } = await supabase
+        .from("testimonials")
+        .select("rating")
+        .eq("is_active", true);
+
+      if (!error && data && data.length > 0) {
+        const avgRating = (data.reduce((sum, t) => sum + (t.rating || 5), 0) / data.length).toFixed(1);
+        setTestimonialStats({ avgRating, count: data.length.toString() });
+      }
+    };
+    loadTestimonialStats();
+  }, []);
+
   const businessSchema = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
@@ -42,8 +62,8 @@ const Index = () => {
     "priceRange": "£££",
     "aggregateRating": {
       "@type": "AggregateRating",
-      "ratingValue": "5.0",
-      "reviewCount": "150"
+      "ratingValue": testimonialStats.avgRating,
+      "reviewCount": testimonialStats.count
     }
   };
 
