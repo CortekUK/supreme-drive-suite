@@ -54,18 +54,21 @@ export default function FeedbackManagement() {
 
   const loadFeedbacks = async () => {
     setLoading(true);
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("feedback_submissions")
       .select("*")
       .order("created_at", { ascending: false });
 
     if (error) {
+      console.error("Feedback load error:", error);
       toast({
         title: "Error",
-        description: "Failed to load feedback submissions",
+        description: `Failed to load feedback: ${error.message}`,
         variant: "destructive",
       });
+      setFeedbacks([]);
     } else {
+      console.log("Loaded feedbacks:", data);
       setFeedbacks(data || []);
     }
     setLoading(false);

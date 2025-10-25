@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Star, MessageSquareQuote, GripVertical, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Edit, Trash2, Star, MessageSquareQuote, GripVertical, Search, ChevronLeft, ChevronRight, RefreshCcw } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -438,7 +438,7 @@ const TestimonialsManagement = () => {
 
         <div className="flex gap-2">
           <Button onClick={loadTestimonials} variant="outline" className="gap-2">
-            <Plus className="w-4 h-4" />
+            <RefreshCcw className="w-4 h-4" />
             Refresh
           </Button>
           

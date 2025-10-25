@@ -61,6 +61,62 @@ const CloseProtectionModal = ({
     }
   }, [open]); // Remove customerName, customerEmail, customerPhone from dependencies
 
+  // Validate individual field
+  const validateField = (fieldName: string, value: string) => {
+    let error = "";
+
+    if (fieldName === "name") {
+      const nameValue = value.trim();
+      if (!nameValue) {
+        error = "Please enter your full name";
+      } else if (nameValue.length < 2) {
+        error = "Name must be at least 2 characters";
+      } else if (!/^[a-zA-Z\s\-']+$/.test(nameValue)) {
+        error = "Name must contain only letters, spaces, hyphens, and apostrophes";
+      } else if (!/[a-zA-Z]{2,}/.test(nameValue)) {
+        error = "Name must contain at least 2 alphabetic characters";
+      } else if (nameValue.replace(/[\s\-']/g, '').length < 2) {
+        error = "Name must have actual alphabetic content";
+      }
+    } else if (fieldName === "email") {
+      if (!value.trim()) {
+        error = "Please enter your email address";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        error = "Please enter a valid email address";
+      }
+    } else if (fieldName === "phone") {
+      const phoneValue = value.trim();
+      if (!phoneValue) {
+        error = "Please enter your phone number";
+      } else {
+        const cleaned = phoneValue.replace(/[\s\-()]/g, '');
+        const digitCount = (cleaned.match(/\d/g) || []).length;
+        // Valid international phone: 7-15 digits, optional + at start
+        if (digitCount < 7 || digitCount > 15) {
+          error = "Please enter a valid phone number (7-15 digits)";
+        } else if (cleaned.startsWith('+') && !/^\+\d+$/.test(cleaned)) {
+          error = "Invalid phone number format";
+        } else if (!cleaned.startsWith('+') && !/^\d+$/.test(cleaned.replace(/[\s\-()]/g, ''))) {
+          error = "Phone number should contain only digits";
+        }
+      }
+    } else if (fieldName === "threatLevel") {
+      if (!value || value.trim() === "") {
+        error = "Please select a threat assessment level";
+      }
+    }
+
+    setErrors(prev => {
+      if (error) {
+        return { ...prev, [fieldName]: error };
+      } else {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
+      }
+    });
+  };
+
   const handleSubmit = async () => {
     const newErrors: {[key: string]: string} = {};
 
@@ -85,22 +141,22 @@ const CloseProtectionModal = ({
       newErrors.email = "Please enter a valid email address";
     }
 
-    // Validate phone (UK format)
+    // Validate phone (international format)
     const phoneValue = formData.phone.trim();
     if (!phoneValue) {
       newErrors.phone = "Please enter your phone number";
     } else {
       // Remove all spaces, hyphens, parentheses for validation
       const cleaned = phoneValue.replace(/[\s\-()]/g, '');
-      // UK phone number: must start with 0 or +44, and have correct length
-      const ukPattern = /^(\+44|0)[1-9]\d{9,10}$/;
-      const isValidUK = ukPattern.test(cleaned);
       // Count actual digits
       const digitCount = (cleaned.match(/\d/g) || []).length;
-      const isValid = isValidUK || (cleaned.startsWith('+44') && digitCount >= 12 && digitCount <= 13) || (cleaned.startsWith('0') && digitCount >= 10 && digitCount <= 11);
-
-      if (!isValid) {
-        newErrors.phone = "Please enter a valid UK phone number (e.g., 07XXX XXXXXX or +44 7XXX XXXXXX)";
+      // Valid international phone: 7-15 digits, optional + at start
+      if (digitCount < 7 || digitCount > 15) {
+        newErrors.phone = "Please enter a valid phone number (7-15 digits)";
+      } else if (cleaned.startsWith('+') && !/^\+\d+$/.test(cleaned)) {
+        newErrors.phone = "Invalid phone number format";
+      } else if (!cleaned.startsWith('+') && !/^\d+$/.test(cleaned.replace(/[\s\-()]/g, ''))) {
+        newErrors.phone = "Phone number should contain only digits";
       }
     }
 
@@ -112,7 +168,6 @@ const CloseProtectionModal = ({
     // If there are errors, set them and return
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      toast.error("Please fix the errors before submitting");
       return;
     }
 
@@ -215,10 +270,9 @@ ${formData.requirements || 'None specified'}
                 // Allow only letters, spaces, hyphens, and apostrophes
                 const sanitized = e.target.value.replace(/[^a-zA-Z\s\-']/g, '');
                 setFormData({ ...formData, name: sanitized });
-                if (errors.name) {
-                  setErrors({ ...errors, name: "" });
-                }
+                validateField('name', sanitized);
               }}
+              onBlur={() => validateField('name', formData.name)}
               placeholder="Your name"
               className={errors.name ? "border-destructive" : ""}
             />
@@ -236,11 +290,11 @@ ${formData.requirements || 'None specified'}
               autoComplete="off"
               value={formData.email}
               onChange={(e) => {
-                setFormData({ ...formData, email: e.target.value });
-                if (errors.email) {
-                  setErrors({ ...errors, email: "" });
-                }
+                const value = e.target.value;
+                setFormData({ ...formData, email: value });
+                validateField('email', value);
               }}
+              onBlur={() => validateField('email', formData.email)}
               placeholder="your@email.com"
               className={errors.email ? "border-destructive" : ""}
             />
@@ -261,11 +315,10 @@ ${formData.requirements || 'None specified'}
                 // Allow only numbers, spaces, +, -, (, )
                 const sanitized = e.target.value.replace(/[^\d\s+\-()]/g, '');
                 setFormData({ ...formData, phone: sanitized });
-                if (errors.phone) {
-                  setErrors({ ...errors, phone: "" });
-                }
+                validateField('phone', sanitized);
               }}
-              placeholder="+44 7XXX XXXXXX"
+              onBlur={() => validateField('phone', formData.phone)}
+              placeholder="Enter phone number"
               className={errors.phone ? "border-destructive" : ""}
             />
             {errors.phone && (
@@ -279,9 +332,7 @@ ${formData.requirements || 'None specified'}
               value={formData.threatLevel}
               onValueChange={(value) => {
                 setFormData({ ...formData, threatLevel: value });
-                if (errors.threatLevel) {
-                  setErrors({ ...errors, threatLevel: "" });
-                }
+                validateField('threatLevel', value);
               }}
             >
               <SelectTrigger

@@ -22,8 +22,9 @@ const EnhancedTestimonials = () => {
   useEffect(() => {
     if (testimonials.length === 0) return;
 
+    const totalPages = Math.ceil(testimonials.length / 3);
     const interval = setInterval(() => {
-      setActiveIndex((current) => (current + 1) % testimonials.length);
+      setActiveIndex((current) => (current + 1) % totalPages);
     }, 5000);
 
     return () => clearInterval(interval);
@@ -37,12 +38,25 @@ const EnhancedTestimonials = () => {
       .order("is_featured", { ascending: false })
       .order("display_order", { ascending: true })
       .order("created_at", { ascending: false })
-      .limit(6);
+      .limit(9);
 
-    if (data) setTestimonials(data);
+    if (data) {
+      console.log("Loaded testimonials:", data.length, data);
+      setTestimonials(data);
+    }
   };
 
   if (testimonials.length === 0) return null;
+
+  const itemsPerPage = 3;
+  const totalPages = Math.ceil(testimonials.length / itemsPerPage);
+  const startIndex = activeIndex * itemsPerPage;
+  const visibleTestimonials = testimonials.slice(startIndex, startIndex + itemsPerPage);
+
+  console.log('Active Index:', activeIndex);
+  console.log('Total testimonials:', testimonials.length);
+  console.log('Total pages:', totalPages);
+  console.log('Visible testimonials:', visibleTestimonials.map(t => t.customer_name));
 
   return (
     <section className="py-24 md:py-28 lg:py-32 bg-muted/30">
@@ -56,38 +70,26 @@ const EnhancedTestimonials = () => {
           </div>
         </div>
 
-        <div 
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto"
-          onMouseEnter={() => {
-            const interval = setInterval(() => {
-              setActiveIndex((current) => (current + 1) % testimonials.length);
-            }, 5000);
-            return () => clearInterval(interval);
-          }}
-        >
-          {testimonials.map((testimonial, index) => (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto" key={activeIndex}>
+          {visibleTestimonials.map((testimonial, index) => (
             <Card
               key={testimonial.id}
-              className={`p-8 shadow-metal bg-gradient-to-br from-card via-card to-secondary/20 backdrop-blur transition-all duration-500 hover:-translate-y-2 hover:shadow-glow flex flex-col ${
-                index === activeIndex ? 'ring-2 ring-accent/50' : ''
-              }`}
+              className="p-8 shadow-metal bg-gradient-to-br from-card via-card to-secondary/20 backdrop-blur transition-all duration-500 hover:-translate-y-2 hover:shadow-glow flex flex-col animate-fade-in"
               style={{
-                animation: `fadeIn 0.6s ease-out forwards`,
-                animationDelay: `${index * 0.1}s`,
-                opacity: 0
+                animationDelay: `${index * 0.1}s`
               }}
             >
               <div className="flex gap-1 mb-6">
                 {[...Array(testimonial.rating || 5)].map((_, i) => (
-                  <Star 
-                    key={i} 
-                    className="w-5 h-5 fill-accent text-accent drop-shadow-[0_0_8px_rgba(255,215,0,0.5)]" 
+                  <Star
+                    key={i}
+                    className="w-5 h-5 fill-accent text-accent drop-shadow-[0_0_8px_rgba(255,215,0,0.5)]"
                     aria-hidden="true"
                   />
                 ))}
               </div>
 
-              <p className="text-foreground/90 mb-6 italic leading-relaxed min-h-[7rem] flex items-start text-base">
+              <p className="text-foreground/90 mb-6 italic leading-relaxed min-h-[7rem] text-base break-words overflow-wrap-anywhere hyphens-auto">
                 "{testimonial.content}"
               </p>
 
@@ -102,16 +104,16 @@ const EnhancedTestimonials = () => {
         </div>
 
         <div className="flex justify-center gap-3 mt-12">
-          {testimonials.map((_, index) => (
+          {[...Array(totalPages)].map((_, index) => (
             <button
               key={index}
               onClick={() => setActiveIndex(index)}
               className={`h-2 rounded-full transition-all duration-300 ${
-                index === activeIndex 
-                  ? 'bg-accent w-8 shadow-[0_0_10px_rgba(255,215,0,0.5)]' 
+                index === activeIndex
+                  ? 'bg-accent w-8 shadow-[0_0_10px_rgba(255,215,0,0.5)]'
                   : 'bg-muted-foreground/30 w-2 hover:bg-muted-foreground/50'
               }`}
-              aria-label={`View testimonial ${index + 1}`}
+              aria-label={`View page ${index + 1}`}
             />
           ))}
         </div>

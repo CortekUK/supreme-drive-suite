@@ -20,15 +20,11 @@ const contactSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters"),
   email: z.string().trim().email("Please enter a valid email address").max(255, "Email must be less than 255 characters"),
   phone: z.string().trim().refine((val) => {
-    // Remove all spaces, hyphens, parentheses
     const cleaned = val.replace(/[\s\-()]/g, '');
-    // UK phone number: must start with 0 or +44, and have correct length
-    const ukPattern = /^(\+44|0)[1-9]\d{9,10}$/;
-    const isValidUK = ukPattern.test(cleaned);
-    // Count actual digits
     const digitCount = (cleaned.match(/\d/g) || []).length;
-    return isValidUK || (cleaned.startsWith('+44') && digitCount >= 12 && digitCount <= 13) || (cleaned.startsWith('0') && digitCount >= 10 && digitCount <= 11);
-  }, "Please enter a valid UK phone number (e.g., 07XXX XXXXXX or +44 7XXX XXXXXX)"),
+    // Valid international phone: 7-15 digits
+    return digitCount >= 7 && digitCount <= 15;
+  }, "Please enter a valid phone number (7-15 digits)"),
   subject: z.string().trim().min(3, "Subject must be at least 3 characters").max(200, "Subject must be less than 200 characters"),
   message: z.string().trim().min(10, "Message must be at least 10 characters").max(2000, "Message must be less than 2000 characters"),
   gdprConsent: z.boolean().refine(val => val === true, "You must consent to being contacted"),
@@ -51,9 +47,29 @@ const Contact = () => {
   // Format phone number for tel: link (remove spaces and special chars except +)
   const phoneLink = settings.phone.replace(/[^\d+]/g, '');
   // Format WhatsApp number (remove all non-digits and add country code)
-  const whatsappNumber = settings.whatsapp_number 
-    ? settings.whatsapp_number.replace(/[^\d]/g, '') 
+  const whatsappNumber = settings.whatsapp_number
+    ? settings.whatsapp_number.replace(/[^\d]/g, '')
     : phoneLink;
+
+  // Validate individual field
+  const validateField = (fieldName: keyof typeof formData, value: any) => {
+    try {
+      const fieldSchema = contactSchema.shape[fieldName];
+      fieldSchema.parse(value);
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        setErrors((prev) => ({
+          ...prev,
+          [fieldName]: error.errors[0].message,
+        }));
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -273,7 +289,7 @@ const Contact = () => {
 
             {/* Right Column - Contact Form */}
             <Card className="p-8 lg:p-10 shadow-metal bg-card/50 backdrop-blur border-accent/20 animate-fade-in animation-delay-400">
-              <h3 className="text-3xl font-display font-bold mb-2 text-gradient-silver">Send Us a Message</h3>
+              <h3 className="text-3xl font-display font-bold mb-2 dark:text-gradient-silver text-gradient-black">Send Us a Message</h3>
               <p className="text-sm text-muted-foreground mb-8">
                 We typically reply within 2 hours during business hours.
               </p>
@@ -285,7 +301,12 @@ const Contact = () => {
                   <Input
                     id="name"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData({ ...formData, name: value });
+                      validateField('name', value);
+                    }}
+                    onBlur={() => validateField('name', formData.name)}
                     className={`${errors.name ? 'border-destructive focus-visible:ring-destructive' : ''} h-12`}
                     aria-invalid={!!errors.name}
                     aria-describedby={errors.name ? "name-error" : undefined}
@@ -305,7 +326,12 @@ const Contact = () => {
                     id="email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData({ ...formData, email: value });
+                      validateField('email', value);
+                    }}
+                    onBlur={() => validateField('email', formData.email)}
                     className={`${errors.email ? 'border-destructive focus-visible:ring-destructive' : ''} h-12`}
                     aria-invalid={!!errors.email}
                     aria-describedby={errors.email ? "email-error" : undefined}
@@ -320,13 +346,18 @@ const Contact = () => {
                 
                 {/* Phone */}
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-base">Phone Number (UK) *</Label>
+                  <Label htmlFor="phone" className="text-base">Phone Number *</Label>
                   <Input
                     id="phone"
                     type="tel"
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="e.g. 0800 123 4567"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData({ ...formData, phone: value });
+                      validateField('phone', value);
+                    }}
+                    onBlur={() => validateField('phone', formData.phone)}
+                    placeholder="Enter phone number"
                     className={`${errors.phone ? 'border-destructive focus-visible:ring-destructive' : ''} h-12`}
                     aria-invalid={!!errors.phone}
                     aria-describedby={errors.phone ? "phone-error" : undefined}
@@ -345,7 +376,12 @@ const Contact = () => {
                   <Input
                     id="subject"
                     value={formData.subject}
-                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData({ ...formData, subject: value });
+                      validateField('subject', value);
+                    }}
+                    onBlur={() => validateField('subject', formData.subject)}
                     className={`${errors.subject ? 'border-destructive focus-visible:ring-destructive' : ''} h-12`}
                     aria-invalid={!!errors.subject}
                     aria-describedby={errors.subject ? "subject-error" : undefined}
@@ -364,7 +400,12 @@ const Contact = () => {
                   <Textarea
                     id="message"
                     value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData({ ...formData, message: value });
+                      validateField('message', value);
+                    }}
+                    onBlur={() => validateField('message', formData.message)}
                     rows={5}
                     className={`${errors.message ? 'border-destructive focus-visible:ring-destructive' : ''} min-h-[120px]`}
                     aria-invalid={!!errors.message}
@@ -383,9 +424,11 @@ const Contact = () => {
                   <Checkbox
                     id="gdprConsent"
                     checked={formData.gdprConsent}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, gdprConsent: checked as boolean })
-                    }
+                    onCheckedChange={(checked) => {
+                      const value = checked as boolean;
+                      setFormData({ ...formData, gdprConsent: value });
+                      validateField('gdprConsent', value);
+                    }}
                     className={`${errors.gdprConsent ? 'border-destructive' : ''} mt-1`}
                     aria-invalid={!!errors.gdprConsent}
                     aria-describedby={errors.gdprConsent ? "gdpr-error" : undefined}

@@ -116,8 +116,31 @@ serve(async (req) => {
       body: JSON.stringify({
         from: FROM_EMAIL,
         to: [adminEmail],
-        subject: `New Contact: ${subject}`,
+        subject: `New Contact Form Submission: ${subject}`,
         html: emailHtml,
+        text: `Contact Form Submission
+
+Contact Details:
+Name: ${name}
+Email: ${email}
+Phone: ${phone}
+Subject: ${subject}
+
+Message:
+${message}
+
+Received: ${new Date().toLocaleString('en-GB', {
+          dateStyle: 'full',
+          timeStyle: 'short',
+          timeZone: 'Europe/London'
+        })}
+
+---
+Reply to this customer at: ${email}
+
+Travel in Supreme Style
+Luxury Chauffeur & Close Protection Services
+`,
         reply_to: email, // Set reply-to as customer's email
       }),
     })

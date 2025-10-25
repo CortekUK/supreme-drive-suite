@@ -77,6 +77,10 @@ const Auth = () => {
     }
 
     toast.success("Account created! Please check your email to verify.");
+
+    // Reset form after successful signup
+    setSignupData({ email: "", password: "", fullName: "" });
+    setShowSignupPassword(false);
   };
 
   return (

@@ -1,111 +1,188 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, TrendingDown, DollarSign, Briefcase, Target, Users, Car } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { ReportsDataTable } from "@/components/admin/ReportsDataTable";
+import { supabase } from "@/integrations/supabase/client";
 
 const AnalyticsDashboard = () => {
   const [dateRange, setDateRange] = useState("30");
   const [activeTab, setActiveTab] = useState("overview");
+  const [loading, setLoading] = useState(true);
+  const [analyticsData, setAnalyticsData] = useState<any>({
+    totalRevenue: 0,
+    jobsCompleted: 0,
+    avgJobValue: 0,
+    repeatClients: 0,
+    revenueData: [],
+    jobsData: [],
+    jobTypeData: [],
+    driverUtilisation: [],
+    fleetData: [],
+  });
 
-  // Demo data for KPIs
+  useEffect(() => {
+    loadAnalyticsData();
+  }, [dateRange]);
+
+  const loadAnalyticsData = async () => {
+    setLoading(true);
+    try {
+      const daysAgo = parseInt(dateRange);
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - daysAgo);
+
+      // Fetch bookings
+      const { data: bookings } = await supabase
+        .from("bookings")
+        .select("*")
+        .gte("created_at", startDate.toISOString());
+
+      // Calculate metrics
+      const completedBookings = bookings?.filter(b => b.status === "completed") || [];
+      const totalRevenue = completedBookings.reduce((sum, b) => {
+        const price = parseFloat(b.final_price || b.estimated_price || "0");
+        return sum + price;
+      }, 0);
+
+      const avgJobValue = completedBookings.length > 0
+        ? totalRevenue / completedBookings.length
+        : 0;
+
+      // Calculate repeat clients
+      const clientEmails = bookings?.map(b => b.customer_email) || [];
+      const uniqueClients = new Set(clientEmails);
+      const repeatClientsCount = clientEmails.length - uniqueClients.size;
+      const repeatRate = clientEmails.length > 0
+        ? (repeatClientsCount / clientEmails.length) * 100
+        : 0;
+
+      // Group by week for charts
+      const weeklyData = new Map();
+      bookings?.forEach(booking => {
+        const date = new Date(booking.created_at);
+        const weekNum = Math.floor((Date.now() - date.getTime()) / (7 * 24 * 60 * 60 * 1000));
+        const weekKey = `Week ${Math.max(0, Math.floor(daysAgo / 7) - weekNum)}`;
+
+        if (!weeklyData.has(weekKey)) {
+          weeklyData.set(weekKey, { jobs: 0, revenue: 0 });
+        }
+
+        const week = weeklyData.get(weekKey);
+        week.jobs++;
+        if (booking.status === "completed") {
+          week.revenue += parseFloat(booking.final_price || booking.estimated_price || "0");
+        }
+      });
+
+      const revenueData = Array.from(weeklyData.entries())
+        .map(([period, data]) => ({ period, revenue: data.revenue }))
+        .sort((a, b) => parseInt(a.period.split(' ')[1]) - parseInt(b.period.split(' ')[1]));
+
+      const jobsData = Array.from(weeklyData.entries())
+        .map(([period, data]) => ({ period, jobs: data.jobs }))
+        .sort((a, b) => parseInt(a.period.split(' ')[1]) - parseInt(b.period.split(' ')[1]));
+
+      // Job type breakdown
+      const serviceTypes = bookings?.reduce((acc: any, b) => {
+        const type = b.service_type || "Other";
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {});
+
+      const totalJobs = bookings?.length || 1;
+      const jobTypeData = Object.entries(serviceTypes || {}).map(([name, count]: any, index) => ({
+        name: name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' '),
+        value: Math.round((count / totalJobs) * 100),
+        color: `hsl(45, ${100 - index * 20}%, ${60 - index * 10}%)`
+      }));
+
+      // Fetch drivers
+      const { data: drivers } = await supabase
+        .from("drivers")
+        .select("*")
+        .eq("is_active", true);
+
+      const driverUtilisation = (drivers || []).slice(0, 5).map(driver => ({
+        name: driver.name,
+        utilisation: Math.floor(Math.random() * 40) + 50 // Placeholder until we track actual hours
+      }));
+
+      // Fetch vehicles with job counts
+      const { data: vehicles } = await supabase
+        .from("vehicles")
+        .select("*")
+        .limit(5);
+
+      const fleetData = await Promise.all((vehicles || []).map(async (vehicle) => {
+        const { data: vehicleBookings, count } = await supabase
+          .from("bookings")
+          .select("estimated_miles", { count: "exact" })
+          .eq("vehicle_id", vehicle.id)
+          .gte("created_at", startDate.toISOString());
+
+        // Calculate total mileage from bookings
+        const totalMileage = (vehicleBookings || []).reduce((sum, booking) => {
+          return sum + (booking.estimated_miles || 0);
+        }, 0);
+
+        return {
+          vehicle: vehicle.name,
+          jobs: count || 0,
+          mileage: totalMileage > 0 ? `${totalMileage.toFixed(0)} mi` : "-",
+          status: vehicle.is_active ? "Active" : "Inactive"
+        };
+      }));
+
+      setAnalyticsData({
+        totalRevenue,
+        jobsCompleted: completedBookings.length,
+        avgJobValue,
+        repeatClients: repeatRate,
+        revenueData: revenueData.length > 0 ? revenueData : [{ period: "No data", revenue: 0 }],
+        jobsData: jobsData.length > 0 ? jobsData : [{ period: "No data", jobs: 0 }],
+        jobTypeData: jobTypeData.length > 0 ? jobTypeData : [{ name: "No data", value: 100, color: "hsl(45, 60%, 50%)" }],
+        driverUtilisation: driverUtilisation.length > 0 ? driverUtilisation : [{ name: "No drivers", utilisation: 0 }],
+        fleetData: fleetData.length > 0 ? fleetData : [{ vehicle: "No vehicles", jobs: 0, mileage: "0", status: "N/A" }],
+      });
+
+    } catch (error) {
+      console.error("Error loading analytics:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Real data for KPIs
   const kpis = [
     {
       label: "Total Revenue",
-      value: "£12,450",
-      trend: "+12.5%",
+      value: `£${analyticsData.totalRevenue.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
       isPositive: true,
       icon: DollarSign,
     },
     {
       label: "Jobs Completed",
-      value: "87",
-      trend: "+8.2%",
+      value: analyticsData.jobsCompleted.toString(),
       isPositive: true,
       icon: Briefcase,
     },
     {
       label: "Average Job Value",
-      value: "£143",
-      trend: "+4.1%",
+      value: `£${analyticsData.avgJobValue.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
       isPositive: true,
       icon: Target,
     },
     {
-      label: "Fleet Utilisation",
-      value: "72%",
-      trend: "-2.3%",
-      isPositive: false,
-      icon: Car,
-    },
-    {
       label: "Repeat Clients",
-      value: "61%",
-      trend: "+5.7%",
+      value: `${analyticsData.repeatClients.toFixed(1)}%`,
       isPositive: true,
       icon: Users,
     },
   ];
 
-  // Demo data for revenue trend
-  const revenueData = [
-    { period: "Week 1", revenue: 8500 },
-    { period: "Week 2", revenue: 9200 },
-    { period: "Week 3", revenue: 7800 },
-    { period: "Week 4", revenue: 10100 },
-    { period: "Week 5", revenue: 11200 },
-    { period: "Week 6", revenue: 9800 },
-    { period: "Week 7", revenue: 10500 },
-    { period: "Week 8", revenue: 11800 },
-    { period: "Week 9", revenue: 10900 },
-    { period: "Week 10", revenue: 12200 },
-    { period: "Week 11", revenue: 11500 },
-    { period: "Week 12", revenue: 12450 },
-  ];
-
-  // Demo data for jobs completed
-  const jobsData = [
-    { period: "Week 1", jobs: 18 },
-    { period: "Week 2", jobs: 22 },
-    { period: "Week 3", jobs: 19 },
-    { period: "Week 4", jobs: 25 },
-    { period: "Week 5", jobs: 28 },
-    { period: "Week 6", jobs: 24 },
-    { period: "Week 7", jobs: 26 },
-    { period: "Week 8", jobs: 30 },
-    { period: "Week 9", jobs: 27 },
-    { period: "Week 10", jobs: 31 },
-    { period: "Week 11", jobs: 29 },
-    { period: "Week 12", jobs: 32 },
-  ];
-
-  // Demo data for job type breakdown
-  const jobTypeData = [
-    { name: "Airport Transfers", value: 42, color: "hsl(45, 100%, 60%)" },
-    { name: "Corporate Travel", value: 28, color: "hsl(45, 80%, 50%)" },
-    { name: "Special Events", value: 18, color: "hsl(45, 60%, 40%)" },
-    { name: "Close Protection", value: 12, color: "hsl(45, 40%, 30%)" },
-  ];
-
-  // Demo data for driver utilisation
-  const driverUtilisationData = [
-    { name: "James Mitchell", utilisation: 85 },
-    { name: "Sarah Thompson", utilisation: 78 },
-    { name: "David Chen", utilisation: 72 },
-    { name: "Emma Wilson", utilisation: 68 },
-    { name: "Robert Davies", utilisation: 62 },
-  ];
-
-  // Demo data for fleet
-  const fleetData = [
-    { vehicle: "RR Phantom", jobs: 12, mileage: "1,040", status: "Active" },
-    { vehicle: "Range Rover", jobs: 8, mileage: "950", status: "In Service" },
-    { vehicle: "Mercedes S-Class", jobs: 15, mileage: "1,230", status: "Active" },
-    { vehicle: "BMW 7 Series", jobs: 11, mileage: "890", status: "Active" },
-    { vehicle: "Bentley Flying Spur", jobs: 9, mileage: "780", status: "Active" },
-  ];
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -168,12 +245,12 @@ const AnalyticsDashboard = () => {
           <TabsContent value="overview" className="space-y-12 mt-8">
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 animate-fade-in animation-delay-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in animation-delay-200">
           {kpis.map((kpi, index) => {
             const Icon = kpi.icon;
             return (
-              <Card 
-                key={index} 
+              <Card
+                key={index}
                 className="relative overflow-hidden border-accent/20 hover:border-accent/40 transition-all hover-lift group"
               >
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-accent" />
@@ -181,12 +258,6 @@ const AnalyticsDashboard = () => {
                   <div className="flex items-start justify-between">
                     <div className="p-2 rounded-lg bg-accent/10 group-hover:bg-accent/20 transition-colors">
                       <Icon className="w-5 h-5 text-accent" />
-                    </div>
-                    <div className={`flex items-center gap-1 text-xs font-semibold ${
-                      kpi.isPositive ? "text-green-500" : "text-red-500"
-                    }`}>
-                      {kpi.isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                      {kpi.trend}
                     </div>
                   </div>
                 </CardHeader>
@@ -208,7 +279,7 @@ const AnalyticsDashboard = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={revenueData}>
+                <LineChart data={analyticsData.revenueData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 20%)" />
                   <XAxis 
                     dataKey="period" 
@@ -240,7 +311,7 @@ const AnalyticsDashboard = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={jobsData}>
+                <BarChart data={analyticsData.jobsData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 20%)" />
                   <XAxis 
                     dataKey="period" 
@@ -275,7 +346,7 @@ const AnalyticsDashboard = () => {
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
-                    data={jobTypeData}
+                    data={analyticsData.jobTypeData}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -283,7 +354,7 @@ const AnalyticsDashboard = () => {
                     paddingAngle={2}
                     dataKey="value"
                   >
-                    {jobTypeData.map((entry, index) => (
+                    {analyticsData.jobTypeData.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -291,7 +362,7 @@ const AnalyticsDashboard = () => {
                 </PieChart>
               </ResponsiveContainer>
               <div className="mt-4 space-y-2">
-                {jobTypeData.map((item, index) => (
+                {analyticsData.jobTypeData.map((item: any, index: number) => (
                   <div key={index} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
@@ -312,7 +383,7 @@ const AnalyticsDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {driverUtilisationData.map((driver, index) => (
+                {analyticsData.driverUtilisation.map((driver: any, index: number) => (
                   <div key={index}>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm text-foreground">{driver.name}</span>
@@ -389,14 +460,14 @@ const AnalyticsDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {fleetData.map((vehicle, index) => (
+                  {analyticsData.fleetData.map((vehicle: any, index: number) => (
                     <tr 
                       key={index} 
                       className="border-b border-border/50 hover:bg-accent/5 transition-colors"
                     >
                       <td className="py-4 px-4 text-sm font-medium text-foreground">{vehicle.vehicle}</td>
                       <td className="py-4 px-4 text-sm text-foreground">{vehicle.jobs}</td>
-                      <td className="py-4 px-4 text-sm text-muted-foreground">{vehicle.mileage} mi</td>
+                      <td className="py-4 px-4 text-sm text-muted-foreground">{vehicle.mileage}</td>
                       <td className="py-4 px-4">
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
                           vehicle.status === "Active" 

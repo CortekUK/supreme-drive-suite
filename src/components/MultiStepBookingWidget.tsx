@@ -365,6 +365,62 @@ const MultiStepBookingWidget = () => {
 
   const priceBreakdown = calculatePriceBreakdown();
 
+  // Validate individual field in real-time
+  const validateSingleField = (fieldName: string, value: any) => {
+    let error = "";
+
+    switch (fieldName) {
+      case "customerName":
+        const nameValue = String(value).trim();
+        if (!nameValue) {
+          error = "Full name is required";
+        } else if (nameValue.length < 2) {
+          error = "Full name must be at least 2 characters";
+        } else if (!/^[a-zA-Z\s\-']+$/.test(nameValue)) {
+          error = "Name must contain only letters, spaces, hyphens, and apostrophes";
+        } else if (!/[a-zA-Z]{2,}/.test(nameValue)) {
+          error = "Name must contain at least 2 alphabetic characters";
+        } else if (nameValue.replace(/[\s\-']/g, '').length < 2) {
+          error = "Name must have actual alphabetic content";
+        }
+        break;
+      case "customerEmail":
+        if (!String(value).trim()) {
+          error = "Email address is required";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value))) {
+          error = "Please enter a valid email address";
+        }
+        break;
+      case "customerPhone":
+        const phoneValue = String(value).trim();
+        if (!phoneValue) {
+          error = "Phone number is required";
+        } else {
+          const cleaned = phoneValue.replace(/[\s\-()]/g, '');
+          const digitCount = (cleaned.match(/\d/g) || []).length;
+          // Valid international phone: 7-15 digits, optional + at start
+          if (digitCount < 7 || digitCount > 15) {
+            error = "Please enter a valid phone number (7-15 digits)";
+          } else if (cleaned.startsWith('+') && !/^\+\d+$/.test(cleaned)) {
+            error = "Invalid phone number format";
+          } else if (!cleaned.startsWith('+') && !/^\d+$/.test(cleaned.replace(/[\s\-()]/g, ''))) {
+            error = "Phone number should contain only digits";
+          }
+        }
+        break;
+    }
+
+    if (error) {
+      setErrors(prev => ({ ...prev, [fieldName]: error }));
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
+      });
+    }
+  };
+
   const validateStep1 = () => {
     const newErrors: {[key: string]: string} = {};
 
@@ -495,22 +551,22 @@ const MultiStepBookingWidget = () => {
       newErrors.customerEmail = "Please enter a valid email address";
     }
 
-    // Validate phone number (UK format)
+    // Validate phone number (international format)
     const phoneValue = formData.customerPhone.trim();
     if (!phoneValue) {
       newErrors.customerPhone = "Phone number is required";
     } else {
       // Remove all spaces, hyphens, parentheses for validation
       const cleaned = phoneValue.replace(/[\s\-()]/g, '');
-      // UK phone number: must start with 0 or +44, and have correct length
-      const ukPattern = /^(\+44|0)[1-9]\d{9,10}$/;
-      const isValidUK = ukPattern.test(cleaned);
       // Count actual digits
       const digitCount = (cleaned.match(/\d/g) || []).length;
-      const isValid = isValidUK || (cleaned.startsWith('+44') && digitCount >= 12 && digitCount <= 13) || (cleaned.startsWith('0') && digitCount >= 10 && digitCount <= 11);
-
-      if (!isValid) {
-        newErrors.customerPhone = "Please enter a valid UK phone number (e.g., 07XXX XXXXXX or +44 7XXX XXXXXX)";
+      // Valid international phone: 7-15 digits, optional + at start
+      if (digitCount < 7 || digitCount > 15) {
+        newErrors.customerPhone = "Please enter a valid phone number (7-15 digits)";
+      } else if (cleaned.startsWith('+') && !/^\+\d+$/.test(cleaned)) {
+        newErrors.customerPhone = "Invalid phone number format";
+      } else if (!cleaned.startsWith('+') && !/^\d+$/.test(cleaned.replace(/[\s\-()]/g, ''))) {
+        newErrors.customerPhone = "Phone number should contain only digits";
       }
     }
 
@@ -619,7 +675,24 @@ const MultiStepBookingWidget = () => {
                     <p className="text-sm text-destructive">{errors.dropoffLocation}</p>
                   )}
                 </div>
+              </div>
 
+              {/* Distance Calculator */}
+              {formData.pickupLocation && formData.dropoffLocation && (
+                <div className="flex items-center gap-3 p-4 bg-accent/5 border border-accent/20 rounded-lg">
+                  <Calculator className="w-5 h-5 text-accent flex-shrink-0" />
+                  {calculatedDistance && !distanceOverride ? (
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1">
+                      <span className="text-sm font-medium">Driving Distance:</span>
+                      <span className="text-lg font-bold text-accent">{calculatedDistance} miles</span>
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Distance will be calculated automatically</span>
+                  )}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="pickupDate">Pickup Date *</Label>
                   <Popover>
@@ -704,23 +777,6 @@ const MultiStepBookingWidget = () => {
                 </div>
               </div>
 
-              {/* Distance Calculator */}
-              {formData.pickupLocation && formData.dropoffLocation && (
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 bg-accent/5 border border-accent/20 rounded-lg">
-                  <div className="flex items-center gap-3 flex-1">
-                    <Calculator className="w-5 h-5 text-accent flex-shrink-0" />
-                    {calculatedDistance && !distanceOverride ? (
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1">
-                        <span className="text-sm font-medium">Driving Distance:</span>
-                        <span className="text-lg font-bold text-accent">{calculatedDistance} miles</span>
-                      </div>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">Click calculate to get driving distance</span>
-                    )}
-                  </div>
-
-                </div>
-              )}
             </div>
 
             {/* Passengers & Luggage Section */}
@@ -1166,10 +1222,9 @@ const MultiStepBookingWidget = () => {
                         // Allow only letters, spaces, hyphens, and apostrophes
                         const sanitized = e.target.value.replace(/[^a-zA-Z\s\-']/g, '');
                         setFormData({ ...formData, customerName: sanitized });
-                        if (errors.customerName) {
-                          setErrors({ ...errors, customerName: "" });
-                        }
+                        validateSingleField("customerName", sanitized);
                       }}
+                      onBlur={(e) => validateSingleField("customerName", e.target.value)}
                       placeholder="Enter your name"
                       className="p-4 focus-visible:ring-[#C5A572]"
                     />
@@ -1186,10 +1241,9 @@ const MultiStepBookingWidget = () => {
                       value={formData.customerEmail}
                       onChange={(e) => {
                         setFormData({ ...formData, customerEmail: e.target.value });
-                        if (errors.customerEmail) {
-                          setErrors({ ...errors, customerEmail: "" });
-                        }
+                        validateSingleField("customerEmail", e.target.value);
                       }}
+                      onBlur={(e) => validateSingleField("customerEmail", e.target.value)}
                       placeholder="your@email.com"
                       className="p-4 focus-visible:ring-[#C5A572]"
                     />
@@ -1208,11 +1262,10 @@ const MultiStepBookingWidget = () => {
                         // Allow only numbers, spaces, +, -, (, )
                         const sanitized = e.target.value.replace(/[^\d\s+\-()]/g, '');
                         setFormData({ ...formData, customerPhone: sanitized });
-                        if (errors.customerPhone) {
-                          setErrors({ ...errors, customerPhone: "" });
-                        }
+                        validateSingleField("customerPhone", sanitized);
                       }}
-                      placeholder="+44 7XXX XXXXXX"
+                      onBlur={(e) => validateSingleField("customerPhone", e.target.value)}
+                      placeholder="Enter phone number"
                       className="p-4 focus-visible:ring-[#C5A572]"
                     />
                     {errors.customerPhone && (

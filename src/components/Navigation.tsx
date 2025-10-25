@@ -97,8 +97,8 @@ const Navigation = () => {
         </div>
 
         {/* Mobile Navigation */}
-        {isOpen && <div className="xl:hidden px-4 pb-4 pt-4 space-y-3 border-t border-border/50 mt-4 bg-background/95 backdrop-blur-sm">
-            {navLinks.map(link => <Link key={link.path} to={link.path} onClick={() => setIsOpen(false)} className={`block py-2.5 text-sm font-medium transition-colors ${isActive(link.path) ? "text-primary" : "text-muted-foreground"}`}>
+        {isOpen && <div className="xl:hidden pb-4 pt-4 space-y-3 border-t border-border/50 mt-4 bg-background/95 backdrop-blur-sm -mx-2 px-2">
+            {navLinks.map(link => <Link key={link.path} to={link.path} onClick={() => setIsOpen(false)} className={`block py-2.5 text-sm font-medium transition-colors pl-0 ${isActive(link.path) ? "text-primary" : "text-muted-foreground"}`}>
                 {link.label}
               </Link>)}
             <div className="pt-4 space-y-3">

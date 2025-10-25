@@ -61,15 +61,26 @@ const Footer = () => {
             <ul className="space-y-2">
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Phone className="w-4 h-4" />
-                {settings.phone}
+                <a href={`tel:${settings.phone?.replace(/\s/g, '')}`} className="hover:text-accent transition-colors duration-200">
+                  {settings.phone}
+                </a>
               </li>
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Mail className="w-4 h-4" />
-                {settings.email}
+                <a href={`mailto:${settings.email}`} className="hover:text-accent transition-colors duration-200">
+                  {settings.email}
+                </a>
               </li>
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="w-4 h-4" />
-                {settings.office_address}
+                <a
+                  href={`https://maps.google.com/?q=${encodeURIComponent(settings.office_address || '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-accent transition-colors duration-200"
+                >
+                  {settings.office_address}
+                </a>
               </li>
             </ul>
           </div>

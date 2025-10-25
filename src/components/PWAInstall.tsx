@@ -7,35 +7,39 @@ import QRCode from "qrcode";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
 const PWAInstall = () => {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const [showInstructions, setShowInstructions] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isMobile = useIsMobile();
-  
+
   // Detect platform and browser
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isAndroid = /Android/.test(navigator.userAgent);
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+  const isChrome =
+    /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
   const isEdge = /Edg/.test(navigator.userAgent);
 
   useEffect(() => {
     // Check if app is already installed
     const checkInstalled = () => {
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+      const isStandalone = window.matchMedia(
+        "(display-mode: standalone)"
+      ).matches;
       setIsInstalled(isStandalone);
     };
-    
+
     checkInstalled();
 
     // Generate QR code (only for desktop)
     if (canvasRef.current && !isMobile) {
-      const appUrl = 'https://travelinsupremestyle.cortek.io/';
+      const appUrl = "https://travelinsupremestyle.cortek.io/";
       QRCode.toCanvas(
         canvasRef.current,
         appUrl,
@@ -43,12 +47,12 @@ const PWAInstall = () => {
           width: 144,
           margin: 1,
           color: {
-            dark: '#E5C26E',
-            light: '#0c0c0c'
-          }
+            dark: "#E5C26E",
+            light: "#0c0c0c",
+          },
         },
         (error) => {
-          if (error) console.error('QR code generation failed:', error);
+          if (error) console.error("QR code generation failed:", error);
         }
       );
     }
@@ -59,10 +63,13 @@ const PWAInstall = () => {
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt
+      );
     };
   }, [isMobile]);
 
@@ -71,11 +78,11 @@ const PWAInstall = () => {
       // Android/Chrome flow
       deferredPrompt.prompt();
       const choiceResult = await deferredPrompt.userChoice;
-      
-      if (choiceResult.outcome === 'accepted') {
-        console.log('PWA installed');
+
+      if (choiceResult.outcome === "accepted") {
+        console.log("PWA installed");
       }
-      
+
       setDeferredPrompt(null);
     } else {
       // Show instructions for platforms without prompt
@@ -101,7 +108,8 @@ const PWAInstall = () => {
                 <CheckCircle2 className="h-6 w-6 text-accent" /> App Installed
               </h3>
               <p className="text-base text-muted-foreground">
-                Supreme Style is installed on your device. Find it on your home screen for quick access.
+                Supreme Style is installed on your device. Find it on your home
+                screen for quick access.
               </p>
             </div>
           </div>
@@ -119,7 +127,7 @@ const PWAInstall = () => {
               Install Supreme Style
             </h3>
             <p className="text-base text-muted-foreground mb-6">
-              {isMobile 
+              {isMobile
                 ? "Add our app to your home screen for faster booking and instant access."
                 : "Scan the QR code with your phone to install our app as a PWA for faster booking."}
             </p>
@@ -135,7 +143,7 @@ const PWAInstall = () => {
                   Install App
                 </Button>
               )}
-              
+
               {/* For iOS, only show "How it works" or auto-show instructions */}
               {!isIOS && (
                 <Button
@@ -151,67 +159,137 @@ const PWAInstall = () => {
 
             {showInstructions && (
               <div className="mt-6 p-5 rounded-lg bg-muted/30 border border-accent/20 animate-fade-in">
-                <Tabs defaultValue={isIOS ? "ios" : isAndroid ? "android" : "desktop"} className="w-full">
+                <Tabs
+                  defaultValue={
+                    isIOS ? "ios" : isAndroid ? "android" : "desktop"
+                  }
+                  className="w-full"
+                >
                   <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="ios" className="flex items-center gap-2">
+                    <TabsTrigger
+                      value="ios"
+                      className="flex items-center gap-2"
+                    >
                       <Smartphone className="h-4 w-4" />
                       iPhone
                     </TabsTrigger>
-                    <TabsTrigger value="android" className="flex items-center gap-2">
+                    <TabsTrigger
+                      value="android"
+                      className="flex items-center gap-2"
+                    >
                       <Smartphone className="h-4 w-4" />
                       Android
                     </TabsTrigger>
-                    <TabsTrigger value="desktop" className="flex items-center gap-2">
+                    <TabsTrigger
+                      value="desktop"
+                      className="flex items-center gap-2"
+                    >
                       <Monitor className="h-4 w-4" />
                       Desktop
                     </TabsTrigger>
                   </TabsList>
-                  
+
                   <TabsContent value="ios" className="mt-4">
                     <div>
-                      <h4 className="font-semibold text-foreground mb-3">Install on iPhone</h4>
+                      <h4 className="font-semibold text-foreground mb-3">
+                        Install on iPhone
+                      </h4>
                       <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
-                        <li>Tap the <strong className="text-foreground">Share</strong> button (⤴︎) at the bottom of Safari</li>
-                        <li>Scroll down and choose <strong className="text-foreground">Add to Home Screen</strong></li>
-                        <li>Tap <strong className="text-foreground">Add</strong> in the top right</li>
+                        <li>
+                          Tap the{" "}
+                          <strong className="text-foreground">Share</strong>{" "}
+                          button (⤴︎) at the bottom of Safari
+                        </li>
+                        <li>
+                          Scroll down and choose{" "}
+                          <strong className="text-foreground">
+                            Add to Home Screen
+                          </strong>
+                        </li>
+                        <li>
+                          Tap <strong className="text-foreground">Add</strong>{" "}
+                          in the top right
+                        </li>
                         <li>Find the Supreme Style icon on your home screen</li>
                       </ol>
                     </div>
                   </TabsContent>
-                  
+
                   <TabsContent value="android" className="mt-4">
                     <div>
-                      <h4 className="font-semibold text-foreground mb-3">Install on Android</h4>
+                      <h4 className="font-semibold text-foreground mb-3">
+                        Install on Android
+                      </h4>
                       <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
-                        <li>Tap <strong className="text-foreground">Install App</strong> button above or the menu ⋮</li>
-                        <li>Select <strong className="text-foreground">Add to Home screen</strong> or <strong className="text-foreground">Install</strong></li>
+                        <li>
+                          Tap{" "}
+                          <strong className="text-foreground">
+                            Install App
+                          </strong>{" "}
+                          button above or the menu ⋮
+                        </li>
+                        <li>
+                          Select{" "}
+                          <strong className="text-foreground">
+                            Add to Home screen
+                          </strong>{" "}
+                          or{" "}
+                          <strong className="text-foreground">Install</strong>
+                        </li>
                         <li>Confirm the installation</li>
                       </ol>
                     </div>
                   </TabsContent>
-                  
+
                   <TabsContent value="desktop" className="mt-4">
                     <div>
-                      <h4 className="font-semibold text-foreground mb-3">Install on Desktop</h4>
+                      <h4 className="font-semibold text-foreground mb-3">
+                        Install on Desktop
+                      </h4>
                       {isSafari ? (
                         <p className="text-sm text-muted-foreground">
-                          Safari on Mac doesn't support PWA installation. Please use <strong className="text-foreground">Chrome</strong> or <strong className="text-foreground">Edge</strong>, or scan the QR code with your phone.
+                          Safari on Mac doesn't support PWA installation. Please
+                          use{" "}
+                          <strong className="text-foreground">Chrome</strong> or{" "}
+                          <strong className="text-foreground">Edge</strong>, or
+                          scan the QR code with your phone.
                         </p>
                       ) : isChrome ? (
                         <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
-                          <li>Click the <strong className="text-foreground">⋮</strong> menu (top right)</li>
-                          <li>Select <strong className="text-foreground">Install Supreme Style</strong></li>
-                          <li>Click <strong className="text-foreground">Install</strong></li>
+                          <li>
+                            Click{" "}
+                            <strong className="text-foreground">Install</strong>
+                          </li>
+                          <li>
+                            Click{" "}
+                            <strong className="text-foreground">Install</strong>
+                             {" "}from dialogue box 
+                          </li>
                         </ol>
                       ) : isEdge ? (
                         <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
-                          <li>Click the <strong className="text-foreground">⋯</strong> menu (top right)</li>
-                          <li>Go to <strong className="text-foreground">Apps</strong> → <strong className="text-foreground">Install this site as an app</strong></li>
-                          <li>Click <strong className="text-foreground">Install</strong></li>
+                          <li>
+                            Click the{" "}
+                            <strong className="text-foreground">⋯</strong> menu
+                            (top right)
+                          </li>
+                          <li>
+                            Go to{" "}
+                            <strong className="text-foreground">Apps</strong> →{" "}
+                            <strong className="text-foreground">
+                              Install this site as an app
+                            </strong>
+                          </li>
+                          <li>
+                            Click{" "}
+                            <strong className="text-foreground">Install</strong>
+                          </li>
                         </ol>
                       ) : (
                         <p className="text-sm text-muted-foreground">
-                          Look for an install option in your browser's menu, or scan the QR code with your phone for the best experience.
+                          Look for an install option in your browser's menu, or
+                          scan the QR code with your phone for the best
+                          experience.
                         </p>
                       )}
                     </div>

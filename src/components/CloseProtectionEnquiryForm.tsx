@@ -34,15 +34,11 @@ const enquirySchema = z.object({
     .trim()
     .min(1, "Phone number is required")
     .refine((val) => {
-      // Remove all spaces, hyphens, parentheses for validation
       const cleaned = val.replace(/[\s\-()]/g, '');
-      // UK phone number: must start with 0 or +44, and have correct length
-      const ukPattern = /^(\+44|0)[1-9]\d{9,10}$/;
-      const isValidUK = ukPattern.test(cleaned);
-      // Count actual digits
       const digitCount = (cleaned.match(/\d/g) || []).length;
-      return isValidUK || (cleaned.startsWith('+44') && digitCount >= 12 && digitCount <= 13) || (cleaned.startsWith('0') && digitCount >= 10 && digitCount <= 11);
-    }, "Please enter a valid UK phone number (e.g., 07XXX XXXXXX or +44 7XXX XXXXXX)"),
+      // Valid international phone: 7-15 digits
+      return digitCount >= 7 && digitCount <= 15;
+    }, "Please enter a valid phone number (7-15 digits)"),
   serviceType: z.enum(["Event", "Travel", "Residential", "Ongoing"], {
     required_error: "Please select a service type",
   }),
@@ -79,6 +75,8 @@ const CloseProtectionEnquiryForm = () => {
     reset,
   } = useForm<EnquiryFormData>({
     resolver: zodResolver(enquirySchema),
+    mode: 'onChange', // Validate on change
+    reValidateMode: 'onChange', // Re-validate on change
   });
 
   // Reset submitted state when form has validation errors
@@ -237,7 +235,7 @@ const CloseProtectionEnquiryForm = () => {
               id="phone"
               type="tel"
               {...register("phone")}
-              placeholder="+44 7700 900000"
+              placeholder="Enter phone number"
               className="bg-background/50"
               onChange={(e) => {
                 // Allow only numbers, spaces, +, -, (, )

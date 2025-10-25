@@ -51,6 +51,8 @@ interface JobData {
   status: string | null;
   pickup_location: string | null;
   dropoff_location: string | null;
+  vehicles?: { name: string } | null;
+  drivers?: { name: string } | null;
 }
 
 type SortField = "pickup_date" | "customer_name" | "total_price" | "distance_miles";
@@ -78,7 +80,21 @@ export const ReportsDataTable = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("bookings")
-        .select("id, pickup_date, customer_name, service_type, driver_id, vehicle_id, total_price, distance_miles, status, pickup_location, dropoff_location")
+        .select(`
+          id,
+          pickup_date,
+          customer_name,
+          service_type,
+          driver_id,
+          vehicle_id,
+          total_price,
+          distance_miles,
+          status,
+          pickup_location,
+          dropoff_location,
+          vehicles:vehicle_id(name),
+          drivers:driver_id(name)
+        `)
         .order("pickup_date", { ascending: false })
         .limit(500);
 
@@ -168,13 +184,14 @@ export const ReportsDataTable = () => {
   };
 
   const exportToCSV = () => {
-    const headers = ["Date", "Job ID", "Customer", "Service", "Vehicle", "Revenue", "Distance", "Status"];
+    const headers = ["Date", "Job ID", "Customer", "Service", "Driver", "Vehicle", "Revenue", "Distance", "Status"];
     const rows = filteredAndSortedJobs.map((job) => [
       format(new Date(job.pickup_date), "dd MMM yyyy"),
       job.id,
       job.customer_name || "—",
       job.service_type || "—",
-      job.vehicle_id || "—",
+      job.drivers?.name || "—",
+      job.vehicles?.name || "—",
       `£${job.total_price || 0}`,
       job.distance_miles ? `${job.distance_miles} mi` : "—",
       job.status || "—",
@@ -421,10 +438,10 @@ export const ReportsDataTable = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {job.driver_id ? "Assigned" : "—"}
+                      {job.drivers?.name || "—"}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {job.vehicle_id || "—"}
+                      {job.vehicles?.name || "—"}
                     </TableCell>
                     <TableCell className="text-right font-semibold">
                       £{job.total_price || 0}

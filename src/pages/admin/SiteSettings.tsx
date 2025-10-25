@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Building2, Bell, Scale } from "lucide-react";
+import { Building2, Bell, Scale, Loader2 } from "lucide-react";
 import { logAuditEvent, generateFieldSummary } from "@/lib/auditLogger";
 
 // Validation schemas
@@ -48,6 +48,7 @@ export default function SiteSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [settingsId, setSettingsId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
 
@@ -140,10 +141,11 @@ export default function SiteSettings() {
 
   const saveCompany = async (data: CompanyData) => {
     if (!settingsId) return;
-    
+
     try {
+      setSaving(true);
       const before = await getCurrentSettings();
-      
+
       const { error } = await supabase
         .from("site_settings")
         .update(data)
@@ -154,7 +156,7 @@ export default function SiteSettings() {
       const changedFields = Object.keys(data).filter(
         key => JSON.stringify(before?.[key]) !== JSON.stringify(data[key as keyof CompanyData])
       );
-      
+
       await logAuditEvent({
         action: "update",
         entityType: "Site Settings",
@@ -163,10 +165,10 @@ export default function SiteSettings() {
         before: before ? Object.fromEntries(changedFields.map(k => [k, before[k]])) : {},
         after: data,
       });
-      
+
       // Invalidate cache to refresh settings across all components
       queryClient.invalidateQueries({ queryKey: ["site-settings"] });
-      
+
       toast({
         title: "Settings saved successfully",
         description: "Company information has been updated.",
@@ -177,15 +179,18 @@ export default function SiteSettings() {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
   const saveNotifications = async (data: NotificationsData) => {
     if (!settingsId) return;
-    
+
     try {
+      setSaving(true);
       const before = await getCurrentSettings();
-      
+
       const emailArray = data.notification_emails
         .split(",")
         .map((e) => e.trim())
@@ -207,7 +212,7 @@ export default function SiteSettings() {
       const changedFields = Object.keys(updateData).filter(
         key => JSON.stringify(before?.[key]) !== JSON.stringify(updateData[key as keyof typeof updateData])
       );
-      
+
       await logAuditEvent({
         action: "update",
         entityType: "Site Settings",
@@ -216,10 +221,10 @@ export default function SiteSettings() {
         before: before ? Object.fromEntries(changedFields.map(k => [k, before[k]])) : {},
         after: updateData,
       });
-      
+
       // Invalidate cache to refresh settings across all components
       queryClient.invalidateQueries({ queryKey: ["site-settings"] });
-      
+
       toast({
         title: "Settings saved successfully",
         description: "Notification preferences have been updated.",
@@ -230,15 +235,18 @@ export default function SiteSettings() {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
   const saveLegal = async (data: LegalData) => {
     if (!settingsId) return;
-    
+
     try {
+      setSaving(true);
       const before = await getCurrentSettings();
-      
+
       const { error } = await supabase
         .from("site_settings")
         .update(data)
@@ -249,7 +257,7 @@ export default function SiteSettings() {
       const changedFields = Object.keys(data).filter(
         key => JSON.stringify(before?.[key]) !== JSON.stringify(data[key as keyof LegalData])
       );
-      
+
       await logAuditEvent({
         action: "update",
         entityType: "Site Settings",
@@ -258,10 +266,10 @@ export default function SiteSettings() {
         before: before ? Object.fromEntries(changedFields.map(k => [k, before[k]])) : {},
         after: data,
       });
-      
+
       // Invalidate cache to refresh settings across all components
       queryClient.invalidateQueries({ queryKey: ["site-settings"] });
-      
+
       toast({
         title: "Settings saved successfully",
         description: "Legal and footer information has been updated.",
@@ -272,6 +280,8 @@ export default function SiteSettings() {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -401,204 +411,22 @@ export default function SiteSettings() {
                   )}
                 />
 
-                <Button type="submit" className="w-full">
-                  Save Changes
+                <Button type="submit" className="w-full" disabled={saving}>
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
                 </Button>
               </form>
             </Form>
           </CardContent>
         </Card>
 
-        {/* Notifications */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="w-5 h-5 text-primary" />
-              Notifications
-            </CardTitle>
-            <CardDescription>
-              Configure email notifications for bookings
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...notificationsForm}>
-              <form onSubmit={notificationsForm.handleSubmit(saveNotifications)} className="space-y-4">
-                <FormField
-                  control={notificationsForm.control}
-                  name="notify_new_booking"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel>Notify on New Booking</FormLabel>
-                        <div className="text-sm text-muted-foreground">
-                          Receive emails for chauffeur bookings
-                        </div>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
 
-                <FormField
-                  control={notificationsForm.control}
-                  name="notify_new_enquiry"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel>Notify on New Close Protection Enquiry</FormLabel>
-                        <div className="text-sm text-muted-foreground">
-                          Receive emails for protection enquiries
-                        </div>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={notificationsForm.control}
-                  name="notification_emails"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email Recipients</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          placeholder="admin@example.com, manager@example.com"
-                          rows={3}
-                        />
-                      </FormControl>
-                      <div className="text-xs text-muted-foreground">
-                        Comma-separated list of email addresses
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button type="submit" className="w-full">
-                  Save Changes
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-
-        {/* Legal & Footer */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Scale className="w-5 h-5 text-primary" />
-              Legal & Footer
-            </CardTitle>
-            <CardDescription>
-              Configure legal links and social media
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...legalForm}>
-              <form onSubmit={legalForm.handleSubmit(saveLegal)} className="space-y-4">
-                <FormField
-                  control={legalForm.control}
-                  name="privacy_policy_url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Privacy Policy URL</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="/privacy or https://..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={legalForm.control}
-                  name="terms_url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Terms of Service URL</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="/terms or https://..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={legalForm.control}
-                  name="footer_tagline"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Footer Tagline</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} rows={2} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={legalForm.control}
-                  name="instagram_url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Instagram URL (optional)</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="https://instagram.com/..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={legalForm.control}
-                  name="facebook_url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Facebook URL (optional)</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="https://facebook.com/..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={legalForm.control}
-                  name="linkedin_url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>LinkedIn URL (optional)</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="https://linkedin.com/..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button type="submit" className="w-full">
-                  Save Changes
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

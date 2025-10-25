@@ -142,8 +142,34 @@ serve(async (req) => {
     `
 
     const subject = isCloseProtection
-      ? `🛡️ New Close Protection Booking - ${bookingDetails.pickupDate} - ${customerName}`
-      : `New Booking - ${bookingDetails.pickupDate} - ${customerName}`
+      ? `New Close Protection Booking - ${bookingDetails.pickupDate} - ${customerName}`
+      : `New Booking Confirmation - ${bookingDetails.pickupDate} - ${customerName}`
+
+    const plainText = `${isCloseProtection ? 'CLOSE PROTECTION BOOKING RECEIVED' : 'NEW BOOKING RECEIVED'}
+
+Customer Information:
+Name: ${customerName}
+Email: ${bookingDetails.customerEmail || 'Not provided'}
+Phone: ${bookingDetails.customerPhone || 'Not provided'}
+
+Service Details:
+Pickup Location: ${bookingDetails.pickupLocation}
+Drop-off Location: ${bookingDetails.dropoffLocation}
+Date & Time: ${bookingDetails.pickupDate} at ${bookingDetails.pickupTime}
+Vehicle: ${bookingDetails.vehicleName}
+Passengers: ${bookingDetails.passengers || 'N/A'}
+${hasPrice ? `Total: £${bookingDetails.totalPrice}` : ''}
+
+${bookingDetails.additionalRequirements ? `Additional Information:\n${bookingDetails.additionalRequirements}` : ''}
+
+${isCloseProtection ? `ACTION REQUIRED:\nThis is a close protection booking. Please assign appropriate security personnel and contact the client within 24 hours.` : ''}
+
+---
+Supreme Drive Suite
+Luxury Chauffeur & Close Protection Services
+Email: ${supportEmail}
+Phone: +44 1234 567 890
+`
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -156,6 +182,7 @@ serve(async (req) => {
         to: [customerEmail], // This is admin email
         subject: subject,
         html: emailHtml,
+        text: plainText,
       }),
     })
 

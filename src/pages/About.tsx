@@ -91,7 +91,7 @@ const About = () => {
                   <Clock className="w-8 h-8 text-accent" />
                 </div>
               </div>
-              <div className="text-5xl font-display font-bold bg-gradient-to-br from-accent to-accent/70 bg-clip-text text-transparent mb-3">
+              <div className="text-5xl font-display font-bold bg-gradient-to-br from-accent to-accent/70 bg-clip-text text-transparent mb-3 pb-1">
                 15+
               </div>
               <div className="text-sm uppercase tracking-wider text-muted-foreground">
@@ -105,7 +105,7 @@ const About = () => {
                   <Car className="w-8 h-8 text-accent" />
                 </div>
               </div>
-              <div className="text-5xl font-display font-bold bg-gradient-to-br from-accent to-accent/70 bg-clip-text text-transparent mb-3">
+              <div className="text-5xl font-display font-bold bg-gradient-to-br from-accent to-accent/70 bg-clip-text text-transparent mb-3 pb-1">
                 10,000+
               </div>
               <div className="text-sm uppercase tracking-wider text-muted-foreground">
@@ -119,7 +119,7 @@ const About = () => {
                   <Star className="w-8 h-8 text-accent" />
                 </div>
               </div>
-              <div className="text-5xl font-display font-bold bg-gradient-to-br from-accent to-accent/70 bg-clip-text text-transparent mb-3">
+              <div className="text-5xl font-display font-bold bg-gradient-to-br from-accent to-accent/70 bg-clip-text text-transparent mb-3 pb-1">
                 100%
               </div>
               <div className="text-sm uppercase tracking-wider text-muted-foreground">

@@ -332,16 +332,9 @@ const AuditLogs = () => {
                             </span>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center w-[180px] gap-2">
-                              <Badge className={`${getEntityBadgeColor(entityType)} hover:bg-transparent hover:cursor-pointer`}>
-                                {formatEntityName(entityType)}
-                              </Badge>
-                              {entityId && (
-                                <span className="text-xs  text-muted-foreground font-mono">
-                                  {entityId.substring(0, 8)}…
-                                </span>
-                              )}
-                            </div>
+                            <Badge className={`${getEntityBadgeColor(entityType)} hover:bg-transparent hover:cursor-pointer`}>
+                              {formatEntityName(entityType)}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             {log.summary ? (
@@ -363,7 +356,7 @@ const AuditLogs = () => {
                             <TableRow className="border-border/50 bg-muted/20">
                               <TableCell colSpan={6} className="py-4">
                                 <div className="grid grid-cols-2 gap-4 px-4">
-                                  {log.old_values && (
+                                  {log.old_values && Object.keys(log.old_values).length > 0 && (
                                     <div>
                                       <div className="flex items-center gap-2 mb-2">
                                         <FileText className="w-4 h-4 text-destructive" />
@@ -376,12 +369,12 @@ const AuditLogs = () => {
                                       </pre>
                                     </div>
                                   )}
-                                  {log.new_values && (
-                                    <div>
+                                  {log.new_values && Object.keys(log.new_values).length > 0 && (
+                                    <div className={log.old_values && Object.keys(log.old_values).length > 0 ? "" : "col-span-2"}>
                                       <div className="flex items-center gap-2 mb-2">
                                         <FileText className="w-4 h-4 text-primary" />
                                         <span className="text-sm font-medium text-primary">
-                                          After
+                                          {log.old_values && Object.keys(log.old_values).length > 0 ? "After" : "Changes"}
                                         </span>
                                       </div>
                                       <pre className="text-xs bg-primary/5 border border-primary/20 p-3 rounded overflow-x-auto font-mono">

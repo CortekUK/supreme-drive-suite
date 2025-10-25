@@ -180,8 +180,41 @@ serve(async (req) => {
       body: JSON.stringify({
         from: FROM_EMAIL,
         to: [adminEmail],
-        subject: `🛡️ URGENT: Close Protection Enquiry - ${enquiryDetails.riskLevel} Risk - ${enquiryDetails.date}`,
+        subject: `Close Protection Enquiry - ${enquiryDetails.riskLevel} Risk Level - ${enquiryDetails.date}`,
         html: emailHtml,
+        text: `Close Protection Enquiry
+
+Customer Information:
+Name: ${customerName}
+Email: ${customerEmail}
+Phone: ${customerPhone}
+
+Service Requirements:
+Service Type: ${enquiryDetails.serviceType}
+Date: ${enquiryDetails.date}
+${enquiryDetails.startTime && enquiryDetails.startTime !== 'TBD' ? `Start Time: ${enquiryDetails.startTime}` : ''}
+${enquiryDetails.durationHours && enquiryDetails.durationHours !== 'TBD' ? `Duration: ${enquiryDetails.durationHours} hours` : ''}
+Primary Location: ${enquiryDetails.primaryLocation}
+${enquiryDetails.secondaryLocation && enquiryDetails.secondaryLocation.trim() !== '' ? `Secondary Location: ${enquiryDetails.secondaryLocation}` : ''}
+${enquiryDetails.agentsRequired && enquiryDetails.agentsRequired !== 'TBD' ? `Agents Required: ${enquiryDetails.agentsRequired}` : ''}
+Risk Level: ${enquiryDetails.riskLevel.toUpperCase()}
+
+${enquiryDetails.notes ? `Additional Notes:\n${enquiryDetails.notes}` : ''}
+
+Action Required:
+1. Review security requirements and assess risk level
+2. Prepare custom quote based on service requirements
+3. Contact customer at ${customerPhone} or ${customerEmail}
+4. Respond within 24 hours
+
+CONFIDENTIAL - Handle with discretion
+
+---
+Supreme Drive Suite
+Close Protection & Executive Security Services
+Email: ${supportEmail}
+Phone: +44 1234 567 890
+`,
       }),
     })
 

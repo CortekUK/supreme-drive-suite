@@ -17,6 +17,7 @@ import {
   Tag,
   RefreshCw,
   CalendarX,
+  UserCog,
 } from "lucide-react";
 import {
   Sidebar,
@@ -532,10 +533,8 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm" className="gap-2">
-                      <div className="h-8 w-8 rounded-full bg-gradient-accent flex items-center justify-center text-white font-medium">
-                        {user?.email?.[0].toUpperCase()}
-                      </div>
-                      <span className="hidden md:inline text-sm">{user?.email}</span>
+                      <UserCog className="h-5 w-5 text-amber-500" />
+                      <span className="hidden md:inline text-sm">{user?.user_metadata?.full_name || user?.email}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56 bg-card border-border">
