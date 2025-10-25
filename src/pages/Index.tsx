@@ -102,11 +102,11 @@ const Index = () => {
       
       <section id="booking" className="py-24 md:py-28 lg:py-32 bg-gradient-dark">
         <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-12 space-y-4 animate-fade-in">
+          <div className="text-center mb-12 space-y-4 animate-fade-in overflow-visible">
             <p className="text-sm uppercase tracking-widest text-accent/80 font-medium mb-2">
               Simple Booking Process
             </p>
-            <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal">
+            <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal leading-relaxed pb-2">
               Book Your Journey
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -127,7 +127,7 @@ const Index = () => {
         
         <div className="container mx-auto px-4 text-center relative z-10">
           <div className="animate-fade-in space-y-8">
-            <h2 className="text-5xl md:text-6xl font-display font-bold text-gradient-metal">
+            <h2 className="text-5xl md:text-6xl font-display font-bold text-gradient-metal pb-2">
               Ready to Experience Supreme Service?
             </h2>
             <p className="text-xl text-foreground/80 max-w-3xl mx-auto leading-relaxed">

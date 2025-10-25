@@ -119,7 +119,7 @@ const ChauffeurServices = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-20 space-y-6 animate-fade-in">
-              <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal">
+              <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal pb-2">
                 Our Services
               </h2>
               <p className="text-base text-muted-foreground max-w-2xl mx-auto uppercase tracking-wider">
@@ -172,7 +172,7 @@ const ChauffeurServices = () => {
       <section className="py-24 md:py-28 lg:py-32 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal text-center mb-20 animate-fade-in">
+            <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal text-center mb-20 animate-fade-in pb-2">
               Why Leading Executives Choose Us
             </h2>
 
@@ -221,7 +221,7 @@ const ChauffeurServices = () => {
             <p className="text-sm uppercase tracking-widest text-accent/80 font-medium mb-2">
               Simple Booking Process
             </p>
-            <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal">
+            <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal pb-2">
               Book Your Chauffeur Service
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">

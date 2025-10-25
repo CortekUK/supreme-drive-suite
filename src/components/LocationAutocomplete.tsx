@@ -114,7 +114,9 @@ const LocationAutocomplete = ({
   };
 
   const handleInputChange = (inputValue: string) => {
-    onChange(inputValue);
+    // Sanitize input: allow letters, numbers, spaces, commas, hyphens, apostrophes, and periods
+    const sanitized = inputValue.replace(/[^a-zA-Z0-9\s,.\-']/g, '');
+    onChange(sanitized);
 
     // Debounce API calls
     if (debounceTimer.current) {
@@ -122,8 +124,18 @@ const LocationAutocomplete = ({
     }
 
     debounceTimer.current = setTimeout(() => {
-      fetchSuggestions(inputValue);
+      fetchSuggestions(sanitized);
     }, 300);
+  };
+
+  const handleFocus = () => {
+    // Show existing suggestions when focusing if there are any and input has text
+    if (value.length >= 3 && suggestions.length > 0) {
+      setShowSuggestions(true);
+    } else if (value.length >= 3) {
+      // Fetch suggestions if we have enough text but no suggestions
+      fetchSuggestions(value);
+    }
   };
 
   const handleSelectSuggestion = (suggestion: NominatimResult) => {
@@ -147,6 +159,7 @@ const LocationAutocomplete = ({
           id={id}
           value={value}
           onChange={(e) => handleInputChange(e.target.value)}
+          onFocus={handleFocus}
           placeholder={placeholder}
           className={className}
           autoComplete="off"

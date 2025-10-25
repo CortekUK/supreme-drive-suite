@@ -22,7 +22,7 @@ const TrustBadges = () => {
   return (
     <section className="py-20 md:py-24 lg:py-28 bg-gradient-to-b from-background to-background/95">
       <div className="container mx-auto px-4">
-        <h2 className="text-4xl md:text-5xl font-display font-bold text-center mb-20 text-gradient-metal animate-fade-in">
+        <h2 className="text-4xl md:text-5xl font-display font-bold text-center mb-20 text-gradient-metal animate-fade-in pb-2">
           Why Choose Us
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-16 lg:gap-20 max-w-6xl mx-auto">

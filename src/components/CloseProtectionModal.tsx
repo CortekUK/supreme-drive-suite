@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Shield } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -38,19 +38,86 @@ const CloseProtectionModal = ({
   onSubmit
 }: CloseProtectionModalProps) => {
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [formData, setFormData] = useState({
-    name: customerName,
-    email: customerEmail,
-    phone: customerPhone,
+    name: "",
+    email: "",
+    phone: "",
     requirements: "",
     threatLevel: ""
   });
 
+  // Initialize form when modal opens (only on first open)
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        name: customerName,
+        email: customerEmail,
+        phone: customerPhone,
+        requirements: "",
+        threatLevel: ""
+      });
+      setErrors({});
+    }
+  }, [open]); // Remove customerName, customerEmail, customerPhone from dependencies
+
   const handleSubmit = async () => {
-    if (!formData.name || !formData.email || !formData.phone) {
-      toast.error("Please fill in all required fields");
+    const newErrors: {[key: string]: string} = {};
+
+    // Validate name
+    const nameValue = formData.name.trim();
+    if (!nameValue) {
+      newErrors.name = "Please enter your full name";
+    } else if (nameValue.length < 2) {
+      newErrors.name = "Name must be at least 2 characters";
+    } else if (!/^[a-zA-Z\s\-']+$/.test(nameValue)) {
+      newErrors.name = "Name must contain only letters, spaces, hyphens, and apostrophes";
+    } else if (!/[a-zA-Z]{2,}/.test(nameValue)) {
+      newErrors.name = "Name must contain at least 2 alphabetic characters";
+    } else if (nameValue.replace(/[\s\-']/g, '').length < 2) {
+      newErrors.name = "Name must have actual alphabetic content";
+    }
+
+    // Validate email
+    if (!formData.email.trim()) {
+      newErrors.email = "Please enter your email address";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    // Validate phone (UK format)
+    const phoneValue = formData.phone.trim();
+    if (!phoneValue) {
+      newErrors.phone = "Please enter your phone number";
+    } else {
+      // Remove all spaces, hyphens, parentheses for validation
+      const cleaned = phoneValue.replace(/[\s\-()]/g, '');
+      // UK phone number: must start with 0 or +44, and have correct length
+      const ukPattern = /^(\+44|0)[1-9]\d{9,10}$/;
+      const isValidUK = ukPattern.test(cleaned);
+      // Count actual digits
+      const digitCount = (cleaned.match(/\d/g) || []).length;
+      const isValid = isValidUK || (cleaned.startsWith('+44') && digitCount >= 12 && digitCount <= 13) || (cleaned.startsWith('0') && digitCount >= 10 && digitCount <= 11);
+
+      if (!isValid) {
+        newErrors.phone = "Please enter a valid UK phone number (e.g., 07XXX XXXXXX or +44 7XXX XXXXXX)";
+      }
+    }
+
+    // Validate threat level (optional but show error if you want it required)
+    if (!formData.threatLevel || formData.threatLevel.trim() === "") {
+      newErrors.threatLevel = "Please select a threat assessment level";
+    }
+
+    // If there are errors, set them and return
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("Please fix the errors before submitting");
       return;
     }
+
+    // Clear errors if validation passes
+    setErrors({});
 
     setLoading(true);
     try {
@@ -64,35 +131,37 @@ const CloseProtectionModal = ({
         submitted_at: new Date().toISOString()
       };
 
-      // Send email to admin about close protection request
-      const adminEmail = 'ilyasghulam32@gmail.com'; // Replace with actual admin email
+      // Send email to admin about close protection request with booking
+      const adminEmail = 'ilyasghulam32@gmail.com';
 
       const emailData = {
-        customerEmail: adminEmail,
-        customerName: 'Admin',
-        bookingDetails: {
-          pickupLocation: fullBookingData?.pickupLocation || 'N/A',
-          dropoffLocation: fullBookingData?.dropoffLocation || 'N/A',
-          pickupDate: fullBookingData?.pickupDate || new Date().toLocaleDateString(),
-          pickupTime: fullBookingData?.pickupTime || new Date().toLocaleTimeString(),
-          vehicleName: fullBookingData?.vehicleName || 'Close Protection Request',
-          passengers: fullBookingData?.passengers || 'N/A',
-          totalPrice: 'TBD',
-          additionalRequirements: `
-            <strong>CLOSE PROTECTION REQUEST</strong><br/><br/>
-            <strong>Customer Name:</strong> ${formData.name}<br/>
-            <strong>Email:</strong> ${formData.email}<br/>
-            <strong>Phone:</strong> ${formData.phone}<br/>
-            <strong>Threat Level:</strong> ${formData.threatLevel || 'Not Sure'}<br/><br/>
-            <strong>Specific Requirements:</strong><br/>
-            ${formData.requirements || 'None specified'}
-          `
+        adminEmail: adminEmail,
+        customerName: formData.name,
+        customerEmail: formData.email,
+        customerPhone: formData.phone,
+        enquiryDetails: {
+          serviceType: 'Combined with Chauffeur Service',
+          date: fullBookingData?.pickupDate || new Date().toLocaleDateString(),
+          startTime: fullBookingData?.pickupTime || 'TBD',
+          durationHours: 'TBD',
+          primaryLocation: fullBookingData?.pickupLocation || 'N/A',
+          secondaryLocation: fullBookingData?.dropoffLocation || '',
+          agentsRequired: 'TBD',
+          riskLevel: formData.threatLevel || 'Not Sure',
+          notes: `
+COMBINED WITH CHAUFFEUR BOOKING:
+Vehicle: ${fullBookingData?.vehicleName || 'N/A'}
+Passengers: ${fullBookingData?.passengers || 'N/A'}
+
+SPECIFIC REQUIREMENTS:
+${formData.requirements || 'None specified'}
+          `.trim()
         },
         supportEmail: adminEmail
       };
 
-      // Send email notification to admin
-      await supabase.functions.invoke('hyper-api', {
+      // Send email notification to admin using dedicated CP enquiry function
+      await supabase.functions.invoke('send-cp-enquiry', {
         body: emailData
       });
 
@@ -122,7 +191,7 @@ const CloseProtectionModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <Shield className="w-6 h-6 text-[#C5A572]" />
@@ -133,46 +202,92 @@ const CloseProtectionModal = ({
           </DialogDescription>
         </DialogHeader>
 
+        <form name="closeProtectionForm" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="cp-name">Name *</Label>
             <Input
               id="cp-name"
+              name="cp-modal-name"
+              autoComplete="off"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) => {
+                // Allow only letters, spaces, hyphens, and apostrophes
+                const sanitized = e.target.value.replace(/[^a-zA-Z\s\-']/g, '');
+                setFormData({ ...formData, name: sanitized });
+                if (errors.name) {
+                  setErrors({ ...errors, name: "" });
+                }
+              }}
               placeholder="Your name"
+              className={errors.name ? "border-destructive" : ""}
             />
+            {errors.name && (
+              <p className="text-sm text-destructive">{errors.name}</p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="cp-email">Email *</Label>
             <Input
               id="cp-email"
+              name="cp-modal-email"
               type="email"
+              autoComplete="off"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, email: e.target.value });
+                if (errors.email) {
+                  setErrors({ ...errors, email: "" });
+                }
+              }}
               placeholder="your@email.com"
+              className={errors.email ? "border-destructive" : ""}
             />
+            {errors.email && (
+              <p className="text-sm text-destructive">{errors.email}</p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="cp-phone">Phone *</Label>
             <Input
               id="cp-phone"
+              name="cp-modal-phone"
               type="tel"
+              autoComplete="off"
               value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              onChange={(e) => {
+                // Allow only numbers, spaces, +, -, (, )
+                const sanitized = e.target.value.replace(/[^\d\s+\-()]/g, '');
+                setFormData({ ...formData, phone: sanitized });
+                if (errors.phone) {
+                  setErrors({ ...errors, phone: "" });
+                }
+              }}
               placeholder="+44 7XXX XXXXXX"
+              className={errors.phone ? "border-destructive" : ""}
             />
+            {errors.phone && (
+              <p className="text-sm text-destructive">{errors.phone}</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cp-threat">Threat Assessment</Label>
+            <Label htmlFor="cp-threat">Threat Assessment *</Label>
             <Select
               value={formData.threatLevel}
-              onValueChange={(value) => setFormData({ ...formData, threatLevel: value })}
+              onValueChange={(value) => {
+                setFormData({ ...formData, threatLevel: value });
+                if (errors.threatLevel) {
+                  setErrors({ ...errors, threatLevel: "" });
+                }
+              }}
             >
-              <SelectTrigger id="cp-threat">
+              <SelectTrigger
+                id="cp-threat"
+                className={errors.threatLevel ? "border-destructive" : ""}
+              >
                 <SelectValue placeholder="Select threat level" />
               </SelectTrigger>
               <SelectContent>
@@ -182,6 +297,9 @@ const CloseProtectionModal = ({
                 <SelectItem value="Not Sure">Not Sure - Need assessment</SelectItem>
               </SelectContent>
             </Select>
+            {errors.threatLevel && (
+              <p className="text-sm text-destructive">{errors.threatLevel}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -189,10 +307,19 @@ const CloseProtectionModal = ({
             <Textarea
               id="cp-requirements"
               value={formData.requirements}
-              onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, requirements: e.target.value });
+                if (errors.requirements) {
+                  setErrors({ ...errors, requirements: "" });
+                }
+              }}
               placeholder="Any specific security concerns or requirements..."
               rows={3}
+              className={errors.requirements ? "border-destructive" : ""}
             />
+            {errors.requirements && (
+              <p className="text-sm text-destructive">{errors.requirements}</p>
+            )}
           </div>
         </div>
 
@@ -206,13 +333,14 @@ const CloseProtectionModal = ({
             Cancel
           </Button>
           <Button
-            onClick={handleSubmit}
+            type="submit"
             className="flex-1 gradient-accent"
             disabled={loading}
           >
             {loading ? "Submitting..." : "Submit Enquiry"}
           </Button>
         </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

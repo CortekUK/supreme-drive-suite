@@ -50,28 +50,28 @@ const Navigation = () => {
     label: "Contact"
   }];
   return <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-metal py-3 h-[72px]">
-      <div className="container mx-auto px-0">
-        <div className="flex items-center w-full justify-between gap-8">
+      <div className="container mx-auto px-2 lg:px-4">
+        <div className="flex items-center w-full justify-between gap-2 lg:gap-4 xl:gap-8">
           {/* Logo/Branding - Left */}
-          <Link to="/" className="flex items-center gap-3 flex-shrink-0 group">
-            <Shield className="w-6 h-6 text-foreground transition-colors" strokeWidth={1.5} />
+          <Link to="/" className="flex items-center gap-2 lg:gap-3 flex-shrink-0 group">
+            <Shield className="w-5 h-5 lg:w-6 lg:h-6 text-foreground transition-colors" strokeWidth={1.5} />
             <div className="flex flex-col">
-              <span className="text-xl lg:text-2xl font-luxury font-semibold text-gradient-silver leading-tight whitespace-nowrap tracking-wide">
+              <span className="text-base lg:text-lg xl:text-2xl font-luxury font-semibold dark:text-gradient-silver text-gradient-metal leading-tight whitespace-nowrap tracking-wide">
                 Travel in Supreme Style
               </span>
-              <div className="h-0.5 w-full bg-accent/60 mt-1" />
+              <div className="h-0.5 w-full bg-accent/60 mt-0.5 lg:mt-1" />
             </div>
           </Link>
 
           {/* Desktop Navigation - Center */}
-          <div className="hidden lg:flex items-center justify-center flex-1 gap-1 xl:gap-3 2xl:gap-5">
-            {navLinks.map(link => <Link key={link.path} to={link.path} className={`text-xs xl:text-sm font-medium transition-colors hover:text-primary px-1 xl:px-2 whitespace-nowrap ${isActive(link.path) ? "text-primary" : "text-muted-foreground"}`}>
+          <div className="hidden xl:flex items-center justify-center flex-1 gap-3 2xl:gap-5">
+            {navLinks.map(link => <Link key={link.path} to={link.path} className={`text-sm font-medium transition-colors hover:text-primary px-2 whitespace-nowrap ${isActive(link.path) ? "text-primary" : "text-muted-foreground"}`}>
                 {link.label}
               </Link>)}
           </div>
 
           {/* Right-side Action Area */}
-          <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
+          <div className="hidden xl:flex items-center gap-3 flex-shrink-0">
             <ThemeToggle />
             <Link to="/auth">
               <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
@@ -81,14 +81,14 @@ const Navigation = () => {
             </Link>
             <a href={`tel:${phoneLink}`}>
               <Button className="gradient-accent shadow-glow text-sm font-semibold whitespace-nowrap">
-                <Phone className="w-4 h-4 mr-2" />
-                {settings.phone}
+                <Phone className="w-4 h-4 2xl:mr-2" />
+                <span className="hidden 2xl:inline">{settings.phone}</span>
               </Button>
             </a>
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="flex lg:hidden items-center gap-2">
+          <div className="flex xl:hidden items-center gap-2">
             <ThemeToggle />
             <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-foreground">
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -97,13 +97,13 @@ const Navigation = () => {
         </div>
 
         {/* Mobile Navigation */}
-        {isOpen && <div className="lg:hidden pb-4 pt-4 space-y-3 border-t border-border/50 mt-4">
+        {isOpen && <div className="xl:hidden px-4 pb-4 pt-4 space-y-3 border-t border-border/50 mt-4 bg-background/95 backdrop-blur-sm">
             {navLinks.map(link => <Link key={link.path} to={link.path} onClick={() => setIsOpen(false)} className={`block py-2.5 text-sm font-medium transition-colors ${isActive(link.path) ? "text-primary" : "text-muted-foreground"}`}>
                 {link.label}
               </Link>)}
             <div className="pt-4 space-y-3">
               <Link to="/auth" onClick={() => setIsOpen(false)}>
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full mb-2">
                   <Lock className="w-4 h-4 mr-2" />
                   Admin Login
                 </Button>

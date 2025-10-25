@@ -33,7 +33,7 @@ serve(async (req) => {
             currency: 'usd',
             product_data: {
               name: 'Chauffeur Service Booking',
-              description: `Booking ID: ${bookingId}`,
+              description: 'Luxury chauffeur service - Supreme Drive Suite',
             },
             unit_amount: Math.round(totalAmount * 100), // Convert to cents
           },

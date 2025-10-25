@@ -23,27 +23,56 @@ const BookingSuccess = () => {
             setBookingDetails(booking);
 
             // Send confirmation email to admin (until domain is configured)
+            const isCloseProtection = booking.serviceType === 'close_protection';
+            const emailBody = isCloseProtection ? {
+              customerEmail: 'ilyasghulam32@gmail.com',
+              customerName: booking.customerName,
+              bookingDetails: {
+                pickupLocation: booking.pickupLocation,
+                dropoffLocation: booking.dropoffLocation,
+                pickupDate: booking.pickupDate,
+                pickupTime: booking.pickupTime,
+                vehicleName: `🛡️ ${booking.vehicleName} + CLOSE PROTECTION`,
+                passengers: booking.passengers,
+                totalPrice: booking.totalPrice,
+                customerEmail: booking.customerEmail,
+                customerPhone: booking.customerPhone,
+                additionalRequirements: `
+                  <strong>🛡️ CLOSE PROTECTION BOOKING CONFIRMED</strong><br/><br/>
+                  <strong>Service Details:</strong><br/>
+                  Service Type: ${booking.protectionDetails?.serviceType || 'Combined with Chauffeur Service'}<br/>
+                  Risk Level: <strong>${booking.protectionDetails?.threat_level || booking.protectionDetails?.riskLevel || 'Not specified'}</strong><br/>
+                  ${booking.protectionDetails?.agentsRequired ? `Agents Required: ${booking.protectionDetails.agentsRequired}<br/>` : ''}
+                  ${booking.protectionDetails?.durationHours ? `Duration: ${booking.protectionDetails.durationHours} hours<br/>` : ''}<br/>
+                  <strong>Chauffeur Details:</strong><br/>
+                  Vehicle: ${booking.vehicleName}<br/>
+                  Passengers: ${booking.passengers}<br/><br/>
+                  ${booking.additionalRequirements ? `<strong>Additional Requirements:</strong><br/>${booking.additionalRequirements}<br/><br/>` : ''}
+                  ${booking.protectionDetails?.requirements ? `<strong>Protection Requirements:</strong><br/>${booking.protectionDetails.requirements}<br/><br/>` : ''}
+                  <strong>⚠️ HIGH PRIORITY - This is a confirmed close protection booking requiring immediate team assignment.</strong>
+                `
+              },
+              supportEmail: 'ilyasghulam32@gmail.com'
+            } : {
+              customerEmail: 'ilyasghulam32@gmail.com',
+              customerName: booking.customerName,
+              bookingDetails: {
+                pickupLocation: booking.pickupLocation,
+                dropoffLocation: booking.dropoffLocation,
+                pickupDate: booking.pickupDate,
+                pickupTime: booking.pickupTime,
+                vehicleName: booking.vehicleName,
+                passengers: booking.passengers,
+                totalPrice: booking.totalPrice,
+                customerEmail: booking.customerEmail,
+                customerPhone: booking.customerPhone,
+                additionalRequirements: booking.additionalRequirements || ''
+              },
+              supportEmail: 'ilyasghulam32@gmail.com'
+            };
+
             await supabase.functions.invoke('hyper-api', {
-              body: {
-                customerEmail: 'ilyasghulam32@gmail.com', // Admin email for now
-                customerName: 'Admin',
-                bookingDetails: {
-                  pickupLocation: booking.pickupLocation,
-                  dropoffLocation: booking.dropoffLocation,
-                  pickupDate: booking.pickupDate,
-                  pickupTime: booking.pickupTime,
-                  vehicleName: booking.vehicleName,
-                  passengers: booking.passengers,
-                  totalPrice: booking.totalPrice,
-                  additionalRequirements: `
-                    <strong>Customer Details:</strong><br/>
-                    Name: ${booking.customerName}<br/>
-                    Email: ${booking.customerEmail}<br/><br/>
-                    ${booking.additionalRequirements || ''}
-                  `
-                },
-                supportEmail: 'ilyasghulam32@gmail.com'
-              }
+              body: emailBody
             });
 
             // Send SMS confirmation - DISABLED FOR TRIAL (Pakistan numbers not supported on Twilio trial)

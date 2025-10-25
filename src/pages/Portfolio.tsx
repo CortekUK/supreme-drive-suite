@@ -74,15 +74,15 @@ const Portfolio = () => {
       filtered = filtered.filter((item) => item.service_type === filters.serviceType);
     }
 
-    if (filters.vehicle) {
+    if (filters.vehicle && filters.vehicle !== "all") {
       filtered = filtered.filter((item) =>
-        item.vehicle_used?.toLowerCase().includes(filters.vehicle.toLowerCase())
+        item.vehicle_used?.toLowerCase() === filters.vehicle.toLowerCase()
       );
     }
 
-    if (filters.location) {
+    if (filters.location && filters.location !== "all") {
       filtered = filtered.filter((item) =>
-        item.location.toLowerCase().includes(filters.location.toLowerCase())
+        item.location.toLowerCase() === filters.location.toLowerCase()
       );
     }
 

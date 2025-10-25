@@ -89,10 +89,10 @@ export const PortfolioCarousel = ({ serviceType, title, subtitle }: PortfolioCar
   return (
     <section className="py-24 md:py-28 lg:py-32 bg-muted/30 relative">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/5 to-transparent pointer-events-none" />
-      <div className="container mx-auto px-4 relative">
-        <div className="max-w-6xl mx-auto">
+      <div className="container mx-auto px-4 md:px-6 lg:px-10 relative">
+        <div className="max-w-[1400px] mx-auto">
           <div className="text-center mb-16 space-y-6 animate-fade-in">
-            <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal">
+            <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal pb-2">
               {title}
             </h2>
             {subtitle && (
@@ -132,16 +132,16 @@ export const PortfolioCarousel = ({ serviceType, title, subtitle }: PortfolioCar
 
             {/* Carousel */}
             <div className="overflow-hidden">
-              <div 
-                className="grid md:grid-cols-2 gap-10 transition-transform duration-500 ease-out"
-                style={{ 
+              <div
+                className="grid md:grid-cols-2 gap-6 transition-transform duration-500 ease-out"
+                style={{
                   transform: `translateX(-${currentIndex * (100 / 2)}%)`,
                   width: `${(items.length / 2) * 100}%`
                 }}
               >
                 {items.map((item, index) => (
-                  <div 
-                    key={item.id} 
+                  <div
+                    key={item.id}
                     className="animate-fade-in"
                     style={{ animationDelay: `${index * 100}ms` }}
                   >

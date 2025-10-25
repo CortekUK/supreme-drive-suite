@@ -10,24 +10,53 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { TimePicker } from "@/components/ui/time-picker";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, Loader2, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 const enquirySchema = z.object({
-  fullName: z.string().trim().min(2, "Full name is required").max(100),
-  email: z.string().trim().email("Invalid email address").max(255),
-  phone: z.string().trim().min(10, "Valid phone number is required").max(20),
+  fullName: z.string()
+    .min(1, "Full name is required")
+    .refine((val) => val.trim().length > 0, "Full name cannot be empty")
+    .transform((val) => val.trim())
+    .refine((val) => val.length >= 2, "Full name must be at least 2 characters")
+    .refine((val) => /^[a-zA-Z\s\-']+$/.test(val), "Name must contain only letters, spaces, hyphens, and apostrophes")
+    .refine((val) => /[a-zA-Z]{2,}/.test(val), "Name must contain at least 2 alphabetic characters")
+    .refine((val) => val.replace(/[\s\-']/g, '').length >= 2, "Name must have actual alphabetic content"),
+  email: z.string()
+    .trim()
+    .min(1, "Email is required")
+    .email("Invalid email address")
+    .max(255),
+  phone: z.string()
+    .trim()
+    .min(1, "Phone number is required")
+    .refine((val) => {
+      // Remove all spaces, hyphens, parentheses for validation
+      const cleaned = val.replace(/[\s\-()]/g, '');
+      // UK phone number: must start with 0 or +44, and have correct length
+      const ukPattern = /^(\+44|0)[1-9]\d{9,10}$/;
+      const isValidUK = ukPattern.test(cleaned);
+      // Count actual digits
+      const digitCount = (cleaned.match(/\d/g) || []).length;
+      return isValidUK || (cleaned.startsWith('+44') && digitCount >= 12 && digitCount <= 13) || (cleaned.startsWith('0') && digitCount >= 10 && digitCount <= 11);
+    }, "Please enter a valid UK phone number (e.g., 07XXX XXXXXX or +44 7XXX XXXXXX)"),
   serviceType: z.enum(["Event", "Travel", "Residential", "Ongoing"], {
     required_error: "Please select a service type",
   }),
   date: z.string().min(1, "Date is required"),
   startTime: z.string().min(1, "Start time is required"),
-  durationHours: z.number().min(1, "Duration must be at least 1 hour").max(24),
+  durationHours: z.number({
+    required_error: "Duration is required",
+    invalid_type_error: "Please enter a valid number for duration",
+  }).min(1, "Duration must be at least 1 hour").max(24, "Duration cannot exceed 24 hours"),
   primaryLocation: z.string().trim().min(5, "Primary location is required").max(500),
   secondaryLocation: z.string().trim().max(500).optional(),
-  agentsRequired: z.number().min(1).max(10).optional(),
+  agentsRequired: z.number({
+    invalid_type_error: "Please enter a valid number",
+  }).min(1).max(10).optional(),
   riskLevel: z.enum(["Low", "Medium", "High"], {
     required_error: "Please select a risk level",
   }),
@@ -52,8 +81,14 @@ const CloseProtectionEnquiryForm = () => {
     resolver: zodResolver(enquirySchema),
   });
 
+  // Reset submitted state when form has validation errors
+  const onError = () => {
+    setSubmitted(false);
+  };
+
   const onSubmit = async (data: EnquiryFormData) => {
     setIsSubmitting(true);
+    setSubmitted(false); // Reset submitted state before attempting new submission
     try {
       const priority = data.riskLevel === "High" ? "high" : "normal";
       
@@ -90,38 +125,24 @@ const CloseProtectionEnquiryForm = () => {
 
       if (error) throw error;
 
-      // Send confirmation email to admin
+      // Send confirmation email to admin using dedicated CP enquiry function
       try {
-        await supabase.functions.invoke('hyper-api', {
+        await supabase.functions.invoke('send-cp-enquiry', {
           body: {
-            customerEmail: 'ilyasghulam32@gmail.com', // Admin email
-            customerName: 'Admin - Close Protection',
-            bookingDetails: {
-              pickupLocation: data.primaryLocation,
-              dropoffLocation: data.secondaryLocation || 'N/A',
-              pickupDate: data.date,
-              pickupTime: data.startTime,
-              vehicleName: `Close Protection - ${data.serviceType}`,
-              passengers: data.agentsRequired || 1,
-              totalPrice: 'TBD (Quote Required)',
-              additionalRequirements: `
-                <strong>🛡️ CLOSE PROTECTION ENQUIRY</strong><br/><br/>
-                <strong>Customer Details:</strong><br/>
-                Name: ${data.fullName}<br/>
-                Email: ${data.email}<br/>
-                Phone: ${data.phone}<br/><br/>
-                <strong>Service Details:</strong><br/>
-                Service Type: ${data.serviceType}<br/>
-                Date: ${data.date}<br/>
-                Start Time: ${data.startTime}<br/>
-                Duration: ${data.durationHours} hours<br/>
-                Primary Location: ${data.primaryLocation}<br/>
-                ${data.secondaryLocation ? `Secondary Location: ${data.secondaryLocation}<br/>` : ''}
-                Agents Required: ${data.agentsRequired || 'Not specified'}<br/>
-                Risk Level: <strong>${data.riskLevel}</strong><br/><br/>
-                ${data.notes ? `<strong>Additional Notes:</strong><br/>${data.notes}<br/><br/>` : ''}
-                <strong>⚠️ This is a high-priority enquiry requiring immediate attention.</strong>
-              `
+            adminEmail: 'ilyasghulam32@gmail.com',
+            customerName: data.fullName,
+            customerEmail: data.email,
+            customerPhone: data.phone,
+            enquiryDetails: {
+              serviceType: data.serviceType,
+              date: data.date,
+              startTime: data.startTime,
+              durationHours: data.durationHours,
+              primaryLocation: data.primaryLocation,
+              secondaryLocation: data.secondaryLocation || '',
+              agentsRequired: data.agentsRequired,
+              riskLevel: data.riskLevel,
+              notes: data.notes || ''
             },
             supportEmail: 'ilyasghulam32@gmail.com'
           }
@@ -168,20 +189,13 @@ const CloseProtectionEnquiryForm = () => {
         <p className="text-sm text-primary">
           Reference Number: <span className="font-mono font-bold">{referenceNumber}</span>
         </p>
-        <Button
-          onClick={() => setSubmitted(false)}
-          variant="outline"
-          className="mt-4"
-        >
-          Submit Another Enquiry
-        </Button>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-6">
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name *</Label>
@@ -190,6 +204,11 @@ const CloseProtectionEnquiryForm = () => {
               {...register("fullName")}
               placeholder="John Smith"
               className="bg-background/50"
+              onChange={(e) => {
+                // Allow only letters, spaces, hyphens, and apostrophes
+                e.target.value = e.target.value.replace(/[^a-zA-Z\s\-']/g, '');
+                register("fullName").onChange(e);
+              }}
             />
             {errors.fullName && (
               <p className="text-sm text-destructive">{errors.fullName.message}</p>
@@ -220,6 +239,11 @@ const CloseProtectionEnquiryForm = () => {
               {...register("phone")}
               placeholder="+44 7700 900000"
               className="bg-background/50"
+              onChange={(e) => {
+                // Allow only numbers, spaces, +, -, (, )
+                e.target.value = e.target.value.replace(/[^\d\s+\-()]/g, '');
+                register("phone").onChange(e);
+              }}
             />
             {errors.phone && (
               <p className="text-sm text-destructive">{errors.phone.message}</p>
@@ -301,11 +325,17 @@ const CloseProtectionEnquiryForm = () => {
 
           <div className="space-y-2">
             <Label htmlFor="startTime">Start Time *</Label>
-            <Input
-              id="startTime"
-              type="time"
-              {...register("startTime")}
-              className="bg-background/50"
+            <Controller
+              name="startTime"
+              control={control}
+              render={({ field }) => (
+                <TimePicker
+                  id="startTime"
+                  value={field.value}
+                  onChange={field.onChange}
+                  className="bg-background/50"
+                />
+              )}
             />
             {errors.startTime && (
               <p className="text-sm text-destructive">{errors.startTime.message}</p>

@@ -20,8 +20,8 @@ interface PortfolioCardProps {
 
 export const PortfolioCard = ({ item }: PortfolioCardProps) => {
   return (
-    <Link to={`/portfolio/${item.slug}`}>
-      <Card className="group overflow-hidden transition-all duration-500 hover:shadow-[0_10px_40px_rgba(255,215,0,0.25)] hover:shadow-glow hover:-translate-y-2 hover:border-accent/50 bg-card border-border/50 min-h-[480px] flex flex-col">
+    <Link to={`/portfolio/${item.slug}`} className="w-full md:min-w-[400px]">
+      <Card className="group w-full md:min-w-[400px] overflow-hidden transition-all duration-500 hover:shadow-[0_10px_40px_rgba(255,215,0,0.25)] hover:shadow-glow hover:-translate-y-2 hover:border-accent/50 bg-card border-border/50 min-h-[480px] flex flex-col">
         <div className="relative aspect-video overflow-hidden">
           <img
             src={item.cover_image_url}
@@ -74,7 +74,7 @@ export const PortfolioCard = ({ item }: PortfolioCardProps) => {
             {item.title}
           </h3>
           
-          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 flex-1">
+          <p className="text-sm  text-muted-foreground leading-relaxed line-clamp-3 flex-1">
             {item.is_confidential ? "Details available upon request" : item.summary}
           </p>
 

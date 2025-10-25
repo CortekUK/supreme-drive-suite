@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { TimePicker } from "@/components/ui/time-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Car } from "lucide-react";
@@ -208,12 +209,10 @@ const BookingWidget = () => {
           
           <div className="space-y-2">
             <Label htmlFor="pickupTime">Pickup Time</Label>
-            <Input
+            <TimePicker
               id="pickupTime"
-              type="time"
               value={formData.pickupTime}
-              onChange={(e) => setFormData({ ...formData, pickupTime: e.target.value })}
-              required
+              onChange={(value) => setFormData({ ...formData, pickupTime: value })}
             />
           </div>
         </div>

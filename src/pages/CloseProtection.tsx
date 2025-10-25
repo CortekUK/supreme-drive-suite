@@ -94,7 +94,7 @@ const CloseProtection = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-20 space-y-6 animate-fade-in">
-              <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal">
+              <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal pb-2">
                 Uncompromising Excellence
               </h2>
               <p className="text-base text-muted-foreground max-w-2xl mx-auto uppercase tracking-wider">
@@ -102,7 +102,7 @@ const CloseProtection = () => {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8">
+            <div className="grid md:grid-cols-2 gap-8 -full">
               {features.map((feature, index) => (
                 <Card 
                   key={index} 
@@ -138,7 +138,7 @@ const CloseProtection = () => {
         <div className="container mx-auto px-4 relative">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16 animate-fade-in">
-              <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal mb-6">
+              <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal mb-6 pb-2">
                 Our Approach
               </h2>
               <div className="flex items-center justify-center">
@@ -178,7 +178,7 @@ const CloseProtection = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16 animate-fade-in">
-              <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal mb-6">
+              <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal mb-6 pb-2">
                 Accredited & Certified
               </h2>
               <div className="flex items-center justify-center mb-6">
@@ -227,7 +227,7 @@ const CloseProtection = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16 animate-fade-in">
-              <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal mb-6">
+              <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal mb-6 pb-2">
                 Trusted by High-Profile Clients
               </h2>
               <div className="flex items-center justify-center mb-6">
@@ -283,7 +283,7 @@ const CloseProtection = () => {
               <p className="text-sm uppercase tracking-widest text-accent/80 font-medium mb-2">
                 Secure Consultation
               </p>
-              <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal">
+              <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal pb-2">
                 Confidential Consultation
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">

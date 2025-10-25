@@ -21,14 +21,28 @@ interface PortfolioFiltersProps {
 
 export const PortfolioFilters = ({ onFilter, items }: PortfolioFiltersProps) => {
   const [serviceType, setServiceType] = useState("all");
-  const [vehicle, setVehicle] = useState("");
-  const [location, setLocation] = useState("");
+  const [vehicle, setVehicle] = useState("all");
+  const [location, setLocation] = useState("all");
   const [year, setYear] = useState("all");
   const [search, setSearch] = useState("");
 
   const uniqueYears = useMemo(() => {
     const years = items.map((item) => new Date(item.event_date).getFullYear());
     return [...new Set(years)].sort((a, b) => b - a);
+  }, [items]);
+
+  const uniqueVehicles = useMemo(() => {
+    const vehicles = items
+      .map((item) => item.vehicle_used)
+      .filter((v) => v && v.trim() !== "");
+    return [...new Set(vehicles)].sort();
+  }, [items]);
+
+  const uniqueLocations = useMemo(() => {
+    const locations = items
+      .map((item) => item.location)
+      .filter((l) => l && l.trim() !== "");
+    return [...new Set(locations)].sort();
   }, [items]);
 
   const handleFilterChange = (updates: {
@@ -72,20 +86,34 @@ export const PortfolioFilters = ({ onFilter, items }: PortfolioFiltersProps) => 
         </Select>
 
         {/* Vehicle */}
-        <Input
-          placeholder="Vehicle"
-          value={vehicle}
-          onChange={(e) => handleFilterChange({ vehicle: e.target.value })}
-          className="bg-card border-border/50"
-        />
+        <Select value={vehicle} onValueChange={(value) => handleFilterChange({ vehicle: value })}>
+          <SelectTrigger className="bg-card border-border/50">
+            <SelectValue placeholder="Vehicle" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Vehicles</SelectItem>
+            {uniqueVehicles.map((v) => (
+              <SelectItem key={v} value={v}>
+                {v}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Location */}
-        <Input
-          placeholder="Location"
-          value={location}
-          onChange={(e) => handleFilterChange({ location: e.target.value })}
-          className="bg-card border-border/50"
-        />
+        <Select value={location} onValueChange={(value) => handleFilterChange({ location: value })}>
+          <SelectTrigger className="bg-card border-border/50">
+            <SelectValue placeholder="Location" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Locations</SelectItem>
+            {uniqueLocations.map((l) => (
+              <SelectItem key={l} value={l}>
+                {l}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Year */}
         <Select value={year} onValueChange={(value) => handleFilterChange({ year: value })}>

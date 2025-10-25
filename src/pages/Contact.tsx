@@ -16,13 +16,19 @@ import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 
-// UK phone validation regex (various UK formats)
-const ukPhoneRegex = /^(?:(?:\(?(?:0(?:0|11)\)?[\s-]?\(?|\+)44\)?[\s-]?(?:\(?0\)?[\s-]?)?)|(?:\(?0))(?:(?:\d{5}\)?[\s-]?\d{4,5})|(?:\d{4}\)?[\s-]?(?:\d{5}|\d{3}[\s-]?\d{3}))|(?:\d{3}\)?[\s-]?\d{3}[\s-]?\d{3,4})|(?:\d{2}\)?[\s-]?\d{4}[\s-]?\d{4}))(?:[\s-]?(?:x|ext\.?|\#)\d{3,4})?$/;
-
 const contactSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters"),
   email: z.string().trim().email("Please enter a valid email address").max(255, "Email must be less than 255 characters"),
-  phone: z.string().trim().regex(ukPhoneRegex, "Please enter a valid UK phone number"),
+  phone: z.string().trim().refine((val) => {
+    // Remove all spaces, hyphens, parentheses
+    const cleaned = val.replace(/[\s\-()]/g, '');
+    // UK phone number: must start with 0 or +44, and have correct length
+    const ukPattern = /^(\+44|0)[1-9]\d{9,10}$/;
+    const isValidUK = ukPattern.test(cleaned);
+    // Count actual digits
+    const digitCount = (cleaned.match(/\d/g) || []).length;
+    return isValidUK || (cleaned.startsWith('+44') && digitCount >= 12 && digitCount <= 13) || (cleaned.startsWith('0') && digitCount >= 10 && digitCount <= 11);
+  }, "Please enter a valid UK phone number (e.g., 07XXX XXXXXX or +44 7XXX XXXXXX)"),
   subject: z.string().trim().min(3, "Subject must be at least 3 characters").max(200, "Subject must be less than 200 characters"),
   message: z.string().trim().min(10, "Message must be at least 10 characters").max(2000, "Message must be less than 2000 characters"),
   gdprConsent: z.boolean().refine(val => val === true, "You must consent to being contacted"),
@@ -96,7 +102,6 @@ const Contact = () => {
           }
         });
         setErrors(fieldErrors);
-        toast.error("Please correct the errors in the form");
       } else {
         setSubmitStatus('error');
         toast.error("Something went wrong. Please try again.");
@@ -378,22 +383,22 @@ const Contact = () => {
                   <Checkbox
                     id="gdprConsent"
                     checked={formData.gdprConsent}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       setFormData({ ...formData, gdprConsent: checked as boolean })
                     }
-                    className={errors.gdprConsent ? 'border-destructive' : ''}
+                    className={`${errors.gdprConsent ? 'border-destructive' : ''} mt-1`}
                     aria-invalid={!!errors.gdprConsent}
                     aria-describedby={errors.gdprConsent ? "gdpr-error" : undefined}
                   />
-                  <div className="flex-1">
-                    <Label 
-                      htmlFor="gdprConsent" 
-                      className="text-sm cursor-pointer leading-relaxed font-normal"
+                  <div className="flex-1 space-y-1">
+                    <Label
+                      htmlFor="gdprConsent"
+                      className="text-sm cursor-pointer leading-relaxed font-normal block"
                     >
                       I consent to being contacted regarding my enquiry. *
                     </Label>
                     {errors.gdprConsent && (
-                      <p id="gdpr-error" className="text-sm text-destructive flex items-center gap-1 mt-1" role="alert">
+                      <p id="gdpr-error" className="text-sm text-destructive flex items-center gap-1" role="alert">
                         <AlertCircle className="w-4 h-4" />
                         {errors.gdprConsent}
                       </p>
@@ -409,23 +414,6 @@ const Contact = () => {
                   </Link>
                   . We never share your information with third parties.
                 </p>
-
-                {/* Success State */}
-                {submitStatus === 'success' && (
-                  <div 
-                    className="p-4 rounded-lg bg-green-500/10 border border-green-500/30 flex items-start gap-3"
-                    role="alert"
-                    aria-live="polite"
-                  >
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-green-500 mb-1">Message sent successfully</p>
-                      <p className="text-sm text-muted-foreground">
-                        Thank you — your message has been sent. We'll respond shortly.
-                      </p>
-                    </div>
-                  </div>
-                )}
 
                 {/* Error State */}
                 {submitStatus === 'error' && (

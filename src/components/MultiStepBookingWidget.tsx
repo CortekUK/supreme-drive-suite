@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { TimePicker } from "@/components/ui/time-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -57,7 +58,9 @@ const MultiStepBookingWidget = () => {
   const [cpInterested, setCpInterested] = useState(false);
   const [showCPModal, setShowCPModal] = useState(false);
   const [cpDetails, setCpDetails] = useState<any>(null);
+  const cpSubmittedRef = useRef(false); // Track if CP form was successfully submitted
   const [blockedDates, setBlockedDates] = useState<string[]>([]);
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
 
   const [formData, setFormData] = useState({
     pickupLocation: "",
@@ -88,11 +91,11 @@ const MultiStepBookingWidget = () => {
     loadData();
   }, []);
 
-  // Auto-calculate distance when both locations are selected
+  // Auto-calculate distance when both locations are selected or changed
   useEffect(() => {
     const { pickupLat, pickupLon, dropoffLat, dropoffLon } = locationCoords;
 
-    if (pickupLat && pickupLon && dropoffLat && dropoffLon && !calculatedDistance) {
+    if (pickupLat && pickupLon && dropoffLat && dropoffLon) {
       estimateDistance();
     }
   }, [locationCoords]);
@@ -132,7 +135,13 @@ const MultiStepBookingWidget = () => {
     if (vehiclesData) setVehicles(vehiclesData);
     if (extrasData) setExtras(extrasData);
     if (blockedDatesData) {
-      setBlockedDates(blockedDatesData.map(d => d.date));
+      const formattedDates = blockedDatesData.map(d => {
+        // Ensure date is in YYYY-MM-DD format
+        const date = new Date(d.date);
+        return format(date, "yyyy-MM-dd");
+      });
+      console.log("Blocked dates loaded:", formattedDates);
+      setBlockedDates(formattedDates);
     }
   };
 
@@ -163,6 +172,10 @@ const MultiStepBookingWidget = () => {
   };
 
   const handleSubmit = async () => {
+    if (!validateStep3()) {
+      return;
+    }
+
     setLoading(true);
     try {
       const priceBreakdown = calculatePriceBreakdown();
@@ -207,7 +220,9 @@ const MultiStepBookingWidget = () => {
         customerName: formData.customerName,
         customerEmail: formData.customerEmail,
         customerPhone: formData.customerPhone,
-        additionalRequirements: formData.additionalRequirements
+        additionalRequirements: formData.additionalRequirements,
+        serviceType: cpInterested ? 'close_protection' : 'chauffeur',
+        protectionDetails: cpDetails
       };
       localStorage.setItem('pendingBooking', JSON.stringify(bookingDetails));
 
@@ -350,13 +365,170 @@ const MultiStepBookingWidget = () => {
 
   const priceBreakdown = calculatePriceBreakdown();
 
-  const canProceedStep1 = formData.pickupLocation && formData.dropoffLocation && 
-                          formData.pickupDate && formData.pickupTime && 
-                          formData.passengers && formData.luggage;
+  const validateStep1 = () => {
+    const newErrors: {[key: string]: string} = {};
 
-  const canProceedStep2 = formData.vehicleId;
+    // Validate pickup location
+    if (!formData.pickupLocation.trim()) {
+      newErrors.pickupLocation = "Pickup location is required";
+    } else {
+      const pickupText = formData.pickupLocation.trim();
+      // Check for meaningful location data (at least 5 characters and contains letters)
+      if (pickupText.length < 5) {
+        newErrors.pickupLocation = "Please enter a valid pickup address (minimum 5 characters)";
+      } else if (!/[a-zA-Z]{3,}/.test(pickupText)) {
+        newErrors.pickupLocation = "Please enter a meaningful pickup address with letters";
+      } else if (/^[@#$%^&*()_+=\-\[\]{};:'",.<>?\/\\|`~!]{3,}/.test(pickupText)) {
+        newErrors.pickupLocation = "Please enter a valid pickup address, not symbols";
+      } else if (/^[a-zA-Z]+$/.test(pickupText) && pickupText.length < 15) {
+        // If it's only letters and short, it's likely gibberish like "mmmmmmm"
+        newErrors.pickupLocation = "Please enter a complete address (e.g., street name, city, postcode)";
+      } else if (!/[\d]/.test(pickupText) && !/[,]/.test(pickupText) && pickupText.split(' ').length < 2) {
+        // Valid addresses usually have numbers or commas or multiple words
+        newErrors.pickupLocation = "Please enter a complete address with street name or postcode";
+      }
+    }
 
-  const canSubmit = formData.customerName && formData.customerEmail && formData.customerPhone;
+    // Validate drop-off location
+    if (!formData.dropoffLocation.trim()) {
+      newErrors.dropoffLocation = "Drop-off location is required";
+    } else {
+      const dropoffText = formData.dropoffLocation.trim();
+      // Check for meaningful location data (at least 5 characters and contains letters)
+      if (dropoffText.length < 5) {
+        newErrors.dropoffLocation = "Please enter a valid drop-off address (minimum 5 characters)";
+      } else if (!/[a-zA-Z]{3,}/.test(dropoffText)) {
+        newErrors.dropoffLocation = "Please enter a meaningful drop-off address with letters";
+      } else if (/^[@#$%^&*()_+=\-\[\]{};:'",.<>?\/\\|`~!]{3,}/.test(dropoffText)) {
+        newErrors.dropoffLocation = "Please enter a valid drop-off address, not symbols";
+      } else if (/^[a-zA-Z]+$/.test(dropoffText) && dropoffText.length < 15) {
+        // If it's only letters and short, it's likely gibberish like "mmmmmmm"
+        newErrors.dropoffLocation = "Please enter a complete address (e.g., street name, city, postcode)";
+      } else if (!/[\d]/.test(dropoffText) && !/[,]/.test(dropoffText) && dropoffText.split(' ').length < 2) {
+        // Valid addresses usually have numbers or commas or multiple words
+        newErrors.dropoffLocation = "Please enter a complete address with street name or postcode";
+      }
+    }
+    if (!formData.pickupDate) {
+      newErrors.pickupDate = "Pickup date is required";
+    }
+    if (!formData.pickupTime) {
+      newErrors.pickupTime = "Pickup time is required";
+    }
+    if (!formData.passengers) {
+      newErrors.passengers = "Number of passengers is required";
+    } else if (parseInt(formData.passengers) < 1) {
+      newErrors.passengers = "At least 1 passenger is required";
+    }
+    if (!formData.luggage) {
+      newErrors.luggage = "Number of luggage items is required";
+    } else if (parseInt(formData.luggage) < 0) {
+      newErrors.luggage = "Luggage items cannot be negative";
+    }
+
+    // Validate optional fields if filled
+    if (formData.estimatedMiles && formData.estimatedMiles.trim() !== "") {
+      const miles = parseFloat(formData.estimatedMiles);
+      if (isNaN(miles) || miles <= 0) {
+        newErrors.estimatedMiles = "Please enter a number greater than 0";
+      } else if (miles > 1000) {
+        newErrors.estimatedMiles = "Miles cannot exceed 1000";
+      }
+    }
+
+    if (formData.waitTime && formData.waitTime.trim() !== "") {
+      const hours = parseFloat(formData.waitTime);
+      if (isNaN(hours) || hours <= 0) {
+        newErrors.waitTime = "Please enter a number greater than 0";
+      } else if (hours > 24) {
+        newErrors.waitTime = "Wait time cannot exceed 24 hours";
+      }
+    }
+
+    // Validate additional requirements for meaningful content
+    if (formData.additionalRequirements && formData.additionalRequirements.trim() !== "") {
+      const trimmedText = formData.additionalRequirements.trim();
+      if (trimmedText.length < 10) {
+        newErrors.additionalRequirements = "Please provide at least 10 characters of meaningful information";
+      } else if (!/[a-zA-Z]{3,}/.test(trimmedText)) {
+        newErrors.additionalRequirements = "Please provide meaningful text (not just numbers or symbols)";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep2 = () => {
+    const newErrors: {[key: string]: string} = {};
+
+    if (!formData.vehicleId) {
+      newErrors.vehicleId = "Please select a vehicle";
+      toast.error("Please select a vehicle to continue");
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep3 = () => {
+    const newErrors: {[key: string]: string} = {};
+
+    // Validate customer name
+    const nameValue = formData.customerName.trim();
+    if (!nameValue) {
+      newErrors.customerName = "Full name is required";
+    } else if (nameValue.length < 2) {
+      newErrors.customerName = "Full name must be at least 2 characters";
+    } else if (!/^[a-zA-Z\s\-']+$/.test(nameValue)) {
+      newErrors.customerName = "Name must contain only letters, spaces, hyphens, and apostrophes";
+    } else if (!/[a-zA-Z]{2,}/.test(nameValue)) {
+      newErrors.customerName = "Name must contain at least 2 alphabetic characters";
+    } else if (nameValue.replace(/[\s\-']/g, '').length < 2) {
+      newErrors.customerName = "Name must have actual alphabetic content";
+    }
+
+    // Validate email
+    if (!formData.customerEmail.trim()) {
+      newErrors.customerEmail = "Email address is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.customerEmail)) {
+      newErrors.customerEmail = "Please enter a valid email address";
+    }
+
+    // Validate phone number (UK format)
+    const phoneValue = formData.customerPhone.trim();
+    if (!phoneValue) {
+      newErrors.customerPhone = "Phone number is required";
+    } else {
+      // Remove all spaces, hyphens, parentheses for validation
+      const cleaned = phoneValue.replace(/[\s\-()]/g, '');
+      // UK phone number: must start with 0 or +44, and have correct length
+      const ukPattern = /^(\+44|0)[1-9]\d{9,10}$/;
+      const isValidUK = ukPattern.test(cleaned);
+      // Count actual digits
+      const digitCount = (cleaned.match(/\d/g) || []).length;
+      const isValid = isValidUK || (cleaned.startsWith('+44') && digitCount >= 12 && digitCount <= 13) || (cleaned.startsWith('0') && digitCount >= 10 && digitCount <= 11);
+
+      if (!isValid) {
+        newErrors.customerPhone = "Please enter a valid UK phone number (e.g., 07XXX XXXXXX or +44 7XXX XXXXXX)";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleStep1Continue = () => {
+    if (validateStep1()) {
+      setCurrentStep(2);
+    }
+  };
+
+  const handleStep2Continue = () => {
+    if (validateStep2()) {
+      setCurrentStep(3);
+    }
+  };
 
   if (showConfirmation && bookingDetails) {
     return <BookingConfirmation bookingDetails={bookingDetails} onClose={handleCloseConfirmation} />;
@@ -409,41 +581,53 @@ const MultiStepBookingWidget = () => {
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="pickupLocation">Pickup Location</Label>
+                  <Label htmlFor="pickupLocation">Pickup Location *</Label>
                   <LocationAutocomplete
                     id="pickupLocation"
                     value={formData.pickupLocation}
                     onChange={(value, lat, lon) => {
                       setFormData({ ...formData, pickupLocation: value });
                       setLocationCoords({ ...locationCoords, pickupLat: lat || null, pickupLon: lon || null });
+                      if (errors.pickupLocation) {
+                        setErrors({ ...errors, pickupLocation: "" });
+                      }
                     }}
                     placeholder="Enter pickup address"
                     className="p-4 focus-visible:ring-[#C5A572]"
                   />
+                  {errors.pickupLocation && (
+                    <p className="text-sm text-destructive">{errors.pickupLocation}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="dropoffLocation">Drop-off Location</Label>
+                  <Label htmlFor="dropoffLocation">Drop-off Location *</Label>
                   <LocationAutocomplete
                     id="dropoffLocation"
                     value={formData.dropoffLocation}
                     onChange={(value, lat, lon) => {
                       setFormData({ ...formData, dropoffLocation: value });
                       setLocationCoords({ ...locationCoords, dropoffLat: lat || null, dropoffLon: lon || null });
+                      if (errors.dropoffLocation) {
+                        setErrors({ ...errors, dropoffLocation: "" });
+                      }
                     }}
                     placeholder="Enter destination"
                     className="p-4 focus-visible:ring-[#C5A572]"
                   />
+                  {errors.dropoffLocation && (
+                    <p className="text-sm text-destructive">{errors.dropoffLocation}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="pickupDate">Pickup Date</Label>
+                  <Label htmlFor="pickupDate">Pickup Date *</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         className={cn(
-                          "w-full justify-start text-left font-normal p-4 h-auto",
+                          "w-full justify-start text-left font-normal p-[10px] h-auto",
                           !formData.pickupDate && "text-muted-foreground"
                         )}
                       >
@@ -467,11 +651,21 @@ const MultiStepBookingWidget = () => {
                               return;
                             }
                             setFormData({ ...formData, pickupDate: dateStr });
+                            if (errors.pickupDate) {
+                              setErrors({ ...errors, pickupDate: "" });
+                            }
                           }
                         }}
                         disabled={(date) => {
                           const dateStr = format(date, "yyyy-MM-dd");
-                          return date < new Date(new Date().setHours(0, 0, 0, 0)) || blockedDates.includes(dateStr);
+                          const today = new Date(new Date().setHours(0, 0, 0, 0));
+                          const oneMonthFromNow = new Date(today);
+                          oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+                          const isBlocked = blockedDates.includes(dateStr);
+                          if (isBlocked) {
+                            console.log("Date blocked:", dateStr, "Blocked dates:", blockedDates);
+                          }
+                          return date < today || date > oneMonthFromNow || isBlocked;
                         }}
                         initialFocus
                         classNames={{
@@ -481,7 +675,10 @@ const MultiStepBookingWidget = () => {
                       />
                     </PopoverContent>
                   </Popover>
-                  {blockedDates.length > 0 && (
+                  {errors.pickupDate && (
+                    <p className="text-sm text-destructive">{errors.pickupDate}</p>
+                  )}
+                  {!errors.pickupDate && blockedDates.length > 0 && (
                     <p className="text-xs text-muted-foreground">
                       Dates with a strikethrough are not available for booking
                     </p>
@@ -489,14 +686,21 @@ const MultiStepBookingWidget = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="pickupTime">Pickup Time</Label>
-                  <Input
+                  <Label htmlFor="pickupTime">Pickup Time *</Label>
+                  <TimePicker
                     id="pickupTime"
-                    type="time"
                     value={formData.pickupTime}
-                    onChange={(e) => setFormData({ ...formData, pickupTime: e.target.value })}
-                    className="p-4 focus-visible:ring-[#C5A572]"
+                    onChange={(value) => {
+                      setFormData({ ...formData, pickupTime: value });
+                      if (errors.pickupTime) {
+                        setErrors({ ...errors, pickupTime: "" });
+                      }
+                    }}
+                    className="focus-visible:ring-[#C5A572]"
                   />
+                  {errors.pickupTime && (
+                    <p className="text-sm text-destructive">{errors.pickupTime}</p>
+                  )}
                 </div>
               </div>
 
@@ -515,27 +719,6 @@ const MultiStepBookingWidget = () => {
                     )}
                   </div>
 
-                  {calculatedDistance && !distanceOverride ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDistanceOverride(true)}
-                      className="self-end sm:self-auto"
-                    >
-                      Edit
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="default"
-                      size="sm"
-                      onClick={estimateDistance}
-                      className="gradient-accent self-end sm:self-auto"
-                    >
-                      Calculate Distance
-                    </Button>
-                  )}
                 </div>
               )}
             </div>
@@ -548,27 +731,61 @@ const MultiStepBookingWidget = () => {
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="passengers">Passengers</Label>
+                  <Label htmlFor="passengers">Passengers *</Label>
                   <Input
                     id="passengers"
                     type="number"
                     min="1"
                     value={formData.passengers}
-                    onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
+                    onChange={(e) => {
+                      const inputValue = e.target.value;
+                      if (inputValue === '') {
+                        setFormData({ ...formData, passengers: '' });
+                      } else {
+                        const value = Math.max(1, parseInt(inputValue) || 1);
+                        setFormData({ ...formData, passengers: value.toString() });
+                      }
+                      if (errors.passengers) {
+                        setErrors({ ...errors, passengers: "" });
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === '-' || e.key === 'e') e.preventDefault();
+                    }}
                     className="p-4 focus-visible:ring-[#C5A572]"
                   />
+                  {errors.passengers && (
+                    <p className="text-sm text-destructive">{errors.passengers}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="luggage">Luggage Items</Label>
+                  <Label htmlFor="luggage">Luggage Items *</Label>
                   <Input
                     id="luggage"
                     type="number"
                     min="0"
                     value={formData.luggage}
-                    onChange={(e) => setFormData({ ...formData, luggage: e.target.value })}
+                    onChange={(e) => {
+                      const inputValue = e.target.value;
+                      if (inputValue === '') {
+                        setFormData({ ...formData, luggage: '' });
+                      } else {
+                        const value = Math.max(0, parseInt(inputValue) || 0);
+                        setFormData({ ...formData, luggage: value.toString() });
+                      }
+                      if (errors.luggage) {
+                        setErrors({ ...errors, luggage: "" });
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === '-' || e.key === 'e') e.preventDefault();
+                    }}
                     className="p-4 focus-visible:ring-[#C5A572]"
                   />
+                  {errors.luggage && (
+                    <p className="text-sm text-destructive">{errors.luggage}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -582,11 +799,26 @@ const MultiStepBookingWidget = () => {
                 <Textarea
                   id="additionalRequirements"
                   value={formData.additionalRequirements}
-                  onChange={(e) => setFormData({ ...formData, additionalRequirements: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow letters, numbers, spaces, and common punctuation
+                    const sanitized = value.replace(/[^a-zA-Z0-9\s.,;:!?()\-'"]/g, '');
+                    setFormData({ ...formData, additionalRequirements: sanitized });
+                    if (errors.additionalRequirements) {
+                      setErrors({ ...errors, additionalRequirements: "" });
+                    }
+                  }}
                   placeholder="Any special requests or requirements..."
                   rows={3}
                   className="p-4 focus-visible:ring-[#C5A572]"
+                  maxLength={500}
                 />
+                {errors.additionalRequirements && (
+                  <p className="text-sm text-destructive">{errors.additionalRequirements}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {formData.additionalRequirements.length}/500 characters
+                </p>
               </div>
 
               {(distanceOverride || !calculatedDistance) && (
@@ -597,10 +829,33 @@ const MultiStepBookingWidget = () => {
                       id="estimatedMiles"
                       type="number"
                       step="0.1"
+                      min="1"
+                      max="1000"
                       value={formData.estimatedMiles}
-                      onChange={(e) => setFormData({ ...formData, estimatedMiles: e.target.value })}
+                      onChange={(e) => {
+                        const inputValue = e.target.value;
+                        if (inputValue === '') {
+                          setFormData({ ...formData, estimatedMiles: '' });
+                        } else {
+                          const value = parseFloat(inputValue);
+                          if (!isNaN(value) && value >= 0 && value <= 1000) {
+                            setFormData({ ...formData, estimatedMiles: inputValue });
+                          }
+                        }
+                        if (errors.estimatedMiles) {
+                          setErrors({ ...errors, estimatedMiles: "" });
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-4 focus-visible:ring-[#C5A572]"
                     />
+                    {errors.estimatedMiles && (
+                      <p className="text-sm text-destructive">{errors.estimatedMiles}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -609,10 +864,33 @@ const MultiStepBookingWidget = () => {
                       id="waitTime"
                       type="number"
                       step="0.5"
+                      min="0"
+                      max="24"
                       value={formData.waitTime}
-                      onChange={(e) => setFormData({ ...formData, waitTime: e.target.value })}
+                      onChange={(e) => {
+                        const inputValue = e.target.value;
+                        if (inputValue === '') {
+                          setFormData({ ...formData, waitTime: '' });
+                        } else {
+                          const value = parseFloat(inputValue);
+                          if (!isNaN(value) && value >= 0 && value <= 24) {
+                            setFormData({ ...formData, waitTime: inputValue });
+                          }
+                        }
+                        if (errors.waitTime) {
+                          setErrors({ ...errors, waitTime: "" });
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-4 focus-visible:ring-[#C5A572]"
                     />
+                    {errors.waitTime && (
+                      <p className="text-sm text-destructive">{errors.waitTime}</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -639,8 +917,7 @@ const MultiStepBookingWidget = () => {
             </div>
 
             <Button
-              onClick={() => setCurrentStep(2)}
-              disabled={!canProceedStep1}
+              onClick={handleStep1Continue}
               className="w-full gradient-accent hover-lift"
               size="lg"
             >
@@ -653,7 +930,13 @@ const MultiStepBookingWidget = () => {
         {currentStep === 2 && (
           <div className="space-y-6 animate-fade-in">
             <h3 className="text-2xl md:text-3xl font-display font-semibold text-gradient-metal">Select Your Vehicle</h3>
-            
+
+            {errors.vehicleId && (
+              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <p className="text-sm text-destructive">{errors.vehicleId}</p>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {vehicles
                 .sort((a, b) => {
@@ -670,11 +953,16 @@ const MultiStepBookingWidget = () => {
                     <Card
                       key={vehicle.id}
                       className={`p-6 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] relative ${
-                        formData.vehicleId === vehicle.id 
-                          ? 'border-accent bg-accent/10 shadow-lg' 
+                        formData.vehicleId === vehicle.id
+                          ? 'border-accent bg-accent/10 shadow-lg'
                           : 'border-border hover:border-accent/50'
                       } ${isRollsRoyce ? 'border-[#C5A572] shadow-[0_0_20px_rgba(197,165,114,0.2)]' : ''}`}
-                      onClick={() => setFormData({ ...formData, vehicleId: vehicle.id })}
+                      onClick={() => {
+                        setFormData({ ...formData, vehicleId: vehicle.id });
+                        if (errors.vehicleId) {
+                          setErrors({ ...errors, vehicleId: "" });
+                        }
+                      }}
                     >
                       {/* Badge */}
                       {badge && (
@@ -766,8 +1054,7 @@ const MultiStepBookingWidget = () => {
                 <ChevronLeft className="mr-2 w-5 h-5" /> Back
               </Button>
               <Button
-                onClick={() => setCurrentStep(3)}
-                disabled={!canProceedStep2}
+                onClick={handleStep2Continue}
                 className="w-full sm:flex-1 gradient-accent hover-lift order-1 sm:order-2"
                 size="lg"
               >
@@ -861,14 +1148,6 @@ const MultiStepBookingWidget = () => {
                         <Label htmlFor="cp-toggle" className="cursor-pointer text-sm">
                           I'm interested
                         </Label>
-                        <Button
-                          variant="link"
-                          size="sm"
-                          onClick={() => setShowCPModal(true)}
-                          className="ml-auto text-[#C5A572] hover:text-[#C5A572]/80"
-                        >
-                          Learn More →
-                        </Button>
                       </div>
                     </div>
                   </div>
@@ -883,10 +1162,20 @@ const MultiStepBookingWidget = () => {
                     <Input
                       id="customerName"
                       value={formData.customerName}
-                      onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                      onChange={(e) => {
+                        // Allow only letters, spaces, hyphens, and apostrophes
+                        const sanitized = e.target.value.replace(/[^a-zA-Z\s\-']/g, '');
+                        setFormData({ ...formData, customerName: sanitized });
+                        if (errors.customerName) {
+                          setErrors({ ...errors, customerName: "" });
+                        }
+                      }}
                       placeholder="Enter your name"
                       className="p-4 focus-visible:ring-[#C5A572]"
                     />
+                    {errors.customerName && (
+                      <p className="text-sm text-destructive">{errors.customerName}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -895,10 +1184,18 @@ const MultiStepBookingWidget = () => {
                       id="customerEmail"
                       type="email"
                       value={formData.customerEmail}
-                      onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, customerEmail: e.target.value });
+                        if (errors.customerEmail) {
+                          setErrors({ ...errors, customerEmail: "" });
+                        }
+                      }}
                       placeholder="your@email.com"
                       className="p-4 focus-visible:ring-[#C5A572]"
                     />
+                    {errors.customerEmail && (
+                      <p className="text-sm text-destructive">{errors.customerEmail}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -907,10 +1204,20 @@ const MultiStepBookingWidget = () => {
                       id="customerPhone"
                       type="tel"
                       value={formData.customerPhone}
-                      onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
+                      onChange={(e) => {
+                        // Allow only numbers, spaces, +, -, (, )
+                        const sanitized = e.target.value.replace(/[^\d\s+\-()]/g, '');
+                        setFormData({ ...formData, customerPhone: sanitized });
+                        if (errors.customerPhone) {
+                          setErrors({ ...errors, customerPhone: "" });
+                        }
+                      }}
                       placeholder="+44 7XXX XXXXXX"
                       className="p-4 focus-visible:ring-[#C5A572]"
                     />
+                    {errors.customerPhone && (
+                      <p className="text-sm text-destructive">{errors.customerPhone}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -979,7 +1286,7 @@ const MultiStepBookingWidget = () => {
                 </Button>
                 <Button
                   onClick={handleSubmit}
-                  disabled={!canSubmit || loading}
+                  disabled={loading}
                   className="w-full sm:flex-1 gradient-accent hover-lift order-1 sm:order-2"
                   size="lg"
                 >
@@ -999,7 +1306,17 @@ const MultiStepBookingWidget = () => {
         {/* Close Protection Modal */}
         <CloseProtectionModal
           open={showCPModal}
-          onOpenChange={setShowCPModal}
+          onOpenChange={(open) => {
+            setShowCPModal(open);
+            // If modal is being closed and form wasn't successfully submitted, reset the toggle
+            if (!open && !cpSubmittedRef.current) {
+              setCpInterested(false);
+            }
+            // Reset the ref when modal is closed
+            if (!open) {
+              cpSubmittedRef.current = false;
+            }
+          }}
           customerName={formData.customerName}
           customerEmail={formData.customerEmail}
           customerPhone={formData.customerPhone}
@@ -1015,6 +1332,7 @@ const MultiStepBookingWidget = () => {
           onSubmit={(details) => {
             setCpDetails(details);
             setCpInterested(true);
+            cpSubmittedRef.current = true; // Mark as successfully submitted
           }}
         />
       </div>

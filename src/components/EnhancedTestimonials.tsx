@@ -48,7 +48,7 @@ const EnhancedTestimonials = () => {
     <section className="py-24 md:py-28 lg:py-32 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16 animate-fade-in">
-          <h2 className="text-4xl md:text-5xl font-display font-bold mb-4 text-gradient-metal">
+          <h2 className="text-4xl md:text-5xl font-display font-bold mb-4 text-gradient-metal pb-2">
             What Our Clients Say
           </h2>
           <div className="flex items-center justify-center mt-6">

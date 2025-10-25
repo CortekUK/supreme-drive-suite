@@ -21,6 +21,7 @@ import Portfolio from "./pages/Portfolio";
 import PortfolioDetail from "./pages/PortfolioDetail";
 import NotFound from "./pages/NotFound";
 import GDPRConsent from "./components/GDPRConsent";
+import ScrollToTopOnNavigate from "./components/ScrollToTopOnNavigate";
 import BookingSuccess from "./pages/BookingSuccess";
 import BookingCancelled from "./pages/BookingCancelled";
 
@@ -33,6 +34,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTopOnNavigate />
           <GDPRConsent />
           <Routes>
           <Route path="/" element={<Index />} />

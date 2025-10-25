@@ -30,7 +30,7 @@ const EnhancedServiceHighlights = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/5 to-transparent pointer-events-none" />
       <div className="container mx-auto px-4 relative">
         <div className="text-center mb-20 space-y-6 animate-fade-in">
-          <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal">
+          <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal pb-2">
             Elite Services
           </h2>
           <p className="text-base text-muted-foreground uppercase tracking-wider">

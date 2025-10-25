@@ -48,7 +48,7 @@ const About = () => {
       <section className="pt-32 pb-24">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center mb-20 animate-fade-in">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold mb-6 text-gradient-metal leading-tight">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold mb-6 text-gradient-metal leading-tight pb-2">
               About Supreme Style
             </h1>
             <div className="flex items-center justify-center mb-8">
@@ -209,7 +209,7 @@ const About = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal mb-6">
+              <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal mb-6 pb-2">
                 Frequently Asked Questions
               </h2>
               <div className="flex items-center justify-center mb-6">
@@ -222,7 +222,7 @@ const About = () => {
 
             {categories.length > 0 ? (
               <Tabs defaultValue={categories[0]} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 mb-8 bg-card/50 p-1 h-auto">
+                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 mb-8 bg-card/50 p-1 h-auto">
                   {categories.map(category => (
                     <TabsTrigger 
                       key={category} 

@@ -12,13 +12,45 @@ import { Star } from "lucide-react";
 import { z } from "zod";
 
 const feedbackSchema = z.object({
-  customer_name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
-  customer_email: z.string().trim().email("Invalid email address").max(255),
-  customer_phone: z.string().trim().max(20).optional(),
-  service_type: z.string().optional(),
+  customer_name: z.string()
+    .min(1, "Name is required")
+    .refine((val) => val.trim().length > 0, "Name cannot be empty")
+    .transform((val) => val.trim())
+    .refine((val) => val.length >= 2, "Name must be at least 2 characters")
+    .refine((val) => /^[a-zA-Z\s\-']+$/.test(val), "Name must contain only letters, spaces, hyphens, and apostrophes")
+    .refine((val) => /[a-zA-Z]{2,}/.test(val), "Name must contain at least 2 alphabetic characters")
+    .refine((val) => val.replace(/[\s\-']/g, '').length >= 2, "Name must have actual alphabetic content"),
+  customer_email: z.string()
+    .trim()
+    .min(1, "Email is required")
+    .email("Invalid email address")
+    .max(255),
+  customer_phone: z.string()
+    .trim()
+    .max(20)
+    .refine((val) => {
+      if (!val || val === "") return true; // Optional field
+      // Remove all spaces, hyphens, parentheses for validation
+      const cleaned = val.replace(/[\s\-()]/g, '');
+      // UK phone number: must start with 0 or +44, and have correct length
+      const ukPattern = /^(\+44|0)[1-9]\d{9,10}$/;
+      const isValidUK = ukPattern.test(cleaned);
+      // Count actual digits
+      const digitCount = (cleaned.match(/\d/g) || []).length;
+      return isValidUK || (cleaned.startsWith('+44') && digitCount >= 12 && digitCount <= 13) || (cleaned.startsWith('0') && digitCount >= 10 && digitCount <= 11);
+    }, "Please enter a valid UK phone number (e.g., 07XXX XXXXXX or +44 7XXX XXXXXX)")
+    .optional(),
+  service_type: z.string()
+    .min(1, "Please select a service type")
+    .refine((val) => val && val !== "", "Please select a service type"),
   booking_reference: z.string().trim().max(50).optional(),
   rating: z.number().min(1, "Please select a rating").max(5),
-  feedback_message: z.string().trim().min(10, "Feedback must be at least 10 characters").max(1000),
+  feedback_message: z.string()
+    .trim()
+    .min(1, "Feedback is required")
+    .min(10, "Feedback must be at least 10 characters")
+    .max(1000)
+    .regex(/[a-zA-Z]{5,}/, "Please provide meaningful feedback with actual words"),
   would_recommend: z.boolean(),
   gdpr: z.boolean().refine((val) => val === true, "You must agree to the privacy policy"),
 });
@@ -35,17 +67,20 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
   const [hoveredRating, setHoveredRating] = useState(0);
   const [wouldRecommend, setWouldRecommend] = useState(true);
   const [gdprConsent, setGdprConsent] = useState(false);
+  const [serviceType, setServiceType] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrors({}); // Clear previous errors
 
     const formData = new FormData(e.currentTarget);
     const data = {
       customer_name: formData.get("customer_name") as string,
       customer_email: formData.get("customer_email") as string,
       customer_phone: formData.get("customer_phone") as string,
-      service_type: formData.get("service_type") as string,
+      service_type: serviceType,
       booking_reference: formData.get("booking_reference") as string,
       rating,
       feedback_message: formData.get("feedback_message") as string,
@@ -85,16 +120,28 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
       setRating(0);
       setWouldRecommend(true);
       setGdprConsent(false);
+      setServiceType("");
+      setErrors({});
       e.currentTarget.reset();
       setTimeout(() => onOpenChange(false), 500);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        // Build errors object for all fields
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          const fieldName = err.path[0] as string;
+          newErrors[fieldName] = err.message;
+        });
+        setErrors(newErrors);
+
+        // Also show toast for first error
         const firstError = error.errors[0];
         const fieldName = firstError.path[0] as string;
 
         const fieldLabels: Record<string, string> = {
           customer_name: "Name",
           customer_email: "Email",
+          service_type: "Service Type",
           rating: "Rating",
           feedback_message: "Feedback message",
           gdpr: "Privacy policy consent",
@@ -131,10 +178,20 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
               <Input
                 id="customer_name"
                 name="customer_name"
-                required
                 maxLength={100}
                 placeholder="Your full name"
+                className={errors.customer_name ? "border-destructive" : ""}
+                onChange={(e) => {
+                  // Allow only letters, spaces, hyphens, and apostrophes
+                  e.target.value = e.target.value.replace(/[^a-zA-Z\s\-']/g, '');
+                  if (errors.customer_name) {
+                    setErrors({ ...errors, customer_name: "" });
+                  }
+                }}
               />
+              {errors.customer_name && (
+                <p className="text-sm text-destructive">{errors.customer_name}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -143,10 +200,18 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
                 id="customer_email"
                 name="customer_email"
                 type="email"
-                required
                 maxLength={255}
                 placeholder="your@email.com"
+                className={errors.customer_email ? "border-destructive" : ""}
+                onChange={(e) => {
+                  if (errors.customer_email) {
+                    setErrors({ ...errors, customer_email: "" });
+                  }
+                }}
               />
+              {errors.customer_email && (
+                <p className="text-sm text-destructive">{errors.customer_email}</p>
+              )}
             </div>
           </div>
 
@@ -159,13 +224,36 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
                 type="tel"
                 maxLength={20}
                 placeholder="+44 800 123 4567"
+                className={errors.customer_phone ? "border-destructive" : ""}
+                onChange={(e) => {
+                  // Allow only numbers, spaces, +, -, (, )
+                  e.target.value = e.target.value.replace(/[^\d\s+\-()]/g, '');
+                  if (errors.customer_phone) {
+                    setErrors({ ...errors, customer_phone: "" });
+                  }
+                }}
               />
+              {errors.customer_phone && (
+                <p className="text-sm text-destructive">{errors.customer_phone}</p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="service_type">Service Type</Label>
-              <Select name="service_type">
-                <SelectTrigger id="service_type">
+              <Label htmlFor="service_type">Service Type *</Label>
+              <Select
+                name="service_type"
+                value={serviceType}
+                onValueChange={(value) => {
+                  setServiceType(value);
+                  if (errors.service_type) {
+                    setErrors({ ...errors, service_type: "" });
+                  }
+                }}
+              >
+                <SelectTrigger
+                  id="service_type"
+                  className={errors.service_type ? "border-destructive" : ""}
+                >
                   <SelectValue placeholder="Select service" />
                 </SelectTrigger>
                 <SelectContent>
@@ -176,6 +264,9 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
+              {errors.service_type && (
+                <p className="text-sm text-destructive">{errors.service_type}</p>
+              )}
             </div>
           </div>
 
@@ -186,6 +277,10 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
               name="booking_reference"
               maxLength={50}
               placeholder="e.g., BK-12345"
+              onChange={(e) => {
+                // Allow only letters, numbers, hyphens
+                e.target.value = e.target.value.replace(/[^a-zA-Z0-9\-]/g, '');
+              }}
             />
           </div>
 
@@ -196,7 +291,12 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
                 <button
                   key={star}
                   type="button"
-                  onClick={() => setRating(star)}
+                  onClick={() => {
+                    setRating(star);
+                    if (errors.rating) {
+                      setErrors({ ...errors, rating: "" });
+                    }
+                  }}
                   onMouseEnter={() => setHoveredRating(star)}
                   onMouseLeave={() => setHoveredRating(0)}
                   className="transition-transform hover:scale-110"
@@ -216,6 +316,9 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
                 </span>
               )}
             </div>
+            {errors.rating && (
+              <p className="text-sm text-destructive">{errors.rating}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -223,11 +326,21 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
             <Textarea
               id="feedback_message"
               name="feedback_message"
-              required
               maxLength={1000}
               rows={5}
               placeholder="Please share your experience with our service..."
+              className={errors.feedback_message ? "border-destructive" : ""}
+              onChange={(e) => {
+                // Allow letters, numbers, spaces, and common punctuation
+                e.target.value = e.target.value.replace(/[^a-zA-Z0-9\s.,;:!?()\-'"]/g, '');
+                if (errors.feedback_message) {
+                  setErrors({ ...errors, feedback_message: "" });
+                }
+              }}
             />
+            {errors.feedback_message && (
+              <p className="text-sm text-destructive">{errors.feedback_message}</p>
+            )}
           </div>
 
           <div className="flex items-start space-x-2">
@@ -241,27 +354,36 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
             </Label>
           </div>
 
-          <div className="flex items-start space-x-2">
-            <Checkbox
-              id="gdpr"
-              checked={gdprConsent}
-              onCheckedChange={(checked) => setGdprConsent(checked as boolean)}
-              required
-            />
-            <Label htmlFor="gdpr" className="cursor-pointer font-normal">
-              I agree to the processing of my personal data in accordance with the{" "}
-              <a href="/privacy" className="text-primary underline" target="_blank">
-                privacy policy
-              </a>
-              . *
-            </Label>
+          <div className="space-y-2">
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="gdpr"
+                checked={gdprConsent}
+                onCheckedChange={(checked) => {
+                  setGdprConsent(checked as boolean);
+                  if (errors.gdpr) {
+                    setErrors({ ...errors, gdpr: "" });
+                  }
+                }}
+              />
+              <Label htmlFor="gdpr" className="cursor-pointer font-normal">
+                I agree to the processing of my personal data in accordance with the{" "}
+                <a href="/privacy" className="text-primary underline" target="_blank">
+                  privacy policy
+                </a>
+                . *
+              </Label>
+            </div>
+            {errors.gdpr && (
+              <p className="text-sm text-destructive ml-6">{errors.gdpr}</p>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || rating === 0 || !gdprConsent}>
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Submitting..." : "Submit Feedback"}
             </Button>
           </div>
