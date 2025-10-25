@@ -289,9 +289,22 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
   }, [searchQuery]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast.success("Logged out successfully");
-    navigate("/");
+    try {
+      // Sign out and clear all sessions
+      await supabase.auth.signOut({ scope: 'global' });
+
+      // Clear any cached data
+      localStorage.clear();
+      sessionStorage.clear();
+
+      toast.success("Logged out successfully");
+
+      // Force navigation to home page
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Error logging out");
+    }
   };
 
   const handleSearch = (e: React.FormEvent) => {
