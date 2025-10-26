@@ -59,7 +59,7 @@ const Index = () => {
       "addressLocality": "London",
       "addressCountry": "UK"
     },
-    "priceRange": "£££",
+    "priceRange": "$$$",
     "aggregateRating": {
       "@type": "AggregateRating",
       "ratingValue": testimonialStats.avgRating,

@@ -115,8 +115,10 @@ export default function AdminDashboard() {
         (v) => v.is_active && v.service_status === "active"
       ).length;
 
+      // Count completed and confirmed jobs for revenue this week
       const recentBookings = bookings.filter(
-        (b) => new Date(b.created_at) >= weekAgo
+        (b) => new Date(b.created_at) >= weekAgo &&
+        (b.status === "completed" || b.status === "confirmed")
       );
 
       const revenueThisWeek = recentBookings.reduce(
@@ -186,7 +188,7 @@ export default function AdminDashboard() {
       recentActivities.push({
         id: `payment-${booking.id}`,
         icon: "payment",
-        description: `Payment received (£${booking.total_price?.toFixed(2) || "0.00"})`,
+        description: `Payment received ($${booking.total_price?.toFixed(2) || "0.00"})`,
         timestamp: new Date(booking.updated_at || booking.created_at),
       });
     });
@@ -293,7 +295,7 @@ export default function AdminDashboard() {
     },
     {
       title: "Revenue This Week",
-      value: `£${metrics.revenueThisWeek.toFixed(2)}`,
+      value: `$${metrics.revenueThisWeek.toFixed(2)}`,
       icon: PoundSterling,
       gradient: "from-accent/10 via-accent/5 to-transparent",
       iconBg: "bg-accent/10",

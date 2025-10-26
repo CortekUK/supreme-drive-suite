@@ -6,16 +6,34 @@ import { TrendingUp, TrendingDown, DollarSign, Briefcase, Target, Users, Car } f
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { ReportsDataTable } from "@/components/admin/ReportsDataTable";
 import { supabase } from "@/integrations/supabase/client";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DateRange } from "react-day-picker";
+import { subDays, endOfDay, startOfDay } from "date-fns";
 
 const AnalyticsDashboard = () => {
   const [dateRange, setDateRange] = useState("30");
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
+
+  // Date range pickers
+  const [revenueDateRange, setRevenueDateRange] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 30),
+    to: new Date(),
+  });
+  const [jobsDateRange, setJobsDateRange] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 30),
+    to: new Date(),
+  });
+
   const [analyticsData, setAnalyticsData] = useState<any>({
     totalRevenue: 0,
     jobsCompleted: 0,
     avgJobValue: 0,
     repeatClients: 0,
+    cancellationRate: 0,
+    avgRating: 0,
+    totalReviews: 0,
+    onTimeRate: 0,
     revenueData: [],
     jobsData: [],
     jobTypeData: [],
@@ -25,7 +43,7 @@ const AnalyticsDashboard = () => {
 
   useEffect(() => {
     loadAnalyticsData();
-  }, [dateRange]);
+  }, [dateRange, revenueDateRange, jobsDateRange]);
 
   const loadAnalyticsData = async () => {
     setLoading(true);
@@ -34,22 +52,29 @@ const AnalyticsDashboard = () => {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - daysAgo);
 
-      // Fetch bookings
+      // Fetch ALL bookings (no time limit for KPIs)
       const { data: bookings } = await supabase
         .from("bookings")
         .select("*")
-        .gte("created_at", startDate.toISOString());
+        .order("created_at", { ascending: false });
 
-      // Calculate metrics
-      const completedBookings = bookings?.filter(b => b.status === "completed") || [];
-      const totalRevenue = completedBookings.reduce((sum, b) => {
-        const price = parseFloat(b.final_price || b.estimated_price || "0");
+      // Calculate metrics (count completed and confirmed as revenue-generating)
+      const revenueBookings = bookings?.filter(b =>
+        b.status === "completed" || b.status === "confirmed"
+      ) || [];
+      const totalRevenue = revenueBookings.reduce((sum, b) => {
+        const price = parseFloat(String(b.total_price || 0));
         return sum + price;
       }, 0);
 
-      const avgJobValue = completedBookings.length > 0
-        ? totalRevenue / completedBookings.length
+      const avgJobValue = revenueBookings.length > 0
+        ? totalRevenue / revenueBookings.length
         : 0;
+
+      // Jobs completed count includes both completed and confirmed
+      const completedBookings = bookings?.filter(b =>
+        b.status === "completed" || b.status === "confirmed"
+      ) || [];
 
       // Calculate repeat clients
       const clientEmails = bookings?.map(b => b.customer_email) || [];
@@ -59,29 +84,89 @@ const AnalyticsDashboard = () => {
         ? (repeatClientsCount / clientEmails.length) * 100
         : 0;
 
-      // Group by week for charts
-      const weeklyData = new Map();
-      bookings?.forEach(booking => {
-        const date = new Date(booking.created_at);
-        const weekNum = Math.floor((Date.now() - date.getTime()) / (7 * 24 * 60 * 60 * 1000));
-        const weekKey = `Week ${Math.max(0, Math.floor(daysAgo / 7) - weekNum)}`;
+      // Calculate cancellation rate
+      const cancelledBookings = bookings?.filter(b => b.status === "cancelled") || [];
+      const cancellationRate = bookings && bookings.length > 0
+        ? (cancelledBookings.length / bookings.length) * 100
+        : 0;
 
-        if (!weeklyData.has(weekKey)) {
-          weeklyData.set(weekKey, { jobs: 0, revenue: 0 });
+      // Calculate average rating from testimonials
+      const { data: testimonials } = await supabase
+        .from("testimonials")
+        .select("rating")
+        .not("rating", "is", null);
+
+      const totalRating = testimonials?.reduce((sum, t) => sum + (t.rating || 0), 0) || 0;
+      const avgRating = testimonials && testimonials.length > 0
+        ? totalRating / testimonials.length
+        : 0;
+
+      // Calculate on-time rate
+      // For now, we'll use completed jobs as on-time if they don't have a delay field
+      // You can add an "actual_pickup_time" field to track delays
+      const onTimeBookings = completedBookings.filter(b => !b.delayed && !b.delay_minutes);
+      const onTimeRate = completedBookings.length > 0
+        ? (onTimeBookings.length / completedBookings.length) * 100
+        : 94; // Default placeholder until we track actual pickup times
+
+      // Group by week for revenue chart
+      const revenueStartDate = startOfDay(revenueDateRange?.from || subDays(new Date(), 30));
+      const revenueEndDate = endOfDay(revenueDateRange?.to || new Date());
+
+      const { data: revenueChartBookings } = await supabase
+        .from("bookings")
+        .select("*")
+        .gte("created_at", revenueStartDate.toISOString())
+        .lte("created_at", revenueEndDate.toISOString());
+
+      const revenueWeeklyData = new Map();
+      revenueChartBookings?.forEach(booking => {
+        const date = new Date(booking.created_at);
+        const weekNum = Math.floor((revenueEndDate.getTime() - date.getTime()) / (7 * 24 * 60 * 60 * 1000));
+        const daysDiff = Math.floor((revenueEndDate.getTime() - revenueStartDate.getTime()) / (24 * 60 * 60 * 1000));
+        const weekKey = `Week ${Math.max(0, Math.floor(daysDiff / 7) - weekNum)}`;
+
+        if (!revenueWeeklyData.has(weekKey)) {
+          revenueWeeklyData.set(weekKey, { revenue: 0 });
         }
 
-        const week = weeklyData.get(weekKey);
-        week.jobs++;
-        if (booking.status === "completed") {
-          week.revenue += parseFloat(booking.final_price || booking.estimated_price || "0");
+        const week = revenueWeeklyData.get(weekKey);
+        // Count completed and confirmed bookings as revenue
+        if (booking.status === "completed" || booking.status === "confirmed") {
+          week.revenue += parseFloat(String(booking.total_price || 0));
         }
       });
 
-      const revenueData = Array.from(weeklyData.entries())
+      const revenueData = Array.from(revenueWeeklyData.entries())
         .map(([period, data]) => ({ period, revenue: data.revenue }))
         .sort((a, b) => parseInt(a.period.split(' ')[1]) - parseInt(b.period.split(' ')[1]));
 
-      const jobsData = Array.from(weeklyData.entries())
+      // Group by week for jobs chart
+      const jobsStartDate = startOfDay(jobsDateRange?.from || subDays(new Date(), 30));
+      const jobsEndDate = endOfDay(jobsDateRange?.to || new Date());
+
+      const { data: jobsBookings } = await supabase
+        .from("bookings")
+        .select("*")
+        .gte("created_at", jobsStartDate.toISOString())
+        .lte("created_at", jobsEndDate.toISOString());
+
+      const jobsWeeklyData = new Map();
+      jobsBookings?.forEach(booking => {
+        const date = new Date(booking.created_at);
+        const weekNum = Math.floor((jobsEndDate.getTime() - date.getTime()) / (7 * 24 * 60 * 60 * 1000));
+        const daysDiff = Math.floor((jobsEndDate.getTime() - jobsStartDate.getTime()) / (24 * 60 * 60 * 1000));
+        const weekKey = `Week ${Math.max(0, Math.floor(daysDiff / 7) - weekNum)}`;
+
+        if (!jobsWeeklyData.has(weekKey)) {
+          jobsWeeklyData.set(weekKey, { jobs: 0 });
+        }
+
+        const week = jobsWeeklyData.get(weekKey);
+        week.jobs++;
+      });
+
+      const jobsData = Array.from(jobsWeeklyData.entries())
         .map(([period, data]) => ({ period, jobs: data.jobs }))
         .sort((a, b) => parseInt(a.period.split(' ')[1]) - parseInt(b.period.split(' ')[1]));
 
@@ -99,16 +184,84 @@ const AnalyticsDashboard = () => {
         color: `hsl(45, ${100 - index * 20}%, ${60 - index * 10}%)`
       }));
 
-      // Fetch drivers
-      const { data: drivers } = await supabase
-        .from("drivers")
-        .select("*")
-        .eq("is_active", true);
+      // Haversine formula to calculate distance between two coordinates
+      const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+        const R = 3958.8; // Earth's radius in miles
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c;
+        return Math.round(distance * 10) / 10;
+      };
 
-      const driverUtilisation = (drivers || []).slice(0, 5).map(driver => ({
-        name: driver.name,
-        utilisation: Math.floor(Math.random() * 40) + 50 // Placeholder until we track actual hours
+      // Fetch completed bookings with all data
+      const { data: completedBookingsWithLocation } = await supabase
+        .from("bookings")
+        .select("*, drivers(name)")
+        .in("status", ["completed", "confirmed"]);
+
+      console.log("🔍 Completed bookings with location:", completedBookingsWithLocation);
+
+      // Group bookings by driver name and calculate hours
+      const driverHoursMap = new Map<string, { hours: number; jobs: number }>();
+
+      completedBookingsWithLocation?.forEach((booking: any) => {
+        const driverName = booking.drivers?.name || "Unassigned";
+
+        let hours = 0;
+
+        // Calculate distance if we have coordinates
+        if (booking.pickup_lat && booking.pickup_lon && booking.dropoff_lat && booking.dropoff_lon) {
+          const distance = calculateDistance(
+            booking.pickup_lat,
+            booking.pickup_lon,
+            booking.dropoff_lat,
+            booking.dropoff_lon
+          );
+          // Average 40 mph for chauffeur service + 15 minutes prep/end time
+          hours = (distance / 40) + 0.25;
+          console.log(`  📏 ${driverName} - ${booking.customer_name}: ${distance} miles = ${hours.toFixed(1)}h`);
+        } else {
+          // Default 2 hours if no location data
+          hours = 2;
+          console.log(`  🔢 ${driverName} - ${booking.customer_name}: Using default 2h`);
+        }
+
+        // Add wait time if specified
+        const waitTime = booking.wait_time_hours || 0;
+        hours += waitTime;
+
+        // Update driver's total
+        const current = driverHoursMap.get(driverName) || { hours: 0, jobs: 0 };
+        driverHoursMap.set(driverName, {
+          hours: current.hours + hours,
+          jobs: current.jobs + 1
+        });
+      });
+
+      console.log("📊 Driver Hours Map:", Array.from(driverHoursMap.entries()));
+
+      // Convert to array and prepare for display
+      const driverUtilisation = Array.from(driverHoursMap.entries()).map(([name, data]) => ({
+        name,
+        hours: Math.round(data.hours * 10) / 10,
+        jobs: data.jobs,
+        utilisation: 0
       }));
+
+      console.log("📈 Driver Utilisation:", driverUtilisation);
+
+      // Filter out drivers with 0 hours, sort by hours, and take top 5
+      const topDrivers = driverUtilisation
+        .filter(d => d.hours > 0)
+        .sort((a, b) => b.hours - a.hours)
+        .slice(0, 5);
+
+      console.log("🏆 Top Drivers (after filter):", topDrivers);
 
       // Fetch vehicles with job counts
       const { data: vehicles } = await supabase
@@ -141,10 +294,14 @@ const AnalyticsDashboard = () => {
         jobsCompleted: completedBookings.length,
         avgJobValue,
         repeatClients: repeatRate,
+        cancellationRate,
+        avgRating,
+        totalReviews: testimonials?.length || 0,
+        onTimeRate,
         revenueData: revenueData.length > 0 ? revenueData : [{ period: "No data", revenue: 0 }],
         jobsData: jobsData.length > 0 ? jobsData : [{ period: "No data", jobs: 0 }],
         jobTypeData: jobTypeData.length > 0 ? jobTypeData : [{ name: "No data", value: 100, color: "hsl(45, 60%, 50%)" }],
-        driverUtilisation: driverUtilisation.length > 0 ? driverUtilisation : [{ name: "No drivers", utilisation: 0 }],
+        driverUtilisation: topDrivers.length > 0 ? topDrivers : [{ name: "No drivers with hours tracked", hours: 0, jobs: 0, utilisation: 0 }],
         fleetData: fleetData.length > 0 ? fleetData : [{ vehicle: "No vehicles", jobs: 0, mileage: "0", status: "N/A" }],
       });
 
@@ -159,7 +316,7 @@ const AnalyticsDashboard = () => {
   const kpis = [
     {
       label: "Total Revenue",
-      value: `£${analyticsData.totalRevenue.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+      value: `$${analyticsData.totalRevenue.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
       isPositive: true,
       icon: DollarSign,
     },
@@ -171,7 +328,7 @@ const AnalyticsDashboard = () => {
     },
     {
       label: "Average Job Value",
-      value: `£${analyticsData.avgJobValue.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+      value: `$${analyticsData.avgJobValue.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
       isPositive: true,
       icon: Target,
     },
@@ -190,7 +347,7 @@ const AnalyticsDashboard = () => {
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
           <p className="text-sm font-medium text-foreground mb-1">{label}</p>
           <p className="text-sm text-accent font-semibold">
-            {payload[0].name === "revenue" ? "£" : ""}{payload[0].value.toLocaleString()}
+            {payload[0].name === "revenue" ? "$" : ""}{payload[0].value.toLocaleString()}
           </p>
         </div>
       );
@@ -209,19 +366,6 @@ const AnalyticsDashboard = () => {
                 Performance insights and detailed operational data
               </p>
             </div>
-            {activeTab === "overview" && (
-              <Select value={dateRange} onValueChange={setDateRange}>
-                <SelectTrigger className="w-[180px] border-accent/30 focus:border-accent">
-                  <SelectValue placeholder="Select period" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7">Last 7 days</SelectItem>
-                  <SelectItem value="30">Last 30 days</SelectItem>
-                  <SelectItem value="90">Last 90 days</SelectItem>
-                  <SelectItem value="365">This Year</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
           </div>
 
         {/* Tabs */}
@@ -274,27 +418,36 @@ const AnalyticsDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in animation-delay-400">
           <Card className="border-accent/20">
             <CardHeader>
-              <CardTitle className="font-display text-2xl">Revenue Over Time</CardTitle>
-              <CardDescription>Last 12 weeks</CardDescription>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <CardTitle className="font-display text-2xl">Revenue Over Time</CardTitle>
+                  <CardDescription>Weekly revenue breakdown</CardDescription>
+                </div>
+                <DateRangePicker
+                  date={revenueDateRange}
+                  onDateChange={setRevenueDateRange}
+                  placeholder="Select date range"
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={analyticsData.revenueData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 20%)" />
-                  <XAxis 
-                    dataKey="period" 
+                  <XAxis
+                    dataKey="period"
                     stroke="hsl(0 0% 60%)"
                     style={{ fontSize: '12px' }}
                   />
-                  <YAxis 
+                  <YAxis
                     stroke="hsl(0 0% 60%)"
                     style={{ fontSize: '12px' }}
                   />
                   <Tooltip content={<CustomTooltip />} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    stroke="hsl(45 100% 60%)" 
+                  <Line
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="hsl(45 100% 60%)"
                     strokeWidth={3}
                     dot={{ fill: "hsl(45 100% 60%)", r: 4 }}
                     activeDot={{ r: 6, fill: "hsl(45 100% 70%)" }}
@@ -306,25 +459,34 @@ const AnalyticsDashboard = () => {
 
           <Card className="border-accent/20">
             <CardHeader>
-              <CardTitle className="font-display text-2xl">Jobs Completed</CardTitle>
-              <CardDescription>Weekly breakdown</CardDescription>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <CardTitle className="font-display text-2xl">Jobs Completed</CardTitle>
+                  <CardDescription>Weekly breakdown</CardDescription>
+                </div>
+                <DateRangePicker
+                  date={jobsDateRange}
+                  onDateChange={setJobsDateRange}
+                  placeholder="Select date range"
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={analyticsData.jobsData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 20%)" />
-                  <XAxis 
-                    dataKey="period" 
+                  <XAxis
+                    dataKey="period"
                     stroke="hsl(0 0% 60%)"
                     style={{ fontSize: '12px' }}
                   />
-                  <YAxis 
+                  <YAxis
                     stroke="hsl(0 0% 60%)"
                     style={{ fontSize: '12px' }}
                   />
                   <Tooltip content={<CustomTooltip />} />
-                  <Bar 
-                    dataKey="jobs" 
+                  <Bar
+                    dataKey="jobs"
                     fill="hsl(45 100% 60%)"
                     radius={[8, 8, 0, 0]}
                   />
@@ -378,25 +540,39 @@ const AnalyticsDashboard = () => {
           {/* Driver Utilisation */}
           <Card className="border-accent/20">
             <CardHeader>
-              <CardTitle className="font-display text-xl">Driver Utilisation</CardTitle>
-              <CardDescription>Assigned hours this month</CardDescription>
+              <CardTitle className="font-display text-xl">Driver Hours Worked</CardTitle>
+              <CardDescription>Total hours from completed & confirmed jobs</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {analyticsData.driverUtilisation.map((driver: any, index: number) => (
-                  <div key={index}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-foreground">{driver.name}</span>
-                      <span className="text-sm font-semibold text-accent">{driver.utilisation}%</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-accent transition-all duration-500"
-                        style={{ width: `${driver.utilisation}%` }}
-                      />
-                    </div>
+                {analyticsData.driverUtilisation.length === 0 || analyticsData.driverUtilisation[0]?.hours === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p className="text-sm">No driver hours tracked yet</p>
+                    <p className="text-xs mt-2">Hours will appear when drivers complete confirmed jobs</p>
                   </div>
-                ))}
+                ) : (
+                  analyticsData.driverUtilisation.map((driver: any, index: number) => {
+                    // Calculate max hours for bar width (use the highest driver's hours as 100%)
+                    const maxHours = Math.max(...analyticsData.driverUtilisation.map((d: any) => d.hours || 0), 1);
+                    const barWidth = (driver.hours / maxHours) * 100;
+
+
+                    return (
+                      <div key={index}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-foreground">{driver.name}</span>
+                          <span className="text-sm font-semibold text-accent">{driver.hours}h</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                          <div
+                            className="h-full gradient-accent transition-all duration-500"
+                            style={{ width: `${barWidth}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </CardContent>
           </Card>
@@ -412,30 +588,31 @@ const AnalyticsDashboard = () => {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-muted-foreground">On-Time Arrivals</span>
-                    <span className="text-2xl font-bold text-accent">94%</span>
+                    <span className="text-2xl font-bold text-accent">{analyticsData.onTimeRate.toFixed(0)}%</span>
                   </div>
-                  <div className="text-xs text-muted-foreground">Above target of 90%</div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">Average Wait Time</span>
-                    <span className="text-2xl font-bold text-foreground">3.2 min</span>
+                  <div className="text-xs text-muted-foreground">
+                    {analyticsData.onTimeRate >= 90 ? "Above target of 90%" : "Below target of 90%"}
                   </div>
-                  <div className="text-xs text-muted-foreground">Below target of 5 min</div>
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-muted-foreground">Cancellation Rate</span>
-                    <span className="text-2xl font-bold text-foreground">2.1%</span>
+                    <span className="text-2xl font-bold text-foreground">{analyticsData.cancellationRate.toFixed(1)}%</span>
                   </div>
-                  <div className="text-xs text-muted-foreground">Within acceptable range</div>
+                  <div className="text-xs text-muted-foreground">
+                    {analyticsData.cancellationRate <= 5 ? "Within acceptable range" : "Above acceptable range"}
+                  </div>
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-muted-foreground">Customer Satisfaction</span>
-                    <span className="text-2xl font-bold text-accent">4.8/5.0</span>
+                    <span className="text-2xl font-bold text-accent">
+                      {analyticsData.avgRating > 0 ? `${analyticsData.avgRating.toFixed(1)}/5.0` : "N/A"}
+                    </span>
                   </div>
-                  <div className="text-xs text-muted-foreground">Based on 247 reviews</div>
+                  <div className="text-xs text-muted-foreground">
+                    Based on {analyticsData.totalReviews} review{analyticsData.totalReviews !== 1 ? 's' : ''}
+                  </div>
                 </div>
               </div>
               </CardContent>

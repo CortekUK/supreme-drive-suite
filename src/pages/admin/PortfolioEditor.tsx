@@ -754,7 +754,7 @@ export default function PortfolioEditor() {
                   id="priceRange"
                   value={priceRange}
                   onChange={(e) => setPriceRange(e.target.value)}
-                  placeholder="e.g. £1,500 - £3,000"
+                  placeholder="e.g. $1,500 - $3,000"
                 />
               </div>
             )}

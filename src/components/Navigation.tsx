@@ -73,12 +73,6 @@ const Navigation = () => {
           {/* Right-side Action Area */}
           <div className="hidden xl:flex items-center gap-3 flex-shrink-0">
             <ThemeToggle />
-            <Link to="/auth">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                <Lock className="w-4 h-4 mr-1.5" />
-                <span className="text-xs">Admin</span>
-              </Button>
-            </Link>
             <a href={`tel:${phoneLink}`}>
               <Button className="gradient-accent shadow-glow text-sm font-semibold whitespace-nowrap">
                 <Phone className="w-4 h-4 2xl:mr-2" />
@@ -102,12 +96,6 @@ const Navigation = () => {
                 {link.label}
               </Link>)}
             <div className="pt-4 space-y-3">
-              <Link to="/auth" onClick={() => setIsOpen(false)}>
-                <Button variant="outline" className="w-full mb-2">
-                  <Lock className="w-4 h-4 mr-2" />
-                  Admin Login
-                </Button>
-              </Link>
               <a href={`tel:${phoneLink}`}>
                 <Button className="w-full gradient-accent shadow-glow">
                   <Phone className="w-4 h-4 mr-2" />

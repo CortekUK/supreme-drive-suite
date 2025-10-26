@@ -264,7 +264,7 @@ Your luxury chauffeur service booking has been confirmed.
 │ Vehicle: Mercedes S-Class       │
 │ Passengers: 2                   │
 │                                 │
-│ Total: £250.00                  │
+│ Total: $250.00                  │
 └─────────────────────────────────┘
 
 What's Next?

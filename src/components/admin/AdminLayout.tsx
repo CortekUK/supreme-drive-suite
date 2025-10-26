@@ -86,10 +86,10 @@ function AdminSidebar() {
   }, []);
 
   const loadJobsCount = async () => {
+    // Count all bookings to match the Jobs page total
     const { count } = await supabase
       .from("bookings")
-      .select("*", { count: "exact", head: true })
-      .in("status", ["new", "pending"]);
+      .select("*", { count: "exact", head: true });
     setJobsCount(count || 0);
   };
 
@@ -132,7 +132,7 @@ function AdminSidebar() {
             <span className="ml-3 text-[13px]">{item.label}</span>
             {item.badge !== undefined && item.badge > 0 && (
               <Badge 
-                className="ml-auto h-5 min-w-[20px] px-1.5 bg-amber-500/20 text-amber-400 text-xs font-medium"
+                className="ml-auto h-5 min-w-[20px] px-1.5 bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 text-xs font-medium"
               >
                 {item.badge}
               </Badge>

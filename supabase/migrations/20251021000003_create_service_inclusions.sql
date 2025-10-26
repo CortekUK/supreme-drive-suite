@@ -33,10 +33,10 @@ INSERT INTO service_inclusions (title, icon_name, category, display_order) VALUE
   ('Complimentary water and refreshments', 'Droplets', 'standard', 3),
   ('WiFi and device charging', 'Wifi', 'standard', 4),
   ('Flight tracking (airport transfers)', 'Plane', 'standard', 5),
-  ('Close protection officer: from £500/day', 'Shield', 'premium', 1),
-  ('Extended waiting time: £50/hour', 'Clock', 'premium', 2),
+  ('Close protection officer: from $500/day', 'Shield', 'premium', 1),
+  ('Extended waiting time: $50/hour', 'Clock', 'premium', 2),
   ('Last-minute bookings: +25%', 'Phone', 'premium', 3),
-  ('Champagne service: £75', 'GlassWater', 'premium', 4),
+  ('Champagne service: $75', 'GlassWater', 'premium', 4),
   ('Multiple stops: POA', 'Sparkles', 'premium', 5)
 ON CONFLICT DO NOTHING;
 

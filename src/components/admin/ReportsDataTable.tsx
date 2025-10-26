@@ -18,8 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,13 +30,13 @@ import { toast } from "@/hooks/use-toast";
 import {
   Search,
   Download,
-  CalendarIcon,
   ChevronUp,
   ChevronDown,
   FileDown,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, endOfDay, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
+import { DateRange } from "react-day-picker";
 
 interface JobData {
   id: string;
@@ -64,8 +63,7 @@ export const ReportsDataTable = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [serviceFilter, setServiceFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
-  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [sortField, setSortField] = useState<SortField>("pickup_date");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -136,14 +134,16 @@ export const ReportsDataTable = () => {
     }
 
     // Date range filter
-    if (dateFrom) {
+    if (dateRange?.from) {
+      const startDate = startOfDay(dateRange.from);
       filtered = filtered.filter(
-        (job) => new Date(job.pickup_date) >= dateFrom
+        (job) => new Date(job.pickup_date) >= startDate
       );
     }
-    if (dateTo) {
+    if (dateRange?.to) {
+      const endDate = endOfDay(dateRange.to);
       filtered = filtered.filter(
-        (job) => new Date(job.pickup_date) <= dateTo
+        (job) => new Date(job.pickup_date) <= endDate
       );
     }
 
@@ -165,7 +165,7 @@ export const ReportsDataTable = () => {
     });
 
     return filtered;
-  }, [jobs, searchQuery, serviceFilter, statusFilter, dateFrom, dateTo, sortField, sortOrder]);
+  }, [jobs, searchQuery, serviceFilter, statusFilter, dateRange, sortField, sortOrder]);
 
   const paginatedJobs = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -192,7 +192,7 @@ export const ReportsDataTable = () => {
       job.service_type || "—",
       job.drivers?.name || "—",
       job.vehicles?.name || "—",
-      `£${job.total_price || 0}`,
+      `$${job.total_price || 0}`,
       job.distance_miles ? `${job.distance_miles} mi` : "—",
       job.status || "—",
     ]);
@@ -261,56 +261,15 @@ export const ReportsDataTable = () => {
       </div>
 
       {/* Filters Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 p-6 rounded-lg border border-border/50 bg-card/50 backdrop-blur-sm">
-        {/* Date From */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "justify-start text-left font-normal",
-                !dateFrom && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {dateFrom ? format(dateFrom, "PPP") : "Date From"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={dateFrom}
-              onSelect={setDateFrom}
-              initialFocus
-              className={cn("p-3 pointer-events-auto")}
-            />
-          </PopoverContent>
-        </Popover>
-
-        {/* Date To */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "justify-start text-left font-normal",
-                !dateTo && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {dateTo ? format(dateTo, "PPP") : "Date To"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={dateTo}
-              onSelect={setDateTo}
-              initialFocus
-              className={cn("p-3 pointer-events-auto")}
-            />
-          </PopoverContent>
-        </Popover>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 p-6 rounded-lg border border-border/50 bg-card/50 backdrop-blur-sm">
+        {/* Date Range Picker */}
+        <div className="lg:col-span-2">
+          <DateRangePicker
+            date={dateRange}
+            onDateChange={setDateRange}
+            placeholder="Select date range"
+          />
+        </div>
 
         {/* Service Type */}
         <Select value={serviceFilter} onValueChange={setServiceFilter}>
@@ -444,7 +403,7 @@ export const ReportsDataTable = () => {
                       {job.vehicles?.name || "—"}
                     </TableCell>
                     <TableCell className="text-right font-semibold">
-                      £{job.total_price || 0}
+                      ${job.total_price || 0}
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground">
                       {job.distance_miles ? `${job.distance_miles} mi` : "—"}

@@ -81,7 +81,7 @@ serve(async (req) => {
                 </div>
 
                 <div class="total">
-                  Total: £${bookingDetails.totalPrice}
+                  Total: $${bookingDetails.totalPrice}
                 </div>
               </div>
 
