@@ -5,17 +5,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Clock, 
-  Car, 
-  Star, 
-  Shield, 
-  Crown, 
-  Lock, 
-  PhoneCall 
-} from "lucide-react";
+import { Clock, Car, Star, Shield, Crown, Lock, PhoneCall } from "lucide-react";
 const About = () => {
   const [faqs, setFaqs] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -30,20 +27,21 @@ const About = () => {
       .select("*")
       .eq("is_active", true)
       .order("display_order");
-    
+
     if (data) {
       setFaqs(data);
-      const uniqueCategories = [...new Set(data.map(faq => faq.category))];
+      const uniqueCategories = [...new Set(data.map((faq) => faq.category))];
       setCategories(uniqueCategories);
     }
   };
 
-  const faqsByCategory = (category: string) => 
-    faqs.filter(faq => faq.category === category);
+  const faqsByCategory = (category: string) =>
+    faqs.filter((faq) => faq.category === category);
 
-  return <div className="min-h-screen bg-background">
+  return (
+    <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       {/* Hero Section */}
       <section className="pt-32 pb-24">
         <div className="container mx-auto px-4">
@@ -55,7 +53,8 @@ const About = () => {
               <div className="h-[1px] w-24 bg-gradient-to-r from-transparent via-accent to-transparent" />
             </div>
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Setting the standard for luxury chauffeur and close protection services across the United Kingdom.
+              Setting the standard for luxury chauffeur and close protection
+              services across the United Kingdom.
             </p>
           </div>
 
@@ -65,21 +64,69 @@ const About = () => {
               Excellence in Every Journey
             </h2>
             <div className="space-y-6 text-base md:text-lg text-muted-foreground leading-relaxed">
+              <p>Founded in 2021</p>
               <p>
-                Founded on the principles of discretion, professionalism, and uncompromising quality, 
-                Supreme Drive Suite has become one of the United Kingdom's leading providers of luxury 
-                chauffeur and close protection services.
+                Travel in Supreme Style was founded with a simple vision: to
+                provide the highest standard of luxury transport services
+                nationwide and across Europe.
               </p>
               <p>
-                Our team consists of highly trained professionals with backgrounds in military operations, 
-                law enforcement, and luxury hospitality — a combination that ensures unparalleled safety, 
-                comfort, and sophistication.
+                What began as a boutique chauffeur service has grown into the
+                trusted choice for executives, celebrities, and discerning
+                clients across the UK.
               </p>
               <p>
-                We understand our clients value privacy and time above all else. That's why our services 
-                are built around discretion, punctuality, and excellence — available 24/7 with immediate 
-                response times and access to the world's most prestigious vehicles.
+                Our founder and X military professional with over five years of
+                experience serving high-profile clients recognised the need for
+                a service that truly understood the unique requirements of
+                luxury travel and close protection.
               </p>
+              <p>
+                {" "}
+                Discretion, reliability, and uncompromising quality became the
+                pillars upon which Travel in Supreme Style was built.
+              </p>
+              <p>
+                Travel in supreme style operate a fleet of the finest vehicles,
+                each maintained to the highest standards and equipped with
+                premium amenities.
+              </p>
+              <p>
+                Beyond our luxury chauffeur services, we also provide specialist
+                vehicle transportation across Europe, with return dates tailored
+                to each client’s needs and requirements.
+              </p>
+              <p>
+                Our team of professional chauffeurs are trained to provide safe,
+                reliable transportation with a focus on customer service.
+              </p>
+              <p>
+                We will never claim to be the biggest company — but what we are,
+                is the pinnacle of excellence.
+              </p>
+              <p>
+                After studying the marketplace extensively, we recognised the
+                need to create something stronger, more capable, and truly
+                nationwide. That's why we have joined forces with two other
+                leading names in the industry:
+              </p>
+              <ul className="list-disc list-inside pl-4">
+                <li>Jake Atkins at S Line Limited</li>
+                <li>Louis Kyriacou executive</li>
+                <li>Roger McKoy at Travel in Supreme Style Limited</li>
+              </ul>
+              <p>
+                Together, we have formed a robust concierge chauffeur group — a
+                powerful alliance of three unique companies.
+              </p>
+              <p>This partnership creates a service that is second to none:</p>
+              <ul className="list-disc list-inside pl-4">
+                <li>Nationwide strength and capability</li>
+                <li>The best vehicles in the industry</li>
+                <li>Unmatched service at the most competitive prices</li>
+                <li>The ability to deliver on the biggest of jobs with precision and care</li>
+              </ul>
+              <p>This is more than collaboration — it's a new standard.</p>
             </div>
           </Card>
 
@@ -147,7 +194,8 @@ const About = () => {
                     Discretion Guaranteed
                   </h4>
                   <p className="text-muted-foreground leading-relaxed">
-                    All chauffeurs and protection officers sign confidentiality agreements to guarantee complete privacy.
+                    All chauffeurs and protection officers sign confidentiality
+                    agreements to guarantee complete privacy.
                   </p>
                 </div>
               </div>
@@ -163,7 +211,9 @@ const About = () => {
                     Premium Fleet
                   </h4>
                   <p className="text-muted-foreground leading-relaxed">
-                    From the Rolls-Royce Phantom to the Range Rover Autobiography, every vehicle represents British excellence and comfort.
+                    From the Rolls-Royce Phantom to the Range Rover
+                    Autobiography, every vehicle represents British excellence
+                    and comfort.
                   </p>
                 </div>
               </div>
@@ -179,7 +229,8 @@ const About = () => {
                     Elite Security
                   </h4>
                   <p className="text-muted-foreground leading-relaxed">
-                    Our close protection officers are experienced professionals, trained to safeguard high-profile clients discreetly.
+                    Our close protection officers are experienced professionals,
+                    trained to safeguard high-profile clients discreetly.
                   </p>
                 </div>
               </div>
@@ -195,7 +246,8 @@ const About = () => {
                     24/7 Availability
                   </h4>
                   <p className="text-muted-foreground leading-relaxed">
-                    Whether weekday or weekend, we're ready to respond at a moment's notice — anywhere across the UK.
+                    Whether weekday or weekend, we're ready to respond at a
+                    moment's notice — anywhere across the UK.
                   </p>
                 </div>
               </div>
@@ -216,16 +268,17 @@ const About = () => {
                 <div className="h-[1px] w-32 bg-gradient-to-r from-transparent via-accent to-transparent" />
               </div>
               <p className="text-lg md:text-xl text-muted-foreground">
-                Everything you need to know about our luxury chauffeur and protection services.
+                Everything you need to know about our luxury chauffeur and
+                protection services.
               </p>
             </div>
 
             {categories.length > 0 ? (
               <Tabs defaultValue={categories[0]} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 mb-8 bg-card/50 p-1 h-auto">
-                  {categories.map(category => (
-                    <TabsTrigger 
-                      key={category} 
+                  {categories.map((category) => (
+                    <TabsTrigger
+                      key={category}
                       value={category}
                       className="data-[state=active]:bg-accent/20 data-[state=active]:text-accent data-[state=active]:border-accent/50 border border-transparent transition-all py-3"
                     >
@@ -234,18 +287,24 @@ const About = () => {
                   ))}
                 </TabsList>
 
-                {categories.map(category => (
-                  <TabsContent key={category} value={category} className="animate-fade-in">
+                {categories.map((category) => (
+                  <TabsContent
+                    key={category}
+                    value={category}
+                    className="animate-fade-in"
+                  >
                     <Card className="p-8 shadow-metal bg-card/50 backdrop-blur border-accent/20">
                       <Accordion type="single" collapsible className="w-full">
                         {faqsByCategory(category).map((faq, index) => (
-                          <AccordionItem 
-                            key={faq.id} 
+                          <AccordionItem
+                            key={faq.id}
                             value={`item-${index}`}
                             className="border-b border-accent/10 last:border-0"
                           >
                             <AccordionTrigger className="text-left hover:text-accent transition-colors py-5">
-                              <span className="font-medium">{faq.question}</span>
+                              <span className="font-medium">
+                                {faq.question}
+                              </span>
                             </AccordionTrigger>
                             <AccordionContent className="text-muted-foreground leading-relaxed pb-5">
                               {faq.answer}
@@ -270,16 +329,15 @@ const About = () => {
                 Still have questions?
               </h3>
               <p className="text-muted-foreground mb-8 text-lg max-w-xl mx-auto leading-relaxed">
-                Our team is here to help. Contact us for personalised assistance.
+                Our team is here to help. Contact us for personalised
+                assistance.
               </p>
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="shadow-glow hover:shadow-[0_0_40px_rgba(255,215,0,0.4)] transition-all text-base px-10 py-6"
                 asChild
               >
-                <a href="tel:08001234567">
-                  Call 0800 123 4567
-                </a>
+                <a href="tel:08001234567">Call 0800 123 4567</a>
               </Button>
             </Card>
           </div>
@@ -287,6 +345,7 @@ const About = () => {
       </section>
 
       <Footer />
-    </div>;
+    </div>
+  );
 };
 export default About;
