@@ -7,8 +7,10 @@ import { Shield, Award, Users, Globe, CheckCircle, Quote, BadgeCheck, Phone } fr
 import protectionHero from "@/assets/service-protection.jpg";
 import CloseProtectionEnquiryForm from "@/components/CloseProtectionEnquiryForm";
 import { PortfolioCarousel } from "@/components/portfolio/PortfolioCarousel";
+import { SecurityTeamCarousel } from "@/components/SecurityTeamCarousel";
 
 const CloseProtection = () => {
+
   const features = [
     {
       icon: Shield,
@@ -216,10 +218,16 @@ const CloseProtection = () => {
       </section>
 
       {/* Recent Assignments Carousel */}
-      <PortfolioCarousel 
+      <PortfolioCarousel
         serviceType="close_protection"
         title="Recent Assignments"
         subtitle="Explore our portfolio of successful protection operations"
+      />
+
+      {/* Security Team Carousel */}
+      <SecurityTeamCarousel
+        title="Our Security Team"
+        subtitle="Meet our elite close protection officers with military and law enforcement backgrounds"
       />
 
       {/* Trusted by High-Profile Clients */}

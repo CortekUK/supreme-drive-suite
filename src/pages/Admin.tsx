@@ -13,6 +13,8 @@ import AdminFeedback from "./AdminFeedback";
 import JobDetail from "./admin/JobDetail";
 import PortfolioManagement from "./admin/PortfolioManagement";
 import PortfolioEditor from "./admin/PortfolioEditor";
+import SecurityTeamManagement from "./admin/SecurityTeamManagement";
+import SecurityTeamEditor from "./admin/SecurityTeamEditor";
 import AnalyticsDashboard from "./admin/AnalyticsDashboard";
 import SearchResults from "./admin/SearchResults";
 
@@ -70,6 +72,9 @@ const Admin = () => {
         <Route path="/portfolio" element={<PortfolioManagement />} />
         <Route path="/portfolio/new" element={<PortfolioEditor />} />
         <Route path="/portfolio/edit/:id" element={<PortfolioEditor />} />
+        <Route path="/security-team" element={<SecurityTeamManagement />} />
+        <Route path="/security-team/new" element={<SecurityTeamEditor />} />
+        <Route path="/security-team/edit/:id" element={<SecurityTeamEditor />} />
         <Route path="/feedback" element={<AdminFeedback />} />
         <Route path="/settings" element={<AdminSettings />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
