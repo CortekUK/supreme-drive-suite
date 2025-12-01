@@ -89,7 +89,7 @@ const Contact = () => {
           phone: formData.phone,
           subject: formData.subject,
           message: formData.message,
-          adminEmail: 'admin@travelinsupremestyle.co.uk'
+          adminEmail: 'Travelinsupremestyle@gmail.com'
         }
       });
 
