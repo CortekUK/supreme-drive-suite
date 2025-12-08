@@ -19,6 +19,7 @@ import {
   CalendarX,
   UserCog,
   Shield,
+  Key,
 } from "lucide-react";
 import {
   Sidebar,
@@ -49,6 +50,7 @@ import { toast } from "sonner";
 import BlockedDatesModal from "./BlockedDatesModal";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import NotificationBell from "./NotificationBell";
+import ChangePasswordDialog from "./ChangePasswordDialog";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -211,6 +213,7 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [showBlockedDatesModal, setShowBlockedDatesModal] = useState(false);
+  const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   // Persist sidebar state
@@ -307,6 +310,10 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
       console.error("Logout error:", error);
       toast.error("Error logging out");
     }
+  };
+
+  const handleChangePassword = () => {
+    setShowChangePasswordDialog(true);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -553,6 +560,10 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56 bg-card border-border">
+                    <DropdownMenuItem onClick={handleChangePassword} className="cursor-pointer">
+                      <Key className="mr-2 h-4 w-4" />
+                      Change Password
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer">
                       <LogOut className="mr-2 h-4 w-4" />
                       Logout
@@ -569,6 +580,13 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
           </main>
         </div>
       </div>
+
+      {/* Change Password Dialog */}
+      <ChangePasswordDialog
+        open={showChangePasswordDialog}
+        onOpenChange={setShowChangePasswordDialog}
+        userEmail={user?.email || user?.user_metadata?.email || ""}
+      />
 
       {/* Blocked Dates Modal */}
       <BlockedDatesModal

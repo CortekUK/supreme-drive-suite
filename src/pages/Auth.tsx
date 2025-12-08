@@ -4,18 +4,23 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [loginData, setLoginData] = useState({ email: "", password: "" });
-  const [signupData, setSignupData] = useState({ email: "", password: "", fullName: "" });
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetPassword, setResetPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showPasswordResetForm, setShowPasswordResetForm] = useState(false);
+  const [verifiedEmail, setVerifiedEmail] = useState("");
 
   useEffect(() => {
     // Check if user is already logged in
@@ -54,85 +59,194 @@ const Auth = () => {
     toast.success("Logged in successfully");
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleCheckEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
-      email: signupData.email,
-      password: signupData.password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/admin`,
-        data: {
-          full_name: signupData.fullName,
-        },
-      },
-    });
+    try {
+      const emailToCheck = resetEmail.trim().toLowerCase();
 
-    setLoading(false);
+      // Check if user exists by querying profiles table
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('email')
+        .ilike('email', emailToCheck);
 
-    if (error) {
-      toast.error(error.message);
+      setLoading(false);
+
+      if (error) {
+        console.error("Error checking email:", error);
+        toast.error("Error checking email");
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        toast.error("Email not found in our system");
+        return;
+      }
+
+      // Email exists, show password reset form
+      setVerifiedEmail(data[0].email);
+      setShowPasswordResetForm(true);
+      setShowForgotPassword(false);
+    } catch (error) {
+      setLoading(false);
+      console.error("Exception:", error);
+      toast.error("Error checking email");
+    }
+  };
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validate passwords match
+    if (resetPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
       return;
     }
 
-    toast.success("Account created! Please check your email to verify.");
+    // Validate password length
+    if (resetPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
 
-    // Reset form after successful signup
-    setSignupData({ email: "", password: "", fullName: "" });
-    setShowSignupPassword(false);
+    setLoading(true);
+
+    try {
+      // Get the user by email
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', verifiedEmail)
+        .single();
+
+      if (userError || !userData) {
+        setLoading(false);
+        toast.error("Error finding user");
+        return;
+      }
+
+      // Update password using Supabase admin API
+      // Note: This requires creating a Supabase function
+      const { data, error } = await supabase.functions.invoke('update-password', {
+        body: { userId: userData.id, newPassword: resetPassword }
+      });
+
+      setLoading(false);
+
+      if (error) {
+        toast.error("Error updating password. Please contact admin.");
+        return;
+      }
+
+      toast.success("Password changed successfully! You can now login with your new password.");
+      setResetPassword("");
+      setConfirmPassword("");
+      setShowPasswordResetForm(false);
+      setResetEmail("");
+      setVerifiedEmail("");
+    } catch (error) {
+      setLoading(false);
+      toast.error("Error updating password");
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setShowForgotPassword(false);
+    setShowPasswordResetForm(false);
+    setResetEmail("");
+    setResetPassword("");
+    setConfirmPassword("");
+    setVerifiedEmail("");
   };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="p-8 max-w-md w-full shadow-metal bg-card/50 backdrop-blur">
         <h1 className="text-3xl font-display font-bold mb-6 text-gradient-metal text-center">
-          Admin Access
+          {showPasswordResetForm ? "Reset Your Password" : showForgotPassword ? "Forgot Password" : "Admin Login"}
         </h1>
 
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-          </TabsList>
+        {!showForgotPassword && !showPasswordResetForm && (
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="login-email">Email</Label>
+              <Input
+                id="login-email"
+                type="email"
+                value={loginData.email}
+                onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                required
+              />
+            </div>
 
-          <TabsContent value="login">
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="login-email">Email</Label>
+            <div className="space-y-2">
+              <Label htmlFor="login-password">Password</Label>
+              <div className="relative">
                 <Input
-                  id="login-email"
+                  id="login-password"
+                  type={showLoginPassword ? "text" : "password"}
+                  value={loginData.password}
+                  onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                  required
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPassword(!showLoginPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showLoginPassword ? (
+                    <Eye className="w-4 h-4" />
+                  ) : (
+                    <EyeOff className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full gradient-accent shadow-glow"
+              disabled={loading}
+            >
+              {loading ? "Logging in..." : "Login"}
+            </Button>
+
+            <div className="text-center pt-2">
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors underline"
+              >
+                Don't remember your password?
+              </button>
+            </div>
+          </form>
+        )}
+
+        {showForgotPassword && !showPasswordResetForm && (
+          <div>
+            <button
+              onClick={handleBackToLogin}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to login
+            </button>
+            <form onSubmit={handleCheckEmail} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <Input
+                  id="reset-email"
                   type="email"
-                  value={loginData.email}
-                  onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="Enter your email address"
                   required
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="login-password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="login-password"
-                    type={showLoginPassword ? "text" : "password"}
-                    value={loginData.password}
-                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                    required
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowLoginPassword(!showLoginPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    tabIndex={-1}
-                  >
-                    {showLoginPassword ? (
-                      <Eye className="w-4 h-4" />
-                    ) : (
-                      <EyeOff className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
               </div>
 
               <Button
@@ -140,53 +254,78 @@ const Auth = () => {
                 className="w-full gradient-accent shadow-glow"
                 disabled={loading}
               >
-                {loading ? "Logging in..." : "Login"}
+                {loading ? "Checking..." : "Continue"}
               </Button>
+
+              <p className="text-sm text-muted-foreground text-center">
+                We'll check if this email exists in our system.
+              </p>
             </form>
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="signup">
-            <form onSubmit={handleSignup} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signup-name">Full Name</Label>
-                <Input
-                  id="signup-name"
-                  value={signupData.fullName}
-                  onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">Email</Label>
-                <Input
-                  id="signup-email"
-                  type="email"
-                  value={signupData.email}
-                  onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
-                  required
-                />
-              </div>
+        {showPasswordResetForm && (
+          <div>
+            <button
+              onClick={handleBackToLogin}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to login
+            </button>
+            <form onSubmit={handlePasswordReset} className="space-y-4">
+              <p className="text-sm text-muted-foreground mb-4">
+                Setting new password for: <span className="text-foreground font-medium">{verifiedEmail}</span>
+              </p>
 
               <div className="space-y-2">
-                <Label htmlFor="signup-password">Password</Label>
+                <Label htmlFor="new-password">New Password</Label>
                 <div className="relative">
                   <Input
-                    id="signup-password"
-                    type={showSignupPassword ? "text" : "password"}
-                    value={signupData.password}
-                    onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
+                    id="new-password"
+                    type={showResetPassword ? "text" : "password"}
+                    value={resetPassword}
+                    onChange={(e) => setResetPassword(e.target.value)}
                     required
                     minLength={6}
                     className="pr-10"
+                    placeholder="Enter new password"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowSignupPassword(!showSignupPassword)}
+                    onClick={() => setShowResetPassword(!showResetPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     tabIndex={-1}
                   >
-                    {showSignupPassword ? (
+                    {showResetPassword ? (
+                      <Eye className="w-4 h-4" />
+                    ) : (
+                      <EyeOff className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <div className="relative">
+                  <Input
+                    id="confirm-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="pr-10"
+                    placeholder="Confirm new password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? (
                       <Eye className="w-4 h-4" />
                     ) : (
                       <EyeOff className="w-4 h-4" />
@@ -200,11 +339,11 @@ const Auth = () => {
                 className="w-full gradient-accent shadow-glow"
                 disabled={loading}
               >
-                {loading ? "Creating account..." : "Sign Up"}
+                {loading ? "Updating password..." : "Update Password"}
               </Button>
             </form>
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
       </Card>
     </div>
   );

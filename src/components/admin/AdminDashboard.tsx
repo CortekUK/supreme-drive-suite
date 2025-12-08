@@ -59,20 +59,20 @@ export default function AdminDashboard() {
     },
     {
       label: "Vehicle Utilisation",
-      value: "80%",
-      percentage: 80,
+      value: "0%",
+      percentage: 0,
       status: "moderate",
     },
     {
       label: "On-Time Performance",
-      value: "94%",
-      percentage: 94,
+      value: "0%",
+      percentage: 0,
       status: "good",
     },
     {
       label: "Client Satisfaction",
-      value: "4.8/5.0",
-      percentage: 96,
+      value: "0/5.0",
+      percentage: 0,
       status: "good",
     },
   ];
