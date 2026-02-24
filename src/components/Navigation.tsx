@@ -55,7 +55,7 @@ const Navigation = () => {
         <div className="flex items-center w-full justify-between gap-2 lg:gap-4 xl:gap-8">
           {/* Logo/Branding - Left */}
           <Link to="/" className="flex items-center flex-shrink-0 group">
-            <img src={tissLogo} alt="TISS - Travel in Supreme Style" className="h-10 lg:h-12 w-auto" />
+            <img src={tissLogo} alt="TISS - Travel in Supreme Style" className="h-14 lg:h-16 w-auto -my-2 object-contain" />
           </Link>
 
           {/* Desktop Navigation - Center */}
