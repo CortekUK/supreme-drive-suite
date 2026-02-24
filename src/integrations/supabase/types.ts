@@ -21,7 +21,7 @@ export type Database = {
           affected_entity_type: string | null
           created_at: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           new_values: Json | null
           old_values: Json | null
           record_id: string | null
@@ -36,7 +36,7 @@ export type Database = {
           affected_entity_type?: string | null
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_values?: Json | null
           old_values?: Json | null
           record_id?: string | null
@@ -51,7 +51,7 @@ export type Database = {
           affected_entity_type?: string | null
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_values?: Json | null
           old_values?: Json | null
           record_id?: string | null
@@ -59,6 +59,30 @@ export type Database = {
           table_name?: string
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      blocked_dates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date: string
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date: string
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          id?: string
+          reason?: string | null
         }
         Relationships: []
       }
@@ -87,6 +111,7 @@ export type Database = {
           is_long_drive: boolean | null
           luggage: number
           passengers: number
+          payment_status: string | null
           pickup_date: string
           pickup_location: string
           pickup_time: string
@@ -123,6 +148,7 @@ export type Database = {
           is_long_drive?: boolean | null
           luggage: number
           passengers: number
+          payment_status?: string | null
           pickup_date: string
           pickup_location: string
           pickup_time: string
@@ -159,6 +185,7 @@ export type Database = {
           is_long_drive?: boolean | null
           luggage?: number
           passengers?: number
+          payment_status?: string | null
           pickup_date?: string
           pickup_location?: string
           pickup_time?: string
@@ -541,6 +568,57 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          metadata: Json | null
+          related_booking_id: string | null
+          title: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          metadata?: Json | null
+          related_booking_id?: string | null
+          title: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          metadata?: Json | null
+          related_booking_id?: string | null
+          title?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_related_booking_id_fkey"
+            columns: ["related_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_related_booking_id_fkey"
+            columns: ["related_booking_id"]
+            isOneToOne: false
+            referencedRelation: "job_details"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolio: {
         Row: {
           cover_image_url: string
@@ -771,6 +849,93 @@ export type Database = {
           full_name?: string | null
           id?: string
           role?: string | null
+        }
+        Relationships: []
+      }
+      security_team: {
+        Row: {
+          bio: string | null
+          certifications: string[] | null
+          created_at: string | null
+          display_order: number | null
+          email: string | null
+          experience_years: number | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          name: string
+          phone: string | null
+          profile_image_url: string | null
+          specializations: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          bio?: string | null
+          certifications?: string[] | null
+          created_at?: string | null
+          display_order?: number | null
+          email?: string | null
+          experience_years?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name: string
+          phone?: string | null
+          profile_image_url?: string | null
+          specializations?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          bio?: string | null
+          certifications?: string[] | null
+          created_at?: string | null
+          display_order?: number | null
+          email?: string | null
+          experience_years?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name?: string
+          phone?: string | null
+          profile_image_url?: string | null
+          specializations?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      service_inclusions: {
+        Row: {
+          category: string
+          created_at: string | null
+          display_order: number | null
+          icon_name: string
+          id: string
+          is_active: boolean | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          display_order?: number | null
+          icon_name: string
+          id?: string
+          is_active?: boolean | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          display_order?: number | null
+          icon_name?: string
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1026,7 +1191,7 @@ export type Database = {
           affected_entity_type: string | null
           created_at: string | null
           id: string | null
-          ip_address: unknown | null
+          ip_address: unknown
           new_values: Json | null
           old_values: Json | null
           record_id: string | null
@@ -1127,10 +1292,7 @@ export type Database = {
         }
         Returns: string
       }
-      is_admin: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
+      is_admin: { Args: { user_id: string }; Returns: boolean }
       promote_user_to_admin: {
         Args: { user_email: string }
         Returns: undefined
