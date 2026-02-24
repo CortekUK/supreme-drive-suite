@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import tissLogo from "@/assets/tiss-logo.png";
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -53,14 +54,8 @@ const Navigation = () => {
       <div className="container mx-auto px-2 lg:px-4">
         <div className="flex items-center w-full justify-between gap-2 lg:gap-4 xl:gap-8">
           {/* Logo/Branding - Left */}
-          <Link to="/" className="flex items-center gap-2 lg:gap-3 flex-shrink-0 group">
-            <Shield className="w-5 h-5 lg:w-6 lg:h-6 text-foreground transition-colors" strokeWidth={1.5} />
-            <div className="flex flex-col">
-              <span className="text-base lg:text-lg xl:text-2xl font-luxury font-semibold dark:text-gradient-silver text-gradient-metal leading-tight whitespace-nowrap tracking-wide">
-                Travel in Supreme Style
-              </span>
-              <div className="h-0.5 w-full bg-accent/60 mt-0.5 lg:mt-1" />
-            </div>
+          <Link to="/" className="flex items-center flex-shrink-0 group">
+            <img src={tissLogo} alt="TISS - Travel in Supreme Style" className="h-10 lg:h-12 w-auto" />
           </Link>
 
           {/* Desktop Navigation - Center */}
