@@ -78,7 +78,7 @@ const Index = () => {
       <Navigation />
       <div className="animate-fade-in">
         <UniversalHero
-          headline={<>Travel in<br />Supreme Style</>}
+          headline={<>Travel in<br />Ghulam Style</>}
           subheading="Experience unparalleled luxury with our elite chauffeur services and professional close protection"
           backgroundImage={rollsRoyceHero}
           backgroundAlt="Ultra-luxury Rolls-Royce chauffeur service in prestigious city skyline"
