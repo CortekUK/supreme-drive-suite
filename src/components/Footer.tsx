@@ -79,7 +79,7 @@ const Footer = () => {
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="w-4 h-4" />
                 <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(settings.office_address || '')}`}
+                  href="https://www.google.com/maps/place/Windrush+Millennium+Centre/@53.4567857,-2.2523667,3a,75y,249.7h,90.27t/data=!3m7!1e1!3m5!1sqJcOP2bAv_dN5qY74L_GpQ!2e0!6shttps:%2F%2Fstreetviewpixels-pa.googleapis.com%2Fv1%2Fthumbnail%3Fcb_client%3Dmaps_sv.tactile%26w%3D900%26h%3D600%26pitch%3D-0.27357371432761113%26panoid%3DqJcOP2bAv_dN5qY74L_GpQ%26yaw%3D249.69754796698086!7i16384!8i8192!4m6!3m5!1s0x487bb1d0fd4d9deb:0x71dacde302098063!8m2!3d53.4567343!4d-2.252734!16s%2Fg%2F11zh_wq4v8?entry=ttu&g_ep=EgoyMDI2MDIyNS4wIKXMDSoASAFQAw%3D%3D"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-accent transition-colors duration-200"
