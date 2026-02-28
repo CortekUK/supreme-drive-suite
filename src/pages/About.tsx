@@ -111,7 +111,7 @@ const About = () => {
                 leading names in the industry:
               </p>
               <ul className="list-disc list-inside pl-4">
-                <li>Jake Atkins at S Line Limited</li>
+                <li>Jake Ankers at S Line Limited</li>
                 <li>Louis Kyriacou executive</li>
                 <li>Roger McKoy at Travel in Supreme Style Limited</li>
               </ul>
