@@ -144,7 +144,7 @@ const Contact = () => {
               <div className="h-[1px] w-24 bg-gradient-to-r from-transparent via-accent to-transparent" />
             </div>
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              We're here to assist with your travel and protection requirements.
+              Our team is here to assist with all travel and Close Protection enquiries.
             </p>
           </div>
 
