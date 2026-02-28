@@ -87,19 +87,14 @@ const LocationAutocomplete = ({
           country: feature.properties.country,
         }));
 
-        // Sort results to prioritize UK addresses
-        const sortedResults = results.sort((a: any, b: any) => {
-          const aIsUK = a.country === 'United Kingdom' || a.country === 'UK';
-          const bIsUK = b.country === 'United Kingdom' || b.country === 'UK';
+        // Filter to UK-only results
+        const ukResults = results.filter((r: any) => 
+          r.country === 'United Kingdom' || r.country === 'UK'
+        );
 
-          if (aIsUK && !bIsUK) return -1;
-          if (!aIsUK && bIsUK) return 1;
-          return 0;
-        });
-
-        // Limit to 5 results after sorting
-        setSuggestions(sortedResults.slice(0, 5));
-        setShowSuggestions(sortedResults.length > 0);
+        // Limit to 5 results
+        setSuggestions(ukResults.slice(0, 5));
+        setShowSuggestions(ukResults.length > 0);
       } else {
         setSuggestions([]);
         setShowSuggestions(false);
