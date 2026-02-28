@@ -47,11 +47,11 @@ const Navigation = () => {
     path: "/testimonials",
     label: "Testimonials"
   }, {
-    path: "/contact",
-    label: "Contact"
-  }, {
     path: "/terms",
     label: "Terms & Conditions"
+  }, {
+    path: "/contact",
+    label: "Contact"
   }];
   return <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-metal py-3 h-[72px]">
       <div className="container mx-auto px-2 lg:px-4">

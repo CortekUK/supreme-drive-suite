@@ -10,7 +10,7 @@ const Terms = () => {
       <section className="pt-32 pb-20">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-6xl font-display font-bold mb-6 text-gradient-metal">
+            <h1 className="text-5xl md:text-6xl font-display font-bold mb-6 text-gradient-metal text-center">
               Terms &amp; Conditions
             </h1>
             
