@@ -878,25 +878,6 @@ const MultiStepBookingWidget = () => {
               </div>
 
 
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="isLongDrive"
-                    checked={formData.isLongDrive}
-                    onCheckedChange={(checked) => setFormData({ ...formData, isLongDrive: checked as boolean })}
-                  />
-                  <Label htmlFor="isLongDrive" className="cursor-pointer">Long drive (4+ hours)</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="hasOvernightStop"
-                    checked={formData.hasOvernightStop}
-                    onCheckedChange={(checked) => setFormData({ ...formData, hasOvernightStop: checked as boolean })}
-                  />
-                  <Label htmlFor="hasOvernightStop" className="cursor-pointer">Overnight stop required</Label>
-                </div>
-              </div>
             </div>
 
             <Button
