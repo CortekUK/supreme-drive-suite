@@ -87,7 +87,7 @@ const Pricing = () => {
       .order("category, display_order");
 
     if (!error && data) {
-      setServiceInclusions(data);
+      setServiceInclusions(data as any);
     }
   };
 

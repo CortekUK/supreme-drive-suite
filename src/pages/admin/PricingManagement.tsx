@@ -66,7 +66,7 @@ const PricingManagement = () => {
 
       if (extrasRes.data) setExtras(extrasRes.data);
       if (vehiclesRes.data) setVehicles(vehiclesRes.data);
-      if (inclusionsRes.data) setServiceInclusions(inclusionsRes.data);
+      if (inclusionsRes.data) setServiceInclusions(inclusionsRes.data as any);
     } catch (error) {
       toast.error("Failed to load pricing data");
     } finally {

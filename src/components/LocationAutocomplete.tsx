@@ -60,10 +60,51 @@ const LocationAutocomplete = ({
     try {
       // Using Photon API (powered by Komoot) - Free, no API key, better CORS support
       // Biasing results to UK (lat: 54.5, lon: -2.0 is center of UK)
+      // Fetch more results to ensure enough UK ones after filtering
+      // Detect if input looks like a UK postcode
+      const isPostcode = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d?[A-Z]{0,2}$/i.test(inputValue.trim());
+      
+      // For postcodes, use Postcodes.io for precise UK results, otherwise use Photon
+      if (isPostcode) {
+        const postcodeClean = inputValue.trim().replace(/\s+/g, '');
+        const pcResponse = await fetch(
+          `https://api.postcodes.io/postcodes/${encodeURIComponent(postcodeClean)}/autocomplete`
+        );
+        
+        if (pcResponse.ok) {
+          const pcData = await pcResponse.json();
+          if (pcData.result && pcData.result.length > 0) {
+            // Look up each postcode for full details
+            const lookupResponse = await fetch(
+              `https://api.postcodes.io/postcodes/${encodeURIComponent(pcData.result[0])}`
+            );
+            if (lookupResponse.ok) {
+              const lookupData = await lookupResponse.json();
+              if (lookupData.result) {
+                const r = lookupData.result;
+                const results = pcData.result.slice(0, 5).map((pc: string, idx: number) => ({
+                  place_id: idx,
+                  display_name: idx === 0 
+                    ? [r.admin_ward, r.admin_district, r.region, pc].filter(Boolean).join(', ')
+                    : pc,
+                  name: pc,
+                  lat: idx === 0 ? r.latitude.toString() : r.latitude.toString(),
+                  lon: idx === 0 ? r.longitude.toString() : r.longitude.toString(),
+                  country: 'United Kingdom',
+                }));
+                setSuggestions(results);
+                setShowSuggestions(results.length > 0);
+                return;
+              }
+            }
+          }
+        }
+      }
+      
       const response = await fetch(
         `https://photon.komoot.io/api/?` +
         `q=${encodeURIComponent(inputValue)}&` +
-        `limit=10&` +
+        `limit=20&` +
         `lang=en&` +
         `lat=54.5&` +
         `lon=-2.0`
@@ -71,12 +112,11 @@ const LocationAutocomplete = ({
 
       if (response.ok) {
         const data = await response.json();
-        // Convert Photon format to our format
         const results = data.features.map((feature: any) => ({
           place_id: feature.properties.osm_id,
           display_name: [
-            feature.properties.name,
-            feature.properties.street,
+            feature.properties.housenumber ? `${feature.properties.housenumber} ${feature.properties.street || ''}`.trim() : feature.properties.name,
+            feature.properties.street && feature.properties.housenumber ? null : feature.properties.street,
             feature.properties.city || feature.properties.county,
             feature.properties.postcode,
             feature.properties.country
@@ -85,14 +125,14 @@ const LocationAutocomplete = ({
           lat: feature.geometry.coordinates[1].toString(),
           lon: feature.geometry.coordinates[0].toString(),
           country: feature.properties.country,
+          countrycode: feature.properties.countrycode,
         }));
 
         // Filter to UK-only results
         const ukResults = results.filter((r: any) => 
-          r.country === 'United Kingdom' || r.country === 'UK'
+          r.countrycode === 'GB' || r.country === 'United Kingdom' || r.country === 'UK'
         );
 
-        // Limit to 5 results
         setSuggestions(ukResults.slice(0, 5));
         setShowSuggestions(ukResults.length > 0);
       } else {
