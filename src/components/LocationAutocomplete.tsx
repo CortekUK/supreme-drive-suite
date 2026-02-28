@@ -64,7 +64,7 @@ const LocationAutocomplete = ({
       // Detect if input looks like a UK postcode
       const isPostcode = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d?[A-Z]{0,2}$/i.test(inputValue.trim());
       
-      // For postcodes, use Postcodes.io for precise UK results, otherwise use Photon
+      // For postcodes, use Postcodes.io to get the location, then use Photon to find nearby streets
       if (isPostcode) {
         const postcodeClean = inputValue.trim().replace(/\s+/g, '');
         const pcResponse = await fetch(
@@ -74,7 +74,7 @@ const LocationAutocomplete = ({
         if (pcResponse.ok) {
           const pcData = await pcResponse.json();
           if (pcData.result && pcData.result.length > 0) {
-            // Look up each postcode for full details
+            // Look up the first matching postcode for coordinates
             const lookupResponse = await fetch(
               `https://api.postcodes.io/postcodes/${encodeURIComponent(pcData.result[0])}`
             );
@@ -82,18 +82,49 @@ const LocationAutocomplete = ({
               const lookupData = await lookupResponse.json();
               if (lookupData.result) {
                 const r = lookupData.result;
-                const results = pcData.result.slice(0, 5).map((pc: string, idx: number) => ({
-                  place_id: idx,
-                  display_name: idx === 0 
-                    ? [r.admin_ward, r.admin_district, r.region, pc].filter(Boolean).join(', ')
-                    : pc,
-                  name: pc,
-                  lat: idx === 0 ? r.latitude.toString() : r.latitude.toString(),
-                  lon: idx === 0 ? r.longitude.toString() : r.longitude.toString(),
+                // Now use Photon reverse/search near this postcode to get street-level results
+                const streetResponse = await fetch(
+                  `https://photon.komoot.io/reverse?lat=${r.latitude}&lon=${r.longitude}&limit=10&lang=en`
+                );
+                if (streetResponse.ok) {
+                  const streetData = await streetResponse.json();
+                  const streetResults = streetData.features
+                    .filter((f: any) => f.properties.countrycode === 'GB')
+                    .map((feature: any, idx: number) => ({
+                      place_id: idx,
+                      display_name: [
+                        feature.properties.housenumber ? `${feature.properties.housenumber} ${feature.properties.street || ''}`.trim() : feature.properties.street || feature.properties.name,
+                        feature.properties.city || feature.properties.county,
+                        feature.properties.postcode || pcData.result[0],
+                      ].filter(Boolean).join(', '),
+                      name: feature.properties.street || feature.properties.name || pcData.result[0],
+                      lat: feature.geometry.coordinates[1].toString(),
+                      lon: feature.geometry.coordinates[0].toString(),
+                      country: 'United Kingdom',
+                    }))
+                    // Remove duplicates by display_name
+                    .filter((item: any, index: number, self: any[]) => 
+                      index === self.findIndex(s => s.display_name === item.display_name)
+                    );
+                  
+                  if (streetResults.length > 0) {
+                    setSuggestions(streetResults.slice(0, 5));
+                    setShowSuggestions(true);
+                    return;
+                  }
+                }
+                
+                // Fallback: show the postcode area info
+                const results = [{
+                  place_id: 0,
+                  display_name: [r.admin_ward, r.admin_district, r.region, pcData.result[0]].filter(Boolean).join(', '),
+                  name: pcData.result[0],
+                  lat: r.latitude.toString(),
+                  lon: r.longitude.toString(),
                   country: 'United Kingdom',
-                }));
+                }];
                 setSuggestions(results);
-                setShowSuggestions(results.length > 0);
+                setShowSuggestions(true);
                 return;
               }
             }
