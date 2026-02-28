@@ -219,10 +219,28 @@ const Contact = () => {
                       </div>
                       <div className="flex-1">
                         <h3 className="text-xl font-display font-semibold mb-2 text-gradient-silver">Office</h3>
-                        <p className="text-muted-foreground leading-relaxed">
+                        <a 
+                          href="https://www.google.com/maps/place/Windrush+Millennium+Centre/@53.4567857,-2.2523667,17z"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted-foreground leading-relaxed hover:text-accent transition-colors underline-offset-2 hover:underline"
+                        >
                           {settings.office_address}
-                        </p>
+                        </a>
                       </div>
+                    </div>
+                    {/* Google Maps Embed */}
+                    <div className="mt-4 rounded-lg overflow-hidden border border-border">
+                      <iframe
+                        title="Office Location"
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2375.5!2d-2.2523667!3d53.4567857!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x487bb1d0fd4d9deb%3A0x71dacde302098063!2sWindrush%20Millennium%20Centre!5e0!3m2!1sen!2suk!4v1700000000000"
+                        width="100%"
+                        height="200"
+                        style={{ border: 0 }}
+                        allowFullScreen
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                      />
                     </div>
                   </Card>
 
