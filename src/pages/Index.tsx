@@ -92,7 +92,7 @@ const Index = () => {
             text: "Book Online",
             href: "#booking"
           }}
-          trustLine={["Available 24/7", "Immediate Response", "Discreet Service"]}
+          trustLine={["Available 24/7", "We prioritise your time and aim to respond within 2 hours", "Discreet Service"]}
           showScrollIndicator={true}
         />
       </div>
