@@ -104,7 +104,7 @@ const AnalyticsDashboard = () => {
       // Calculate on-time rate
       // For now, we'll use completed jobs as on-time if they don't have a delay field
       // You can add an "actual_pickup_time" field to track delays
-      const onTimeBookings = completedBookings.filter(b => !b.delayed && !b.delay_minutes);
+      const onTimeBookings = completedBookings.filter(b => !(b as any).delayed && !(b as any).delay_minutes);
       const onTimeRate = completedBookings.length > 0
         ? (onTimeBookings.length / completedBookings.length) * 100
         : 94; // Default placeholder until we track actual pickup times
