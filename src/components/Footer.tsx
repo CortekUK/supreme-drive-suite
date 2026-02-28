@@ -79,7 +79,7 @@ const Footer = () => {
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="w-4 h-4" />
                 <a
-                  href={`https://maps.google.com/?q=${encodeURIComponent(settings.office_address || '')}`}
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(settings.office_address || '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-accent transition-colors duration-200"
