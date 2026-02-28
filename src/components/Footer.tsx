@@ -49,13 +49,13 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-sm text-muted-foreground hover:text-accent transition-colors duration-200">
-                  Contact
+                <Link to="/terms" className="text-sm text-muted-foreground hover:text-accent transition-colors duration-200">
+                  Terms &amp; Conditions
                 </Link>
               </li>
               <li>
-                <Link to="/terms" className="text-sm text-muted-foreground hover:text-accent transition-colors duration-200">
-                  Terms &amp; Conditions
+                <Link to="/contact" className="text-sm text-muted-foreground hover:text-accent transition-colors duration-200">
+                  Contact
                 </Link>
               </li>
             </ul>
