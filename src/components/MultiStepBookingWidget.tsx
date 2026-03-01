@@ -190,7 +190,7 @@ const MultiStepBookingWidget = () => {
     };
   };
 
-  const isMultiStopCorporate = isCorporateBooking && parseInt(numberOfStops) >= 2;
+  const isMultiStop = parseInt(numberOfStops) >= 2;
 
   const handleCorporateEnquirySubmit = async () => {
     if (!validateStep3()) return;
@@ -198,7 +198,7 @@ const MultiStepBookingWidget = () => {
     setLoading(true);
     try {
       const selectedVehicle = vehicles.find((v) => v.id === formData.vehicleId);
-      const stopsNote = `[CORPORATE MULTI-STOP ENQUIRY - ${numberOfStops} stops requested]`;
+      const stopsNote = `[MULTI-STOP ENQUIRY - ${numberOfStops} stops requested]`;
       const requirements = `${stopsNote}\n${formData.additionalRequirements}`;
 
       const { error } = await supabase.from("bookings").insert({
@@ -218,7 +218,7 @@ const MultiStepBookingWidget = () => {
         customer_email: formData.customerEmail,
         customer_phone: formData.customerPhone,
         payment_status: 'enquiry',
-        service_type: 'Corporate travel',
+        service_type: isCorporateBooking ? 'Corporate travel' : (cpInterested ? 'close_protection' : 'chauffeur'),
       });
 
       if (error) throw error;
@@ -909,8 +909,8 @@ const MultiStepBookingWidget = () => {
               </div>
             </div>
 
-            {/* Corporate Travel: Number of Stops */}
-            {isCorporateBooking && (
+            {/* Number of Stops */}
+            {(
               <div className="space-y-4">
                 <h4 className="text-lg font-semibold text-foreground/90 flex items-center gap-2">
                   <MapPin className="w-5 h-5 text-accent" />
@@ -1339,12 +1339,12 @@ const MultiStepBookingWidget = () => {
                   <ChevronLeft className="mr-2 w-5 h-5" /> Back
                 </Button>
                 <Button
-                  onClick={isMultiStopCorporate ? handleCorporateEnquirySubmit : handleSubmit}
+                  onClick={isMultiStop ? handleCorporateEnquirySubmit : handleSubmit}
                   disabled={loading}
                   className="w-full sm:flex-1 gradient-accent hover-lift order-1 sm:order-2"
                   size="lg"
                 >
-                  {loading ? "Submitting..." : isMultiStopCorporate ? "Submit Enquiry" : "Confirm Booking"}
+                  {loading ? "Submitting..." : isMultiStop ? "Submit Enquiry" : "Confirm Booking"}
                 </Button>
               </div>
               
