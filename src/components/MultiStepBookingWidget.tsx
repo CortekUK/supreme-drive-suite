@@ -67,6 +67,8 @@ const MultiStepBookingWidget = () => {
   const [numberOfStops, setNumberOfStops] = useState("1");
   const [showCorporateEnquiryDialog, setShowCorporateEnquiryDialog] = useState(false);
   const [isSameDayReturn, setIsSameDayReturn] = useState(false);
+  const [isBlockedDateEnquiry, setIsBlockedDateEnquiry] = useState(false);
+  const [showBlockedDateEnquiryDialog, setShowBlockedDateEnquiryDialog] = useState(false);
 
   const [formData, setFormData] = useState({
     pickupLocation: "",
@@ -240,6 +242,47 @@ const MultiStepBookingWidget = () => {
     }
   };
 
+  const handleBlockedDateEnquirySubmit = async () => {
+    if (!validateStep3()) return;
+
+    setLoading(true);
+    try {
+      const selectedVehicle = vehicles.find((v) => v.id === formData.vehicleId);
+      const enquiryNote = `[ENQUIRY - Blocked date selected: ${formData.pickupDate}]`;
+      const requirements = `${enquiryNote}\n${formData.additionalRequirements}`;
+
+      const { error } = await supabase.from("bookings").insert({
+        pickup_location: formData.pickupLocation,
+        dropoff_location: formData.dropoffLocation,
+        pickup_date: formData.pickupDate,
+        pickup_time: formData.pickupTime,
+        passengers: parseInt(formData.passengers),
+        luggage: parseInt(formData.luggage),
+        additional_requirements: requirements,
+        vehicle_id: formData.vehicleId || null,
+        estimated_miles: parseFloat(formData.estimatedMiles) || null,
+        is_long_drive: formData.isLongDrive,
+        has_overnight_stop: formData.hasOvernightStop,
+        total_price: null,
+        customer_name: formData.customerName,
+        customer_email: formData.customerEmail,
+        customer_phone: formData.customerPhone,
+        payment_status: 'enquiry',
+        service_type: cpInterested ? 'close_protection' : 'chauffeur',
+        source: 'blocked_date_enquiry',
+      });
+
+      if (error) throw error;
+
+      setShowBlockedDateEnquiryDialog(true);
+    } catch (error) {
+      toast.error("Failed to submit enquiry. Please try again.");
+      console.error("Enquiry error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!validateStep3()) {
       return;
@@ -351,6 +394,7 @@ const MultiStepBookingWidget = () => {
     setNumberOfStops("1");
     setIsCorporateBooking(false);
     setIsSameDayReturn(false);
+    setIsBlockedDateEnquiry(false);
   };
 
   // Calculate distance using Haversine formula (great-circle distance)
@@ -791,13 +835,14 @@ const MultiStepBookingWidget = () => {
                         onSelect={(date) => {
                           if (date) {
                             const dateStr = format(date, "yyyy-MM-dd");
-                            if (blockedDates.includes(dateStr)) {
-                              toast.error("This date is not available for booking. Please select another date.");
-                              return;
-                            }
                             setFormData({ ...formData, pickupDate: dateStr });
                             if (errors.pickupDate) {
                               setErrors({ ...errors, pickupDate: "" });
+                            }
+                            if (blockedDates.includes(dateStr)) {
+                              setIsBlockedDateEnquiry(true);
+                            } else {
+                              setIsBlockedDateEnquiry(false);
                             }
                           }
                         }}
@@ -806,11 +851,13 @@ const MultiStepBookingWidget = () => {
                           const today = new Date(new Date().setHours(0, 0, 0, 0));
                           const oneMonthFromNow = new Date(today);
                           oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
-                          const isBlocked = blockedDates.includes(dateStr);
-                          if (isBlocked) {
-                            console.log("Date blocked:", dateStr, "Blocked dates:", blockedDates);
-                          }
-                          return date < today || date > oneMonthFromNow || isBlocked;
+                          return date < today || date > oneMonthFromNow;
+                        }}
+                        modifiers={{
+                          blocked: (date) => blockedDates.includes(format(date, "yyyy-MM-dd")),
+                        }}
+                        modifiersClassNames={{
+                          blocked: "!text-amber-500 font-semibold",
                         }}
                         initialFocus
                         classNames={{
@@ -823,10 +870,11 @@ const MultiStepBookingWidget = () => {
                   {errors.pickupDate && (
                     <p className="text-sm text-destructive">{errors.pickupDate}</p>
                   )}
-                  {!errors.pickupDate && blockedDates.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      Dates with a strikethrough are not available for booking
-                    </p>
+                  {isBlockedDateEnquiry && formData.pickupDate && (
+                    <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-sm">
+                      <p className="font-medium text-amber-500">⚠ Limited availability on this date</p>
+                      <p className="text-muted-foreground mt-1">Your request will be submitted as an enquiry. Our team will confirm availability and get back to you with a price.</p>
+                    </div>
                   )}
                 </div>
 
@@ -1379,12 +1427,12 @@ const MultiStepBookingWidget = () => {
                   <ChevronLeft className="mr-2 w-5 h-5" /> Back
                 </Button>
                 <Button
-                  onClick={isMultiStop ? handleCorporateEnquirySubmit : handleSubmit}
+                  onClick={isMultiStop ? handleCorporateEnquirySubmit : isBlockedDateEnquiry ? handleBlockedDateEnquirySubmit : handleSubmit}
                   disabled={loading}
                   className="w-full sm:flex-1 gradient-accent hover-lift order-1 sm:order-2"
                   size="lg"
                 >
-                  {loading ? "Submitting..." : isMultiStop ? "Submit Enquiry" : "Confirm Booking"}
+                  {loading ? "Submitting..." : isMultiStop ? "Submit Enquiry" : isBlockedDateEnquiry ? "Submit Enquiry" : "Confirm Booking"}
                 </Button>
               </div>
               
@@ -1464,6 +1512,50 @@ const MultiStepBookingWidget = () => {
               <Button
                 onClick={() => {
                   setShowCorporateEnquiryDialog(false);
+                  handleCloseConfirmation();
+                }}
+                className="w-full gradient-accent"
+              >
+                Done
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Blocked Date Enquiry Confirmation Dialog */}
+        <Dialog open={showBlockedDateEnquiryDialog} onOpenChange={setShowBlockedDateEnquiryDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
+                  <CheckCircle className="w-8 h-8 text-accent" />
+                </div>
+              </div>
+              <DialogTitle className="text-center text-xl font-display">
+                Thank You for Your Enquiry
+              </DialogTitle>
+              <DialogDescription className="text-center text-base pt-2">
+                Thank you for submitting your enquiry. Our team will review availability for your requested date and get back to you shortly with a price and confirmation.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 py-4 text-sm text-muted-foreground">
+              <div className="flex justify-between border-b border-border pb-2">
+                <span>Journey</span>
+                <span className="text-foreground font-medium text-right">{formData.pickupLocation} → {formData.dropoffLocation}</span>
+              </div>
+              <div className="flex justify-between border-b border-border pb-2">
+                <span>Requested Date</span>
+                <span className="text-foreground font-medium">{formData.pickupDate ? format(new Date(formData.pickupDate), "dd MMMM yyyy") : ""}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Contact</span>
+                <span className="text-foreground font-medium">{formData.customerEmail}</span>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={() => {
+                  setShowBlockedDateEnquiryDialog(false);
                   handleCloseConfirmation();
                 }}
                 className="w-full gradient-accent"
