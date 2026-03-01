@@ -16,7 +16,8 @@ import {
   ChevronRight, ChevronLeft, Check,
   Baby, Coffee, MapPin, UserCheck,
   Car, Crown, TrendingUp, Users as GroupIcon,
-  Calculator, Shield, CheckCircle, CalendarIcon
+  Calculator, Shield, CheckCircle, CalendarIcon,
+  RotateCcw, Tag
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -65,6 +66,7 @@ const MultiStepBookingWidget = () => {
   const [isCorporateBooking, setIsCorporateBooking] = useState(false);
   const [numberOfStops, setNumberOfStops] = useState("1");
   const [showCorporateEnquiryDialog, setShowCorporateEnquiryDialog] = useState(false);
+  const [isSameDayReturn, setIsSameDayReturn] = useState(false);
 
   const [formData, setFormData] = useState({
     pickupLocation: "",
@@ -179,13 +181,19 @@ const MultiStepBookingWidget = () => {
       return sum + (extra?.price || 0);
     }, 0);
 
-    const totalPrice = mileagePrice + waitTimePrice + overnightFee + extrasTotal;
+    const baseFare = mileagePrice + waitTimePrice + overnightFee + extrasTotal;
+    
+    // 10% discount on mileage rate for same-day return journeys of 200+ miles
+    const sameDayReturnDiscount = (isSameDayReturn && miles >= 200) ? mileagePrice * 0.1 : 0;
+    const totalPrice = baseFare - sameDayReturnDiscount;
 
     return {
       mileagePrice,
       waitTimePrice,
       overnightFee,
       extrasTotal,
+      baseFare,
+      sameDayReturnDiscount,
       totalPrice
     };
   };
@@ -342,6 +350,7 @@ const MultiStepBookingWidget = () => {
     setCpInterested(false);
     setNumberOfStops("1");
     setIsCorporateBooking(false);
+    setIsSameDayReturn(false);
   };
 
   // Calculate distance using Haversine formula (great-circle distance)
@@ -970,6 +979,44 @@ const MultiStepBookingWidget = () => {
                 </p>
               </div>
 
+            {/* Same Day Return */}
+            <div className="space-y-4">
+              <h4 className="text-lg font-semibold text-foreground/90 flex items-center gap-2">
+                <RotateCcw className="w-5 h-5 text-accent" />
+                Same Day Return
+              </h4>
+              <div className="p-4 border border-accent/20 rounded-lg bg-accent/5">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="font-medium">Is this a same-day return journey?</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      An automatic 10% discount applies to same-day return journeys of 200+ miles (applied to mileage rate)
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      id="sameDayReturn"
+                      checked={isSameDayReturn}
+                      onCheckedChange={setIsSameDayReturn}
+                    />
+                    <Label htmlFor="sameDayReturn" className="cursor-pointer text-sm font-medium">
+                      {isSameDayReturn ? "Yes" : "No"}
+                    </Label>
+                  </div>
+                </div>
+                {isSameDayReturn && calculatedDistance && calculatedDistance >= 200 && (
+                  <div className="mt-3 flex items-center gap-2 text-sm text-green-500 font-medium">
+                    <Tag className="w-4 h-4" />
+                    10% same-day return discount will be applied!
+                  </div>
+                )}
+                {isSameDayReturn && calculatedDistance && calculatedDistance < 200 && (
+                  <div className="mt-3 text-sm text-muted-foreground">
+                    Discount applies to journeys of 200+ miles. Current distance: {calculatedDistance} miles.
+                  </div>
+                )}
+              </div>
+            </div>
 
             </div>
 
@@ -1285,32 +1332,48 @@ const MultiStepBookingWidget = () => {
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Mileage</span>
-                        <span className="font-medium text-[#C5A572]">£{priceBreakdown.mileagePrice.toFixed(2)}</span>
+                        <span className="font-medium text-accent">£{priceBreakdown.mileagePrice.toFixed(2)}</span>
                       </div>
                       {priceBreakdown.waitTimePrice > 0 && (
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Wait Time</span>
-                          <span className="font-medium text-[#C5A572]">£{priceBreakdown.waitTimePrice.toFixed(2)}</span>
+                          <span className="font-medium text-accent">£{priceBreakdown.waitTimePrice.toFixed(2)}</span>
                         </div>
                       )}
                       {priceBreakdown.overnightFee > 0 && (
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Overnight</span>
-                          <span className="font-medium text-[#C5A572]">£{priceBreakdown.overnightFee.toFixed(2)}</span>
+                          <span className="font-medium text-accent">£{priceBreakdown.overnightFee.toFixed(2)}</span>
                         </div>
                       )}
-
                       {priceBreakdown.extrasTotal > 0 && (
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Extras</span>
-                          <span className="font-medium text-[#C5A572]">£{priceBreakdown.extrasTotal.toFixed(2)}</span>
+                          <span className="font-medium text-accent">£{priceBreakdown.extrasTotal.toFixed(2)}</span>
                         </div>
                       )}
 
                       <div className="border-t border-border pt-3 mt-3">
+                        <div className="flex justify-between">
+                          <span className="font-medium">Base Fare</span>
+                          <span className="font-semibold">£{priceBreakdown.baseFare.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      {priceBreakdown.sameDayReturnDiscount > 0 && (
+                        <div className="flex justify-between items-center text-green-500">
+                          <span className="flex items-center gap-1.5">
+                            <Tag className="w-3.5 h-3.5" />
+                            Discount (10%)
+                          </span>
+                          <span className="font-medium">-£{priceBreakdown.sameDayReturnDiscount.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      <div className="border-t border-accent/30 pt-3 mt-1">
                         <div className="flex justify-between items-center">
-                          <span className="text-lg font-semibold">Total</span>
-                          <span className="text-2xl font-bold text-[#C5A572]">
+                          <span className="text-lg font-semibold">Final Price</span>
+                          <span className="text-2xl font-bold text-accent">
                             £{priceBreakdown.totalPrice.toFixed(2)}
                           </span>
                         </div>
