@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { 
   Car, 
   CarFront, 
@@ -61,10 +62,12 @@ const getIconComponent = (iconName: string) => {
 const Pricing = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [serviceInclusions, setServiceInclusions] = useState<ServiceInclusion[]>([]);
+  const [pricingFaqs, setPricingFaqs] = useState<any[]>([]);
 
   useEffect(() => {
     loadVehicles();
     loadServiceInclusions();
+    loadPricingFaqs();
   }, []);
 
   const loadVehicles = async () => {
@@ -89,6 +92,16 @@ const Pricing = () => {
     if (!error && data) {
       setServiceInclusions(data as any);
     }
+  };
+
+  const loadPricingFaqs = async () => {
+    const { data } = await supabase
+      .from("faqs")
+      .select("*")
+      .eq("is_active", true)
+      .eq("category", "Pricing")
+      .order("display_order");
+    if (data) setPricingFaqs(data);
   };
 
   const standardInclusions = serviceInclusions.filter(inc => inc.category === 'standard');
@@ -280,6 +293,38 @@ const Pricing = () => {
               </a>
             </div>
           </div>
+
+          {/* Pricing FAQs */}
+          {pricingFaqs.length > 0 && (
+            <div className="max-w-4xl mx-auto mb-24">
+              <div className="text-center mb-12">
+                <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal mb-4">
+                  Pricing FAQs
+                </h2>
+                <div className="flex items-center justify-center">
+                  <div className="h-[1px] w-32 bg-gradient-to-r from-transparent via-accent to-transparent" />
+                </div>
+              </div>
+              <Card className="p-8 shadow-metal bg-card/50 backdrop-blur border-accent/20">
+                <Accordion type="single" collapsible className="w-full">
+                  {pricingFaqs.map((faq, index) => (
+                    <AccordionItem
+                      key={faq.id}
+                      value={`pricing-${index}`}
+                      className="border-b border-accent/10 last:border-0"
+                    >
+                      <AccordionTrigger className="text-left hover:text-accent transition-colors py-5">
+                        <span className="font-medium">{faq.question}</span>
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground leading-relaxed pb-5">
+                        {faq.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </Card>
+            </div>
+          )}
 
           {/* Trust Banner */}
           <Card className="p-8 md:p-12 bg-gradient-to-br from-card via-secondary/20 to-card shadow-metal border-accent/20">
