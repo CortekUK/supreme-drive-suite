@@ -105,12 +105,14 @@ const MultiStepBookingWidget = () => {
   }, [locationCoords]);
 
   // Handle pre-filled service from Chauffeur Services page
-  useEffect(() => {
+  const readPrefilledService = () => {
     const prefilledService = sessionStorage.getItem('prefilledService');
     const prefilledRequirements = sessionStorage.getItem('prefilledRequirements');
     
     if (prefilledService === 'Corporate travel') {
       setIsCorporateBooking(true);
+    } else if (prefilledService) {
+      setIsCorporateBooking(false);
     }
     
     if (prefilledRequirements) {
@@ -123,6 +125,14 @@ const MultiStepBookingWidget = () => {
     // Clear sessionStorage after using
     sessionStorage.removeItem('prefilledService');
     sessionStorage.removeItem('prefilledRequirements');
+  };
+
+  useEffect(() => {
+    readPrefilledService();
+
+    const handler = () => readPrefilledService();
+    window.addEventListener('prefilledServiceUpdated', handler);
+    return () => window.removeEventListener('prefilledServiceUpdated', handler);
   }, []);
 
 

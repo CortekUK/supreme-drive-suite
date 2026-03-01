@@ -74,6 +74,9 @@ const ChauffeurServices = () => {
     sessionStorage.setItem('prefilledService', serviceType);
     sessionStorage.setItem('prefilledRequirements', prefilledText);
     
+    // Dispatch custom event so the booking widget picks up the prefilled service
+    window.dispatchEvent(new Event('prefilledServiceUpdated'));
+    
     const bookingSection = document.getElementById('booking');
     bookingSection?.scrollIntoView({ behavior: 'smooth' });
   };
