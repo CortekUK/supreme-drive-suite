@@ -5,7 +5,7 @@ import UniversalHero from "@/components/UniversalHero";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plane, Briefcase, Sparkles, Map, UserCheck, Car, Shield, Clock, Star, Phone } from "lucide-react";
-import chauffeurHero from "@/assets/chauffeur-hero.jpg";
+import chauffeurHero from "@/assets/chauffeur-hero.webp";
 import EnhancedTestimonials from "@/components/EnhancedTestimonials";
 import MultiStepBookingWidget from "@/components/MultiStepBookingWidget";
 import SEO from "@/components/SEO";
