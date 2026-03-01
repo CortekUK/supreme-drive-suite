@@ -24,6 +24,7 @@ import BookingConfirmation from "./BookingConfirmation";
 import CloseProtectionModal from "./CloseProtectionModal";
 import LocationAutocomplete from "./LocationAutocomplete";
 import { stripePromise } from "@/config/stripe";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 interface Vehicle {
   id: string;
@@ -61,6 +62,9 @@ const MultiStepBookingWidget = () => {
   const cpSubmittedRef = useRef(false); // Track if CP form was successfully submitted
   const [blockedDates, setBlockedDates] = useState<string[]>([]);
   const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [isCorporateBooking, setIsCorporateBooking] = useState(false);
+  const [numberOfStops, setNumberOfStops] = useState("1");
+  const [showCorporateEnquiryDialog, setShowCorporateEnquiryDialog] = useState(false);
 
   const [formData, setFormData] = useState({
     pickupLocation: "",
@@ -102,18 +106,23 @@ const MultiStepBookingWidget = () => {
 
   // Handle pre-filled service from Chauffeur Services page
   useEffect(() => {
+    const prefilledService = sessionStorage.getItem('prefilledService');
     const prefilledRequirements = sessionStorage.getItem('prefilledRequirements');
+    
+    if (prefilledService === 'Corporate travel') {
+      setIsCorporateBooking(true);
+    }
     
     if (prefilledRequirements) {
       setFormData(prev => ({
         ...prev,
         additionalRequirements: prefilledRequirements
       }));
-      
-      // Clear sessionStorage after using
-      sessionStorage.removeItem('prefilledService');
-      sessionStorage.removeItem('prefilledRequirements');
     }
+    
+    // Clear sessionStorage after using
+    sessionStorage.removeItem('prefilledService');
+    sessionStorage.removeItem('prefilledRequirements');
   }, []);
 
 
@@ -169,6 +178,48 @@ const MultiStepBookingWidget = () => {
       extrasTotal,
       totalPrice
     };
+  };
+
+  const isMultiStopCorporate = isCorporateBooking && parseInt(numberOfStops) >= 2;
+
+  const handleCorporateEnquirySubmit = async () => {
+    if (!validateStep3()) return;
+
+    setLoading(true);
+    try {
+      const selectedVehicle = vehicles.find((v) => v.id === formData.vehicleId);
+      const stopsNote = `[CORPORATE MULTI-STOP ENQUIRY - ${numberOfStops} stops requested]`;
+      const requirements = `${stopsNote}\n${formData.additionalRequirements}`;
+
+      const { error } = await supabase.from("bookings").insert({
+        pickup_location: formData.pickupLocation,
+        dropoff_location: formData.dropoffLocation,
+        pickup_date: formData.pickupDate,
+        pickup_time: formData.pickupTime,
+        passengers: parseInt(formData.passengers),
+        luggage: parseInt(formData.luggage),
+        additional_requirements: requirements,
+        vehicle_id: formData.vehicleId || null,
+        estimated_miles: parseFloat(formData.estimatedMiles) || null,
+        is_long_drive: formData.isLongDrive,
+        has_overnight_stop: formData.hasOvernightStop,
+        total_price: null,
+        customer_name: formData.customerName,
+        customer_email: formData.customerEmail,
+        customer_phone: formData.customerPhone,
+        payment_status: 'enquiry',
+        service_type: 'Corporate travel',
+      });
+
+      if (error) throw error;
+
+      setShowCorporateEnquiryDialog(true);
+    } catch (error) {
+      toast.error("Failed to submit enquiry. Please try again.");
+      console.error("Enquiry error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -279,6 +330,8 @@ const MultiStepBookingWidget = () => {
     setCalculatedDistance(null);
     setDistanceOverride(false);
     setCpInterested(false);
+    setNumberOfStops("1");
+    setIsCorporateBooking(false);
   };
 
   // Calculate distance using Haversine formula (great-circle distance)
@@ -846,6 +899,36 @@ const MultiStepBookingWidget = () => {
               </div>
             </div>
 
+            {/* Corporate Travel: Number of Stops */}
+            {isCorporateBooking && (
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold text-foreground/90 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-accent" />
+                  Number of Stops
+                </h4>
+                <div className="space-y-2">
+                  <Label htmlFor="numberOfStops">How many stops does this journey require? *</Label>
+                  <Select value={numberOfStops} onValueChange={setNumberOfStops}>
+                    <SelectTrigger id="numberOfStops" className="p-4 focus-visible:ring-[#C5A572]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num} {num === 1 ? "Stop" : "Stops"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {parseInt(numberOfStops) >= 2 && (
+                    <p className="text-xs text-muted-foreground">
+                      Multi-stop journeys will be submitted as an enquiry for our team to arrange a tailored itinerary.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Additional Options Section */}
             <div className="space-y-4">
               <h4 className="text-lg font-semibold text-foreground/90">Additional Options</h4>
@@ -1246,12 +1329,12 @@ const MultiStepBookingWidget = () => {
                   <ChevronLeft className="mr-2 w-5 h-5" /> Back
                 </Button>
                 <Button
-                  onClick={handleSubmit}
+                  onClick={isMultiStopCorporate ? handleCorporateEnquirySubmit : handleSubmit}
                   disabled={loading}
                   className="w-full sm:flex-1 gradient-accent hover-lift order-1 sm:order-2"
                   size="lg"
                 >
-                  {loading ? "Submitting..." : "Confirm Booking"}
+                  {loading ? "Submitting..." : isMultiStopCorporate ? "Submit Enquiry" : "Confirm Booking"}
                 </Button>
               </div>
               
@@ -1296,6 +1379,50 @@ const MultiStepBookingWidget = () => {
             cpSubmittedRef.current = true; // Mark as successfully submitted
           }}
         />
+
+        {/* Corporate Multi-Stop Enquiry Confirmation Dialog */}
+        <Dialog open={showCorporateEnquiryDialog} onOpenChange={setShowCorporateEnquiryDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
+                  <CheckCircle className="w-8 h-8 text-accent" />
+                </div>
+              </div>
+              <DialogTitle className="text-center text-xl font-display">
+                Enquiry Submitted Successfully
+              </DialogTitle>
+              <DialogDescription className="text-center text-base pt-2">
+                Thank you for your corporate travel enquiry. Our dedicated team will review your multi-stop itinerary and be in touch shortly to discuss the finer details and provide a tailored quotation.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 py-4 text-sm text-muted-foreground">
+              <div className="flex justify-between border-b border-border pb-2">
+                <span>Journey</span>
+                <span className="text-foreground font-medium">{formData.pickupLocation} → {formData.dropoffLocation}</span>
+              </div>
+              <div className="flex justify-between border-b border-border pb-2">
+                <span>Stops Requested</span>
+                <span className="text-foreground font-medium">{numberOfStops}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Contact</span>
+                <span className="text-foreground font-medium">{formData.customerEmail}</span>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={() => {
+                  setShowCorporateEnquiryDialog(false);
+                  handleCloseConfirmation();
+                }}
+                className="w-full gradient-accent"
+              >
+                Done
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </Card>
   );
