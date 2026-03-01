@@ -849,6 +849,21 @@ const MultiStepBookingWidget = () => {
                 </div>
               </div>
 
+              {/* Same Day Return */}
+              <div className="flex items-center justify-between gap-4 p-4 border border-accent/20 rounded-lg bg-accent/5">
+                <Label htmlFor="sameDayReturn" className="cursor-pointer font-medium">
+                  Is this a same-day return journey?
+                </Label>
+                <div className="flex items-center gap-3">
+                  <Switch
+                    id="sameDayReturn"
+                    checked={isSameDayReturn}
+                    onCheckedChange={setIsSameDayReturn}
+                  />
+                  <span className="text-sm font-medium w-6">{isSameDayReturn ? "Yes" : "No"}</span>
+                </div>
+              </div>
+
             </div>
 
             {/* Passengers & Luggage Section */}
@@ -979,44 +994,6 @@ const MultiStepBookingWidget = () => {
                 </p>
               </div>
 
-            {/* Same Day Return */}
-            <div className="space-y-4">
-              <h4 className="text-lg font-semibold text-foreground/90 flex items-center gap-2">
-                <RotateCcw className="w-5 h-5 text-accent" />
-                Same Day Return
-              </h4>
-              <div className="p-4 border border-accent/20 rounded-lg bg-accent/5">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <p className="font-medium">Is this a same-day return journey?</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      An automatic 10% discount applies to same-day return journeys of 200+ miles (applied to mileage rate)
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Switch
-                      id="sameDayReturn"
-                      checked={isSameDayReturn}
-                      onCheckedChange={setIsSameDayReturn}
-                    />
-                    <Label htmlFor="sameDayReturn" className="cursor-pointer text-sm font-medium">
-                      {isSameDayReturn ? "Yes" : "No"}
-                    </Label>
-                  </div>
-                </div>
-                {isSameDayReturn && calculatedDistance && calculatedDistance >= 200 && (
-                  <div className="mt-3 flex items-center gap-2 text-sm text-green-500 font-medium">
-                    <Tag className="w-4 h-4" />
-                    10% same-day return discount will be applied!
-                  </div>
-                )}
-                {isSameDayReturn && calculatedDistance && calculatedDistance < 200 && (
-                  <div className="mt-3 text-sm text-muted-foreground">
-                    Discount applies to journeys of 200+ miles. Current distance: {calculatedDistance} miles.
-                  </div>
-                )}
-              </div>
-            </div>
 
             </div>
 
