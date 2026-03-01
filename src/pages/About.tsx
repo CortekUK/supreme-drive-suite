@@ -29,8 +29,9 @@ const About = () => {
       .order("display_order");
 
     if (data) {
-      setFaqs(data);
-      const uniqueCategories = [...new Set(data.map((faq) => faq.category))];
+      const filtered = data.filter((faq) => faq.category !== "Pricing");
+      setFaqs(filtered);
+      const uniqueCategories = [...new Set(filtered.map((faq) => faq.category))];
       setCategories(uniqueCategories);
     }
   };
