@@ -29,9 +29,8 @@ const About = () => {
       .order("display_order");
 
     if (data) {
-      const filtered = data.filter((faq) => faq.category !== "Pricing");
-      setFaqs(filtered);
-      const uniqueCategories = [...new Set(filtered.map((faq) => faq.category))];
+      setFaqs(data);
+      const uniqueCategories = [...new Set(data.map((faq) => faq.category))].filter(c => c !== "Pricing");
       setCategories(uniqueCategories);
     }
   };
@@ -274,7 +273,30 @@ const About = () => {
               </p>
             </div>
 
-            {categories.length > 0 ? (
+            {/* Pricing FAQs - shown directly without tabs */}
+            {faqs.filter(f => f.category === "Pricing").length > 0 && (
+              <Card className="p-8 shadow-metal bg-card/50 backdrop-blur border-accent/20 mb-8">
+                <Accordion type="single" collapsible className="w-full">
+                  {faqs.filter(f => f.category === "Pricing").map((faq, index) => (
+                    <AccordionItem
+                      key={faq.id}
+                      value={`pricing-${index}`}
+                      className="border-b border-accent/10 last:border-0"
+                    >
+                      <AccordionTrigger className="text-left hover:text-accent transition-colors py-5">
+                        <span className="font-medium">{faq.question}</span>
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground leading-relaxed pb-5">
+                        {faq.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </Card>
+            )}
+
+            {/* Other categories with tabs */}
+            {categories.length > 0 && (
               <Tabs defaultValue={categories[0]} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 mb-8 bg-card/50 p-1 h-auto">
                   {categories.map((category) => (
@@ -317,10 +339,6 @@ const About = () => {
                   </TabsContent>
                 ))}
               </Tabs>
-            ) : (
-              <Card className="p-8 text-center shadow-metal bg-card/50 backdrop-blur">
-                <p className="text-muted-foreground">Loading FAQs...</p>
-              </Card>
             )}
 
             {/* Still Have Questions CTA */}
