@@ -352,7 +352,7 @@ export default function AdminDashboard() {
           {statsCards.map((stat, index) => {
             const content = (
               <Card
-                className={`group relative overflow-hidden border-border/50 bg-card shadow-metal transition-all duration-300 hover:border-accent/40 hover:shadow-[0_0_30px_rgba(244,197,66,0.15)] hover:-translate-y-1 animate-fade-in ${
+                className={`group relative overflow-hidden border-border/50 bg-card shadow-metal transition-all duration-300 hover:border-accent/40 hover:shadow-[0_0_30px_rgba(244,197,66,0.15)] hover:-translate-y-1 animate-fade-in h-full ${
                   stat.link ? "cursor-pointer" : ""
                 }`}
                 style={{ animationDelay: `${index * 100}ms` }}
@@ -363,11 +363,11 @@ export default function AdminDashboard() {
                 {/* Gold Accent Line */}
                 <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-accent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 
-                <CardHeader className="relative flex flex-row items-center justify-between pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardHeader className="relative flex flex-row items-start justify-between pb-3 gap-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground leading-tight">
                     {stat.title}
                   </CardTitle>
-                  <div className={`p-2 rounded-full ${stat.iconBg} backdrop-blur-sm group-hover:scale-110 transition-transform duration-300`}>
+                  <div className={`p-2 rounded-full flex-shrink-0 ${stat.iconBg} backdrop-blur-sm group-hover:scale-110 transition-transform duration-300`}>
                     <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
                   </div>
                 </CardHeader>
@@ -395,11 +395,11 @@ export default function AdminDashboard() {
             );
 
             return stat.link ? (
-              <Link key={stat.title} to={stat.link} className="block">
+              <Link key={stat.title} to={stat.link} className="block h-full">
                 {content}
               </Link>
             ) : (
-              <div key={stat.title}>{content}</div>
+              <div key={stat.title} className="h-full">{content}</div>
             );
           })}
         </div>
