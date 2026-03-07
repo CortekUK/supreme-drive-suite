@@ -1499,7 +1499,7 @@ const MultiStepBookingWidget = () => {
                             <div className="flex justify-between items-center text-green-500">
                               <span className="flex items-center gap-1.5">
                                 <Tag className="w-3.5 h-3.5" />
-                                Return Discount (10%)
+                                Return Discount (5%)
                               </span>
                               <span className="font-medium">-£{priceBreakdown.sameDayReturnDiscount.toFixed(2)}</span>
                             </div>
