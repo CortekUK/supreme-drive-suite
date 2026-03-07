@@ -4,7 +4,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import UniversalHero from "@/components/UniversalHero";
 import SEO from "@/components/SEO";
-import luxuryHero from "@/assets/luxury-hero.jpg";
+import luxuryHero from "@/assets/new-s-class.avif";
 import { PortfolioCard } from "@/components/portfolio/PortfolioCard";
 import { PortfolioFilters } from "@/components/portfolio/PortfolioFilters";
 import { Skeleton } from "@/components/ui/skeleton";
