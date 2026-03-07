@@ -70,6 +70,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PromoPopup />
       <SEO
         title="Luxury Chauffeur & Close Protection Services"
         description="Premium chauffeur and close protection services in the UK. Experienced drivers, luxury vehicles, and 24/7 availability. Book your journey today."
