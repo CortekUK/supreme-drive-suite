@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 import PWAInstall from "@/components/PWAInstall";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import PromoPopup from "@/components/PromoPopup";
 
 const Index = () => {
   const [testimonialStats, setTestimonialStats] = useState({ avgRating: "5.0", count: "0" });
