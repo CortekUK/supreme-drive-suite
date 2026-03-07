@@ -69,10 +69,10 @@ const PromoPopup = () => {
         {/* Flyer — PDF or image */}
         {promo.image_url.includes(".pdf") ? (
           <iframe
-            src={promo.image_url}
+            src={`${promo.image_url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
             title={promo.title}
             className="w-full"
-            style={{ height: "65vh", border: "none" }}
+            style={{ height: "65vh", border: "none", pointerEvents: "none" }}
           />
         ) : (
           <img
