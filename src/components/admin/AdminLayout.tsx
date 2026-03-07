@@ -21,6 +21,7 @@ import {
   Shield,
   Key,
   Speech,
+  Megaphone,
 } from "lucide-react";
 import {
   Sidebar,
