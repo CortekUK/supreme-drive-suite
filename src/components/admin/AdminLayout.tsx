@@ -74,6 +74,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Drivers", icon: Users, href: "/admin/drivers" },
   { label: "Security Team", icon: Shield, href: "/admin/security-team" },
   { label: "Portfolio", icon: Image, href: "/admin/portfolio" },
+  { label: "Promotions", icon: Megaphone, href: "/admin/promotions" },
   { label: "Pricing", icon: Tag, href: "/admin/pricing" },
   { label: "Testimonials", icon: MessageSquare, href: "/admin/testimonials" },
   { label: "Feedback", icon: Speech, href: "/admin/feedback" },
