@@ -1159,11 +1159,18 @@ const MultiStepBookingWidget = () => {
                         }
                       }}
                     >
-                      {/* Badge */}
+                       {/* Badge */}
                       {badge && (
                         <div className={`absolute z-10 top-4 right-4 flex items-center gap-1 px-3 py-1 rounded-full border text-xs font-semibold ${badge.color} bg-background/80 backdrop-blur-sm`}>
                           <badge.icon className="w-3 h-3" />
                           {badge.text}
+                        </div>
+                      )}
+
+                      {/* Enquiry-only label */}
+                      {!vehicle.name.toLowerCase().includes(BOOKABLE_VEHICLE_NAME.toLowerCase()) && (
+                        <div className="absolute z-10 bottom-[calc(100%-2.5rem)] left-4 flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-accent/40 text-xs font-medium text-accent bg-background/80 backdrop-blur-sm">
+                          Enquiry Only
                         </div>
                       )}
 
@@ -1209,13 +1216,20 @@ const MultiStepBookingWidget = () => {
                               {vehicle.capacity}
                             </span>
                           </div>
-                          <div>
-                            <p className="font-semibold text-[#C5A572] text-lg">
-                              £{vehicle.base_price_per_mile.toFixed(2)}/mile
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              Minimum 3 hours
-                            </p>
+                          <div className="text-right">
+                            {vehicle.name.toLowerCase().includes(BOOKABLE_VEHICLE_NAME.toLowerCase()) ? (
+                              <>
+                                <p className="font-semibold text-[#C5A572] text-lg">
+                                  £{vehicle.base_price_per_mile.toFixed(2)}/mile
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-0.5">Minimum 3 hours</p>
+                              </>
+                            ) : (
+                              <>
+                                <p className="font-semibold text-accent text-base">Price on enquiry</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">Team will confirm pricing</p>
+                              </>
+                            )}
                           </div>
                         </div>
 
