@@ -49,7 +49,6 @@ const getVehicleIcon = (category: string) => {
   return Car;
 };
 
-// Map icon names to actual icon components
 const getIconComponent = (iconName: string) => {
   const icons: Record<string, any> = {
     User, Fuel, Droplets, Wifi, Plane, Shield,
@@ -116,17 +115,17 @@ const Pricing = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center mb-20">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold mb-6 text-gradient-metal leading-tight">
-              Transparent Pricing
+              Our Fleet
             </h1>
             <div className="flex items-center justify-center mb-8">
               <div className="h-[1px] w-24 bg-gradient-to-r from-transparent via-accent to-transparent" />
             </div>
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Experience clarity and confidence in every booking — no hidden fees, just premium service at honest rates.
+              Discover our exclusive selection of luxury vehicles — each maintained to the highest standard for your comfort, style, and security.
             </p>
           </div>
 
-          {/* Vehicle Pricing Cards */}
+          {/* Vehicle Cards */}
           <div className="space-y-8 mb-24">
             {vehicles.map((vehicle, index) => {
               const VehicleIcon = getVehicleIcon(vehicle.category);
@@ -159,7 +158,7 @@ const Pricing = () => {
                         </div>
                       )}
                       
-                      {/* Left Content */}
+                      {/* Content */}
                       <div className="flex-1 space-y-6">
                         <div className="flex items-start gap-4">
                           {!vehicle.image_url && (
@@ -195,32 +194,6 @@ const Pricing = () => {
                             </Badge>
                           ))}
                         </div>
-                      </div>
-
-                      {/* Right Pricing Column */}
-                      <div className="lg:text-right space-y-4 lg:min-w-[200px]">
-                        <div className="space-y-2">
-                          <div className="text-5xl md:text-6xl font-display font-bold bg-gradient-to-br from-accent to-accent/70 bg-clip-text text-transparent">
-                            £{vehicle.base_price_per_mile}
-                          </div>
-                          <div className="text-sm text-muted-foreground uppercase tracking-wider">
-                            per mile
-                          </div>
-                        </div>
-
-                        {vehicle.overnight_surcharge > 0 && (
-                          <>
-                            <Separator className="my-4" />
-                            <div className="space-y-2">
-                              <div className="text-3xl font-display font-semibold text-gradient-metal">
-                                +£{vehicle.overnight_surcharge}
-                              </div>
-                              <div className="text-xs text-muted-foreground uppercase tracking-wider">
-                                overnight surcharge
-                              </div>
-                            </div>
-                          </>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -294,12 +267,12 @@ const Pricing = () => {
             </div>
           </div>
 
-          {/* Pricing FAQs */}
+          {/* FAQs */}
           {pricingFaqs.length > 0 && (
             <div className="max-w-4xl mx-auto mb-24">
               <div className="text-center mb-12">
                 <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient-metal mb-4">
-                  Pricing FAQs
+                  FAQs
                 </h2>
                 <div className="flex items-center justify-center">
                   <div className="h-[1px] w-32 bg-gradient-to-r from-transparent via-accent to-transparent" />
