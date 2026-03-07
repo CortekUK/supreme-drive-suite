@@ -395,11 +395,11 @@ export default function AdminDashboard() {
             );
 
             return stat.link ? (
-              <Link key={stat.title} to={stat.link} className="block">
+              <Link key={stat.title} to={stat.link} className="block h-full">
                 {content}
               </Link>
             ) : (
-              <div key={stat.title}>{content}</div>
+              <div key={stat.title} className="h-full">{content}</div>
             );
           })}
         </div>
