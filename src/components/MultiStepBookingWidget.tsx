@@ -228,8 +228,6 @@ const MultiStepBookingWidget = () => {
     ? !selectedVehicleObj.name.toLowerCase().includes(BOOKABLE_VEHICLE_NAME.toLowerCase())
     : false;
 
-  const [showVehicleEnquiryDialog, setShowVehicleEnquiryDialog] = useState(false);
-
   const handleVehicleEnquirySubmit = async () => {
     if (!validateStep3()) return;
     setLoading(true);
