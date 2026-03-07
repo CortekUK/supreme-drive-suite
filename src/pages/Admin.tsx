@@ -17,6 +17,7 @@ import SecurityTeamManagement from "./admin/SecurityTeamManagement";
 import SecurityTeamEditor from "./admin/SecurityTeamEditor";
 import AnalyticsDashboard from "./admin/AnalyticsDashboard";
 import SearchResults from "./admin/SearchResults";
+import PromotionsManagement from "./admin/PromotionsManagement";
 
 const Admin = () => {
   const navigate = useNavigate();
