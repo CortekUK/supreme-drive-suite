@@ -72,6 +72,7 @@ const MultiStepBookingWidget = () => {
   const [isSameDayReturn, setIsSameDayReturn] = useState(false);
   const [isBlockedDateEnquiry, setIsBlockedDateEnquiry] = useState(false);
   const [showBlockedDateEnquiryDialog, setShowBlockedDateEnquiryDialog] = useState(false);
+  const [showVehicleEnquiryDialog, setShowVehicleEnquiryDialog] = useState(false);
 
   const [formData, setFormData] = useState({
     pickupLocation: "",
