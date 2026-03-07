@@ -290,17 +290,26 @@ const PromotionsManagement = () => {
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
             {promotions.map((promo) => (
               <Card key={promo.id} className={`overflow-hidden border transition-all ${promo.is_active ? "border-accent/50 shadow-glow" : "border-border"}`}>
-                {/* Image */}
+                {/* Image/PDF preview on card */}
                 <div className="relative">
-                  <img
-                    src={promo.image_url}
-                    alt={promo.title}
-                    className="w-full object-cover max-h-52"
-                    onError={(e) => {
-                      e.currentTarget.src = "";
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
+                  {promo.image_url.endsWith(".pdf") || promo.image_url.includes(".pdf") ? (
+                    <div className="w-full h-36 flex flex-col items-center justify-center bg-muted/30">
+                      <div className="w-14 h-18 bg-red-500/10 border border-red-500/30 rounded flex items-center justify-center mb-2">
+                        <span className="text-red-400 font-bold text-sm">PDF</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">PDF Flyer</span>
+                    </div>
+                  ) : (
+                    <img
+                      src={promo.image_url}
+                      alt={promo.title}
+                      className="w-full object-cover max-h-52"
+                      onError={(e) => {
+                        e.currentTarget.src = "";
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  )}
                   {promo.is_active && (
                     <Badge className="absolute top-2 left-2 bg-accent text-accent-foreground font-semibold text-xs">
                       ● LIVE
