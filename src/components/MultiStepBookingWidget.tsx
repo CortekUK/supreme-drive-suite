@@ -174,8 +174,17 @@ const MultiStepBookingWidget = () => {
 
     const miles = parseFloat(formData.estimatedMiles) || 0;
     const waitHours = parseFloat(formData.waitTime) || 0;
-    
-    const mileagePrice = miles * selectedVehicle.base_price_per_mile;
+
+    // Minimum fare rule: jobs of 26 miles or under are charged at a flat £200 base rate (one way).
+    // For a return journey at ≤26 miles, the base is £400 (2 × £200), then 10% return discount applied.
+    const SHORT_JOURNEY_THRESHOLD = 26;
+    const SHORT_JOURNEY_MINIMUM_FARE = 200;
+    const isShortJourney = miles > 0 && miles <= SHORT_JOURNEY_THRESHOLD;
+
+    const mileagePrice = isShortJourney
+      ? (isSameDayReturn ? SHORT_JOURNEY_MINIMUM_FARE * 2 : SHORT_JOURNEY_MINIMUM_FARE)
+      : miles * selectedVehicle.base_price_per_mile;
+
     const waitTimePrice = waitHours * 50;
     const overnightFee = formData.hasOvernightStop ? selectedVehicle.overnight_surcharge : 0;
     const extrasTotal = selectedExtras.reduce((sum, extraId) => {
@@ -184,9 +193,15 @@ const MultiStepBookingWidget = () => {
     }, 0);
 
     const baseFare = mileagePrice + waitTimePrice + overnightFee + extrasTotal;
-    
-    // 10% discount on mileage rate for same-day return journeys of 200+ miles
-    const sameDayReturnDiscount = (isSameDayReturn && miles >= 200) ? mileagePrice * 0.1 : 0;
+
+    // 10% return discount applies to:
+    //   - Same-day return journeys of 200+ miles (standard rule)
+    //   - Same-day return journeys of ≤26 miles (short journey minimum fare rule)
+    const sameDayReturnDiscount =
+      isSameDayReturn && (miles >= 200 || isShortJourney)
+        ? mileagePrice * 0.1
+        : 0;
+
     const totalPrice = baseFare - sameDayReturnDiscount;
 
     return {
@@ -196,6 +211,7 @@ const MultiStepBookingWidget = () => {
       extrasTotal,
       baseFare,
       sameDayReturnDiscount,
+      isShortJourney,
       totalPrice
     };
   };
@@ -1356,9 +1372,18 @@ const MultiStepBookingWidget = () => {
                   {priceBreakdown ? (
                     <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Mileage</span>
+                        <span className="text-muted-foreground">
+                          {priceBreakdown.isShortJourney
+                            ? `Minimum Fare${isSameDayReturn ? " (Return)" : " (One Way)"}`
+                            : "Mileage"}
+                        </span>
                         <span className="font-medium text-accent">£{priceBreakdown.mileagePrice.toFixed(2)}</span>
                       </div>
+                      {priceBreakdown.isShortJourney && (
+                        <p className="text-xs text-muted-foreground -mt-1">
+                          Short journey minimum applies (≤26 miles)
+                        </p>
+                      )}
                       {priceBreakdown.waitTimePrice > 0 && (
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Wait Time</span>
@@ -1389,7 +1414,7 @@ const MultiStepBookingWidget = () => {
                         <div className="flex justify-between items-center text-green-500">
                           <span className="flex items-center gap-1.5">
                             <Tag className="w-3.5 h-3.5" />
-                            Discount (10%)
+                            Return Discount (10%)
                           </span>
                           <span className="font-medium">-£{priceBreakdown.sameDayReturnDiscount.toFixed(2)}</span>
                         </div>
