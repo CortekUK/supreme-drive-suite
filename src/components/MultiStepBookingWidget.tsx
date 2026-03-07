@@ -180,7 +180,7 @@ const MultiStepBookingWidget = () => {
     const waitHours = parseFloat(formData.waitTime) || 0;
 
     // Minimum fare rule: jobs of 26 miles or under are charged at a flat £200 base rate (one way).
-    // For a return journey at ≤26 miles, the base is £400 (2 × £200), then 10% return discount applied.
+    // For a return journey at ≤26 miles, the base is £400 (2 × £200), then 5% return discount applied.
     const SHORT_JOURNEY_THRESHOLD = 26;
     const SHORT_JOURNEY_MINIMUM_FARE = 200;
     const isShortJourney = miles > 0 && miles <= SHORT_JOURNEY_THRESHOLD;
@@ -198,12 +198,12 @@ const MultiStepBookingWidget = () => {
 
     const baseFare = mileagePrice + waitTimePrice + overnightFee + extrasTotal;
 
-    // 10% return discount applies to:
+    // 5% return discount applies to:
     //   - Same-day return journeys of 200+ miles (standard rule)
     //   - Same-day return journeys of ≤26 miles (short journey minimum fare rule)
     const sameDayReturnDiscount =
       isSameDayReturn && (miles >= 200 || isShortJourney)
-        ? mileagePrice * 0.1
+        ? mileagePrice * 0.05
         : 0;
 
     const totalPrice = baseFare - sameDayReturnDiscount;
@@ -1499,7 +1499,7 @@ const MultiStepBookingWidget = () => {
                             <div className="flex justify-between items-center text-green-500">
                               <span className="flex items-center gap-1.5">
                                 <Tag className="w-3.5 h-3.5" />
-                                Return Discount (10%)
+                                Return Discount (5%)
                               </span>
                               <span className="font-medium">-£{priceBreakdown.sameDayReturnDiscount.toFixed(2)}</span>
                             </div>
