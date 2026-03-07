@@ -77,6 +77,7 @@ const Admin = () => {
         <Route path="/security-team/new" element={<SecurityTeamEditor />} />
         <Route path="/security-team/edit/:id" element={<SecurityTeamEditor />} />
         <Route path="/feedback" element={<AdminFeedback />} />
+        <Route path="/promotions" element={<PromotionsManagement />} />
         <Route path="/settings" element={<AdminSettings />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>
