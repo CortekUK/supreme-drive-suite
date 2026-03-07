@@ -17,6 +17,7 @@ import SecurityTeamManagement from "./admin/SecurityTeamManagement";
 import SecurityTeamEditor from "./admin/SecurityTeamEditor";
 import AnalyticsDashboard from "./admin/AnalyticsDashboard";
 import SearchResults from "./admin/SearchResults";
+import PromotionsManagement from "./admin/PromotionsManagement";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -76,6 +77,7 @@ const Admin = () => {
         <Route path="/security-team/new" element={<SecurityTeamEditor />} />
         <Route path="/security-team/edit/:id" element={<SecurityTeamEditor />} />
         <Route path="/feedback" element={<AdminFeedback />} />
+        <Route path="/promotions" element={<PromotionsManagement />} />
         <Route path="/settings" element={<AdminSettings />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>

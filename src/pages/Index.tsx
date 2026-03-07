@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 import PWAInstall from "@/components/PWAInstall";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import PromoPopup from "@/components/PromoPopup";
 
 const Index = () => {
   const [testimonialStats, setTestimonialStats] = useState({ avgRating: "5.0", count: "0" });
@@ -69,6 +70,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PromoPopup />
       <SEO
         title="Luxury Chauffeur & Close Protection Services"
         description="Premium chauffeur and close protection services in the UK. Experienced drivers, luxury vehicles, and 24/7 availability. Book your journey today."
