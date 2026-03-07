@@ -66,12 +66,21 @@ const PromoPopup = () => {
           <X className="w-5 h-5 text-foreground" />
         </button>
 
-        {/* Flyer image */}
-        <img
-          src={promo.image_url}
-          alt={promo.title}
-          className="w-full object-contain max-h-[70vh]"
-        />
+        {/* Flyer — PDF or image */}
+        {promo.image_url.includes(".pdf") ? (
+          <iframe
+            src={promo.image_url}
+            title={promo.title}
+            className="w-full"
+            style={{ height: "65vh", border: "none" }}
+          />
+        ) : (
+          <img
+            src={promo.image_url}
+            alt={promo.title}
+            className="w-full object-contain max-h-[70vh]"
+          />
+        )}
 
         {/* Footer strip */}
         <div className="px-6 py-4 bg-card border-t border-border/50 flex items-center justify-between gap-4">

@@ -67,18 +67,22 @@ const PromotionsManagement = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"];
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Please upload a JPG, PNG, WebP, or GIF image");
+      toast.error("Please upload a JPG, PNG, WebP, GIF, or PDF file");
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("File must be under 10MB");
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("File must be under 20MB");
       return;
     }
 
     setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    if (file.type === "application/pdf") {
+      setPreviewUrl("pdf");
+    } else {
+      setPreviewUrl(URL.createObjectURL(file));
+    }
   };
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -221,12 +225,20 @@ const PromotionsManagement = () => {
 
           {/* File upload */}
           <div className="space-y-2">
-            <Label>Flyer Image * (JPG, PNG, WebP — max 10MB)</Label>
+            <Label>Flyer Image or PDF * (JPG, PNG, WebP, PDF — max 20MB)</Label>
             <div
               className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-accent/50 transition-colors"
               onClick={() => fileInputRef.current?.click()}
             >
-              {previewUrl ? (
+              {previewUrl === "pdf" ? (
+                <div className="flex flex-col items-center gap-2 text-accent">
+                  <div className="w-16 h-20 bg-red-500/10 border border-red-500/30 rounded flex items-center justify-center">
+                    <span className="text-red-400 font-bold text-sm">PDF</span>
+                  </div>
+                  <p className="text-sm font-medium">{selectedFile?.name}</p>
+                  <p className="text-xs text-muted-foreground">Click to change file</p>
+                </div>
+              ) : previewUrl ? (
                 <img
                   src={previewUrl}
                   alt="Preview"
@@ -235,19 +247,19 @@ const PromotionsManagement = () => {
               ) : (
                 <div className="flex flex-col items-center gap-2 text-muted-foreground">
                   <ImageIcon className="w-10 h-10 opacity-40" />
-                  <p className="text-sm">Click to upload your flyer image</p>
-                  <p className="text-xs opacity-60">PNG, JPG or WebP</p>
+                  <p className="text-sm">Click to upload your flyer (image or PDF)</p>
+                  <p className="text-xs opacity-60">PNG, JPG, WebP, or PDF</p>
                 </div>
               )}
             </div>
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
+              accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
               className="hidden"
               onChange={handleFileChange}
             />
-            {selectedFile && (
+            {selectedFile && previewUrl !== "pdf" && (
               <p className="text-xs text-muted-foreground">{selectedFile.name}</p>
             )}
           </div>
@@ -278,17 +290,26 @@ const PromotionsManagement = () => {
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
             {promotions.map((promo) => (
               <Card key={promo.id} className={`overflow-hidden border transition-all ${promo.is_active ? "border-accent/50 shadow-glow" : "border-border"}`}>
-                {/* Image */}
+                {/* Image/PDF preview on card */}
                 <div className="relative">
-                  <img
-                    src={promo.image_url}
-                    alt={promo.title}
-                    className="w-full object-cover max-h-52"
-                    onError={(e) => {
-                      e.currentTarget.src = "";
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
+                  {promo.image_url.endsWith(".pdf") || promo.image_url.includes(".pdf") ? (
+                    <div className="w-full h-36 flex flex-col items-center justify-center bg-muted/30">
+                      <div className="w-14 h-18 bg-red-500/10 border border-red-500/30 rounded flex items-center justify-center mb-2">
+                        <span className="text-red-400 font-bold text-sm">PDF</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">PDF Flyer</span>
+                    </div>
+                  ) : (
+                    <img
+                      src={promo.image_url}
+                      alt={promo.title}
+                      className="w-full object-cover max-h-52"
+                      onError={(e) => {
+                        e.currentTarget.src = "";
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  )}
                   {promo.is_active && (
                     <Badge className="absolute top-2 left-2 bg-accent text-accent-foreground font-semibold text-xs">
                       ● LIVE
