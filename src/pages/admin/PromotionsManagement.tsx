@@ -67,18 +67,22 @@ const PromotionsManagement = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"];
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Please upload a JPG, PNG, WebP, or GIF image");
+      toast.error("Please upload a JPG, PNG, WebP, GIF, or PDF file");
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("File must be under 10MB");
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("File must be under 20MB");
       return;
     }
 
     setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    if (file.type === "application/pdf") {
+      setPreviewUrl("pdf");
+    } else {
+      setPreviewUrl(URL.createObjectURL(file));
+    }
   };
 
   const handleAdd = async (e: React.FormEvent) => {
