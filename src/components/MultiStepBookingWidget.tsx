@@ -1428,77 +1428,98 @@ const MultiStepBookingWidget = () => {
                 </div>
               </div>
 
-              {/* Sticky Price Summary (Desktop) */}
+              {/* Sticky Price Summary / Enquiry Notice (Desktop) */}
               <div className="lg:col-span-1">
                 <Card className="p-6 bg-gradient-dark border-accent/30 lg:sticky lg:top-24 lg:self-start">
-                  <h4 className="text-lg font-semibold text-gradient-metal mb-4">Price Summary</h4>
-                  
-                  {priceBreakdown ? (
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          {priceBreakdown.isShortJourney
-                            ? `Minimum Fare${isSameDayReturn ? " (Return)" : " (One Way)"}`
-                            : "Mileage"}
-                        </span>
-                        <span className="font-medium text-accent">£{priceBreakdown.mileagePrice.toFixed(2)}</span>
-                      </div>
-                      {priceBreakdown.isShortJourney && (
-                        <p className="text-xs text-muted-foreground -mt-1">
-                          Short journey minimum applies (≤26 miles)
-                        </p>
-                      )}
-                      {priceBreakdown.waitTimePrice > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Wait Time</span>
-                          <span className="font-medium text-accent">£{priceBreakdown.waitTimePrice.toFixed(2)}</span>
-                        </div>
-                      )}
-                      {priceBreakdown.overnightFee > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Overnight</span>
-                          <span className="font-medium text-accent">£{priceBreakdown.overnightFee.toFixed(2)}</span>
-                        </div>
-                      )}
-                      {priceBreakdown.extrasTotal > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Extras</span>
-                          <span className="font-medium text-accent">£{priceBreakdown.extrasTotal.toFixed(2)}</span>
-                        </div>
-                      )}
-
-                      <div className="border-t border-border pt-3 mt-3">
-                        <div className="flex justify-between">
-                          <span className="font-medium">Base Fare</span>
-                          <span className="font-semibold">£{priceBreakdown.baseFare.toFixed(2)}</span>
+                  {isEnquiryOnlyVehicle ? (
+                    <div className="space-y-4">
+                      <div className="flex justify-center mb-2">
+                        <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center">
+                          <CheckCircle className="w-6 h-6 text-accent" />
                         </div>
                       </div>
-
-                      {priceBreakdown.sameDayReturnDiscount > 0 && (
-                        <div className="flex justify-between items-center text-green-500">
-                          <span className="flex items-center gap-1.5">
-                            <Tag className="w-3.5 h-3.5" />
-                            Return Discount (10%)
-                          </span>
-                          <span className="font-medium">-£{priceBreakdown.sameDayReturnDiscount.toFixed(2)}</span>
-                        </div>
-                      )}
-
-                      <div className="border-t border-accent/30 pt-3 mt-1">
-                        <div className="flex justify-between items-center">
-                          <span className="text-lg font-semibold">Final Price</span>
-                          <span className="text-2xl font-bold text-accent">
-                            £{priceBreakdown.totalPrice.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <p className="text-xs text-muted-foreground mt-4">
-                        * Estimated price. Final price may vary based on actual distance and time.
+                      <h4 className="text-lg font-semibold text-gradient-metal text-center">Enquiry Only</h4>
+                      <p className="text-sm text-muted-foreground text-center leading-relaxed">
+                        Pricing for the <span className="text-foreground font-medium">{selectedVehicleObj?.name}</span> is provided on enquiry. Submit your details and a member of our team will be in touch to confirm pricing.
                       </p>
+                      <div className="border-t border-border pt-3 space-y-2 text-sm">
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Vehicle</span>
+                          <span className="text-foreground font-medium">{selectedVehicleObj?.name}</span>
+                        </div>
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Date</span>
+                          <span className="text-foreground font-medium">
+                            {formData.pickupDate ? format(new Date(formData.pickupDate), "dd MMM yyyy") : "—"}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   ) : (
-                    <p className="text-muted-foreground text-sm">Select a vehicle to see pricing</p>
+                    <>
+                      <h4 className="text-lg font-semibold text-gradient-metal mb-4">Price Summary</h4>
+                      {priceBreakdown ? (
+                        <div className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              {priceBreakdown.isShortJourney
+                                ? `Minimum Fare${isSameDayReturn ? " (Return)" : " (One Way)"}`
+                                : "Mileage"}
+                            </span>
+                            <span className="font-medium text-accent">£{priceBreakdown.mileagePrice.toFixed(2)}</span>
+                          </div>
+                          {priceBreakdown.isShortJourney && (
+                            <p className="text-xs text-muted-foreground -mt-1">Short journey minimum applies (≤26 miles)</p>
+                          )}
+                          {priceBreakdown.waitTimePrice > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Wait Time</span>
+                              <span className="font-medium text-accent">£{priceBreakdown.waitTimePrice.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {priceBreakdown.overnightFee > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Overnight</span>
+                              <span className="font-medium text-accent">£{priceBreakdown.overnightFee.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {priceBreakdown.extrasTotal > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Extras</span>
+                              <span className="font-medium text-accent">£{priceBreakdown.extrasTotal.toFixed(2)}</span>
+                            </div>
+                          )}
+                          <div className="border-t border-border pt-3 mt-3">
+                            <div className="flex justify-between">
+                              <span className="font-medium">Base Fare</span>
+                              <span className="font-semibold">£{priceBreakdown.baseFare.toFixed(2)}</span>
+                            </div>
+                          </div>
+                          {priceBreakdown.sameDayReturnDiscount > 0 && (
+                            <div className="flex justify-between items-center text-green-500">
+                              <span className="flex items-center gap-1.5">
+                                <Tag className="w-3.5 h-3.5" />
+                                Return Discount (10%)
+                              </span>
+                              <span className="font-medium">-£{priceBreakdown.sameDayReturnDiscount.toFixed(2)}</span>
+                            </div>
+                          )}
+                          <div className="border-t border-accent/30 pt-3 mt-1">
+                            <div className="flex justify-between items-center">
+                              <span className="text-lg font-semibold">Final Price</span>
+                              <span className="text-2xl font-bold text-accent">
+                                £{priceBreakdown.totalPrice.toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-4">
+                            * Estimated price. Final price may vary based on actual distance and time.
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground text-sm">Select a vehicle to see pricing</p>
+                      )}
+                    </>
                   )}
                 </Card>
               </div>
@@ -1516,12 +1537,21 @@ const MultiStepBookingWidget = () => {
                   <ChevronLeft className="mr-2 w-5 h-5" /> Back
                 </Button>
                 <Button
-                  onClick={isMultiStop ? handleCorporateEnquirySubmit : isBlockedDateEnquiry ? handleBlockedDateEnquirySubmit : handleSubmit}
+                  onClick={
+                    isMultiStop ? handleCorporateEnquirySubmit
+                    : isBlockedDateEnquiry ? handleBlockedDateEnquirySubmit
+                    : isEnquiryOnlyVehicle ? handleVehicleEnquirySubmit
+                    : handleSubmit
+                  }
                   disabled={loading}
                   className="w-full sm:flex-1 gradient-accent hover-lift order-1 sm:order-2"
                   size="lg"
                 >
-                  {loading ? "Submitting..." : isMultiStop ? "Submit Enquiry" : isBlockedDateEnquiry ? "Submit Enquiry" : "Confirm Booking"}
+                  {loading ? "Submitting..."
+                    : isMultiStop ? "Submit Enquiry"
+                    : isBlockedDateEnquiry ? "Submit Enquiry"
+                    : isEnquiryOnlyVehicle ? "Submit Enquiry"
+                    : "Confirm Booking"}
                 </Button>
               </div>
               
@@ -1642,13 +1672,49 @@ const MultiStepBookingWidget = () => {
               </div>
             </div>
             <DialogFooter>
-              <Button
-                onClick={() => {
-                  setShowBlockedDateEnquiryDialog(false);
-                  handleCloseConfirmation();
-                }}
-                className="w-full gradient-accent"
-              >
+              <Button onClick={() => { setShowBlockedDateEnquiryDialog(false); handleCloseConfirmation(); }} className="w-full gradient-accent">
+                Done
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Vehicle Enquiry Confirmation Dialog */}
+        <Dialog open={showVehicleEnquiryDialog} onOpenChange={setShowVehicleEnquiryDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
+                  <CheckCircle className="w-8 h-8 text-accent" />
+                </div>
+              </div>
+              <DialogTitle className="text-center text-xl font-display">
+                Enquiry Submitted
+              </DialogTitle>
+              <DialogDescription className="text-center text-base pt-2">
+                Your enquiry has been submitted. A member of the team will be in touch soon to confirm pricing and the booking.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 py-4 text-sm text-muted-foreground">
+              <div className="flex justify-between border-b border-border pb-2">
+                <span>Vehicle</span>
+                <span className="text-foreground font-medium">{selectedVehicleObj?.name}</span>
+              </div>
+              <div className="flex justify-between border-b border-border pb-2">
+                <span>Journey</span>
+                <span className="text-foreground font-medium text-right max-w-[60%] text-right">{formData.pickupLocation} → {formData.dropoffLocation}</span>
+              </div>
+              <div className="flex justify-between border-b border-border pb-2">
+                <span>Date</span>
+                <span className="text-foreground font-medium">{formData.pickupDate ? format(new Date(formData.pickupDate), "dd MMMM yyyy") : ""}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Contact</span>
+                <span className="text-foreground font-medium">{formData.customerEmail}</span>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => { setShowVehicleEnquiryDialog(false); handleCloseConfirmation(); }} className="w-full gradient-accent">
                 Done
               </Button>
             </DialogFooter>
