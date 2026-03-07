@@ -173,6 +173,12 @@ const DriversManagement = () => {
   const confirmDelete = async () => {
     if (!driverToDelete) return;
 
+    // Remove related records first to avoid foreign key constraint errors
+    await supabase.from("job_assignments").delete().eq("driver_id", driverToDelete.id);
+    await supabase.from("driver_availability").delete().eq("driver_id", driverToDelete.id);
+    // Unassign driver from any bookings rather than deleting them
+    await supabase.from("bookings").update({ driver_id: null }).eq("driver_id", driverToDelete.id);
+
     const { error } = await supabase.from("drivers").delete().eq("id", driverToDelete.id);
 
     if (error) {
