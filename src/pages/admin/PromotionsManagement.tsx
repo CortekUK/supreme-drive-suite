@@ -225,12 +225,20 @@ const PromotionsManagement = () => {
 
           {/* File upload */}
           <div className="space-y-2">
-            <Label>Flyer Image * (JPG, PNG, WebP — max 10MB)</Label>
+            <Label>Flyer Image or PDF * (JPG, PNG, WebP, PDF — max 20MB)</Label>
             <div
               className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-accent/50 transition-colors"
               onClick={() => fileInputRef.current?.click()}
             >
-              {previewUrl ? (
+              {previewUrl === "pdf" ? (
+                <div className="flex flex-col items-center gap-2 text-accent">
+                  <div className="w-16 h-20 bg-red-500/10 border border-red-500/30 rounded flex items-center justify-center">
+                    <span className="text-red-400 font-bold text-sm">PDF</span>
+                  </div>
+                  <p className="text-sm font-medium">{selectedFile?.name}</p>
+                  <p className="text-xs text-muted-foreground">Click to change file</p>
+                </div>
+              ) : previewUrl ? (
                 <img
                   src={previewUrl}
                   alt="Preview"
@@ -239,19 +247,19 @@ const PromotionsManagement = () => {
               ) : (
                 <div className="flex flex-col items-center gap-2 text-muted-foreground">
                   <ImageIcon className="w-10 h-10 opacity-40" />
-                  <p className="text-sm">Click to upload your flyer image</p>
-                  <p className="text-xs opacity-60">PNG, JPG or WebP</p>
+                  <p className="text-sm">Click to upload your flyer (image or PDF)</p>
+                  <p className="text-xs opacity-60">PNG, JPG, WebP, or PDF</p>
                 </div>
               )}
             </div>
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
+              accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
               className="hidden"
               onChange={handleFileChange}
             />
-            {selectedFile && (
+            {selectedFile && previewUrl !== "pdf" && (
               <p className="text-xs text-muted-foreground">{selectedFile.name}</p>
             )}
           </div>
