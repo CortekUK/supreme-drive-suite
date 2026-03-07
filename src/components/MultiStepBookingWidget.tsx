@@ -46,6 +46,9 @@ interface PricingExtra {
 }
 
 
+// Only this vehicle goes through standard payment; all others are enquiry-only
+const BOOKABLE_VEHICLE_NAME = "Mercedes Benz V-Class V300 LWD";
+
 const MultiStepBookingWidget = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
