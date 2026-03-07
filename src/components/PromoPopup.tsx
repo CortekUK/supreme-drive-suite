@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface Promotion {
   id: string;
@@ -18,7 +17,6 @@ const PromoPopup = () => {
 
   useEffect(() => {
     const load = async () => {
-      // Check if already dismissed this session
       const dismissed = sessionStorage.getItem(STORAGE_KEY);
       if (dismissed) return;
 
@@ -32,7 +30,6 @@ const PromoPopup = () => {
 
       if (!error && data) {
         setPromo(data);
-        // Small delay so page loads first
         setTimeout(() => setVisible(true), 800);
       }
     };
@@ -46,58 +43,45 @@ const PromoPopup = () => {
 
   if (!promo || !visible) return null;
 
+  const isPdf = promo.image_url.includes(".pdf");
+
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-      style={{ backgroundColor: "hsla(0,0%,0%,0.75)" }}
+      style={{ backgroundColor: "hsla(0,0%,0%,0.8)" }}
+      onClick={handleClose}
     >
       <div
-        className="relative w-full max-w-xl rounded-2xl overflow-hidden shadow-2xl border border-accent/30 bg-card animate-in fade-in zoom-in-95 duration-300"
-        role="dialog"
-        aria-modal="true"
-        aria-label={promo.title}
+        className="relative rounded-2xl overflow-hidden shadow-2xl border border-accent/30 animate-in fade-in zoom-in-95 duration-300"
+        style={{ width: "min(700px, 95vw)", maxHeight: "92vh" }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-3 right-3 z-10 rounded-full bg-background/80 hover:bg-background p-1.5 transition-colors"
+          className="absolute top-3 right-3 z-20 rounded-full bg-black/60 hover:bg-black/90 p-2 transition-colors border border-white/20"
           aria-label="Close promotion"
         >
-          <X className="w-5 h-5 text-foreground" />
+          <X className="w-5 h-5 text-white" />
         </button>
 
-        {/* Flyer — PDF or image */}
-        {promo.image_url.includes(".pdf") ? (
+        {/* Flyer */}
+        {isPdf ? (
           <iframe
             src={`${promo.image_url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
             title={promo.title}
-            className="w-full"
-            style={{ height: "65vh", border: "none", pointerEvents: "none" }}
+            className="w-full block"
+            style={{ height: "90vh", border: "none" }}
           />
         ) : (
-          <img
-            src={promo.image_url}
-            alt={promo.title}
-            className="w-full object-contain max-h-[70vh]"
-          />
-        )}
-
-        {/* Footer strip */}
-        <div className="px-6 py-4 bg-card border-t border-border/50 flex items-center justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-foreground text-sm truncate">{promo.title}</p>
-            {promo.description && (
-              <p className="text-xs text-muted-foreground truncate">{promo.description}</p>
-            )}
+          <div className="overflow-y-auto" style={{ maxHeight: "92vh" }}>
+            <img
+              src={promo.image_url}
+              alt={promo.title}
+              className="w-full block"
+            />
           </div>
-          <Button
-            size="sm"
-            className="gradient-accent shadow-glow shrink-0"
-            onClick={handleClose}
-          >
-            Close
-          </Button>
-        </div>
+        )}
       </div>
     </div>
   );
