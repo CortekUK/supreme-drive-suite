@@ -39,7 +39,7 @@ const Navigation = () => {
     label: "Portfolio"
   }, {
     path: "/pricing",
-    label: "Pricing"
+    label: "Our Fleet"
   }, {
     path: "/about",
     label: "About"
