@@ -1109,6 +1109,41 @@ export type Database = {
           },
         ]
       }
+      vehicle_images: {
+        Row: {
+          created_at: string | null
+          display_order: number
+          id: string
+          image_url: string
+          is_cover: boolean | null
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          image_url: string
+          is_cover?: boolean | null
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          image_url?: string
+          is_cover?: boolean | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_images_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicle_service_history: {
         Row: {
           cost: number | null
