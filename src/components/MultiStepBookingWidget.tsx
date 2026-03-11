@@ -1178,7 +1178,7 @@ const MultiStepBookingWidget = () => {
                       )}
 
                       {/* Enquiry-only label */}
-                      {!vehicle.name.toLowerCase().includes(BOOKABLE_VEHICLE_NAME.toLowerCase()) && (
+                      {!isBookableVehicle(vehicle.name) && (
                         <div className="absolute z-10 bottom-[calc(100%-2.5rem)] left-4 flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-accent/40 text-xs font-medium text-accent bg-background/80 backdrop-blur-sm">
                           Enquiry Only
                         </div>
