@@ -48,19 +48,30 @@ const PromoPopup = () => {
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-      style={{ backgroundColor: "hsla(0,0%,0%,0.8)" }}
+      style={{ backgroundColor: "rgba(0,0,0,0.8)", WebkitTapHighlightColor: "transparent" }}
       onClick={handleClose}
+      onTouchEnd={(e) => {
+        // Only close if tap was directly on the backdrop (not the inner card)
+        if (e.target === e.currentTarget) handleClose();
+      }}
     >
       <div
-        className="relative rounded-2xl overflow-hidden shadow-2xl border border-accent/30 animate-in fade-in zoom-in-95 duration-300"
-        style={{ width: "min(700px, 95vw)", maxHeight: "92vh" }}
+        className="relative rounded-2xl overflow-hidden shadow-2xl border border-accent/30"
+        style={{
+          width: "min(700px, 95vw)",
+          maxHeight: "92vh",
+          animation: "fadeInScale 0.3s ease forwards",
+        }}
         onClick={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
       >
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-3 right-3 z-20 rounded-full bg-black/60 hover:bg-black/90 p-2 transition-colors border border-white/20"
+          onTouchEnd={(e) => { e.preventDefault(); handleClose(); }}
+          className="absolute top-3 right-3 z-20 rounded-full bg-black/60 hover:bg-black/90 active:bg-black/90 p-2 transition-colors border border-white/20"
           aria-label="Close promotion"
+          style={{ WebkitTapHighlightColor: "transparent" }}
         >
           <X className="w-5 h-5 text-white" />
         </button>
@@ -74,15 +85,30 @@ const PromoPopup = () => {
             style={{ height: "90vh", border: "none" }}
           />
         ) : (
-          <div className="overflow-y-auto" style={{ maxHeight: "92vh" }}>
+          <div
+            style={{
+              maxHeight: "92vh",
+              overflowY: "auto",
+              WebkitOverflowScrolling: "touch",
+              overscrollBehavior: "contain",
+            }}
+          >
             <img
               src={promo.image_url}
               alt={promo.title}
               className="w-full block"
+              draggable={false}
             />
           </div>
         )}
       </div>
+
+      <style>{`
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </div>
   );
 };
