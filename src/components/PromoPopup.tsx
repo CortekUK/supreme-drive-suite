@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { X } from "lucide-react";
+import { X, ExternalLink } from "lucide-react";
 
 interface Promotion {
   id: string;
@@ -14,6 +14,7 @@ const STORAGE_KEY = "tiss_promo_dismissed";
 const PromoPopup = () => {
   const [promo, setPromo] = useState<Promotion | null>(null);
   const [visible, setVisible] = useState(false);
+  const [pdfError, setPdfError] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -78,12 +79,34 @@ const PromoPopup = () => {
 
         {/* Flyer */}
         {isPdf ? (
-          <iframe
-            src={`https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(promo.image_url)}`}
-            title={promo.title}
-            className="w-full block"
-            style={{ height: "90vh", border: "none" }}
-          />
+          pdfError ? (
+            /* Fallback if Google Docs Viewer fails */
+            <div className="flex flex-col items-center justify-center gap-4 p-10 bg-background text-center" style={{ minHeight: "40vh" }}>
+              <div className="w-16 h-20 bg-destructive/10 border border-destructive/30 rounded flex items-center justify-center">
+                <span className="text-destructive font-bold text-sm">PDF</span>
+              </div>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                The PDF viewer couldn't load. For the best experience, ask your admin to re-upload this flyer as a JPG or PNG image.
+              </p>
+              <a
+                href={promo.image_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Open PDF in New Tab
+              </a>
+            </div>
+          ) : (
+            <iframe
+              src={`https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(promo.image_url)}`}
+              title={promo.title}
+              className="w-full block"
+              style={{ height: "90vh", border: "none" }}
+              onError={() => setPdfError(true)}
+            />
+          )
         ) : (
           <div
             style={{
