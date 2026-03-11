@@ -784,16 +784,25 @@ const MultiStepBookingWidget = () => {
               { step: 3, label: "Details" }
             ].map(({ step, label }, index) => (
               <div key={step} className="flex flex-col items-center flex-1 relative z-10">
-                <div className={`flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full border-2 transition-all ${
-                  currentStep >= step 
-                    ? 'bg-accent border-accent text-accent-foreground shadow-lg' 
-                    : 'border-muted text-muted-foreground bg-background'
-                } ${currentStep === step ? 'animate-pulse' : ''}`}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (step < currentStep) setCurrentStep(step);
+                  }}
+                  className={`flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full border-2 transition-all ${
+                    currentStep >= step 
+                      ? 'bg-accent border-accent text-accent-foreground shadow-lg' 
+                      : 'border-muted text-muted-foreground bg-background'
+                  } ${currentStep === step ? 'animate-pulse' : ''} ${step < currentStep ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+                  disabled={step >= currentStep}
+                >
                   {currentStep > step ? <Check className="w-5 h-5 md:w-6 md:h-6" /> : <span className="text-lg md:text-xl font-semibold">{step}</span>}
-                </div>
+                </button>
                 <span className={`mt-2 text-xs md:text-sm font-medium ${
                   currentStep >= step ? 'text-accent' : 'text-muted-foreground'
-                }`}>
+                } ${step < currentStep ? 'cursor-pointer' : ''}`}
+                  onClick={() => { if (step < currentStep) setCurrentStep(step); }}
+                >
                   {label}
                 </span>
                 {index < 2 && (
@@ -1442,13 +1451,13 @@ const MultiStepBookingWidget = () => {
                       <p className="text-sm text-muted-foreground text-center leading-relaxed">
                         Pricing for the <span className="text-foreground font-medium">{selectedVehicleObj?.name}</span> is provided on enquiry. Submit your details and a member of our team will be in touch to confirm pricing.
                       </p>
-                      <div className="border-t border-border pt-3 space-y-2 text-sm">
-                        <div className="flex justify-between text-muted-foreground">
-                          <span>Vehicle</span>
+                      <div className="border-t border-border pt-3 space-y-3 text-sm">
+                        <div className="flex flex-col gap-1 text-muted-foreground">
+                          <span className="text-xs uppercase tracking-wide">Vehicle</span>
                           <span className="text-foreground font-medium">{selectedVehicleObj?.name}</span>
                         </div>
-                        <div className="flex justify-between text-muted-foreground">
-                          <span>Date</span>
+                        <div className="flex flex-col gap-1 text-muted-foreground">
+                          <span className="text-xs uppercase tracking-wide">Date</span>
                           <span className="text-foreground font-medium">
                             {formData.pickupDate ? format(new Date(formData.pickupDate), "dd MMM yyyy") : "—"}
                           </span>
