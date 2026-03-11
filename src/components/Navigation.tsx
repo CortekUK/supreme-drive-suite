@@ -89,7 +89,7 @@ return <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0a]/95 backdrop-
         </div>
 
         {/* Mobile Navigation */}
-        {isOpen && <div className="xl:hidden pb-4 pt-4 space-y-3 border-t border-white/10 mt-4 bg-[#0a0a0a]/98 -mx-2 px-2">
+        {isOpen && <div className="xl:hidden pb-4 pt-4 space-y-3 border-t border-white/10 mt-4 -mx-4 px-4" style={{ background: "rgba(10,10,10,0.97)", backdropFilter: "blur(12px)", boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}>
             {navLinks.map(link => <Link key={link.path} to={link.path} onClick={() => setIsOpen(false)} className={`block py-2.5 text-sm font-medium transition-colors pl-0 ${isActive(link.path) ? "text-primary" : "text-white/60"}`}>
                 {link.label}
               </Link>)}
