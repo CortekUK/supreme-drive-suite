@@ -53,12 +53,12 @@ const Navigation = () => {
     path: "/contact",
     label: "Contact"
   }];
-  return <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-metal py-3 h-[72px]">
+return <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-metal py-1 h-[80px]">
       <div className="container mx-auto px-2 lg:px-4">
         <div className="flex items-center w-full justify-between gap-2 lg:gap-4 xl:gap-8">
           {/* Logo/Branding - Left */}
           <Link to="/" className="flex items-center flex-shrink-0 group">
-            <img src={tissLogo} alt="TISS - Travel in Supreme Style" className="h-14 lg:h-16 w-auto -my-2 object-contain" />
+            <img src={tissLogo} alt="TISS - Travel in Supreme Style" className="h-[72px] lg:h-[76px] w-auto object-contain" />
           </Link>
 
           {/* Desktop Navigation - Center */}
