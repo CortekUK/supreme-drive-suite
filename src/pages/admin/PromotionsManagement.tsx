@@ -225,6 +225,10 @@ const PromotionsManagement = () => {
 
           {/* File upload */}
           <div className="space-y-2">
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs mb-1">
+              <span className="text-base leading-none mt-0.5">💡</span>
+              <span><strong>Tip:</strong> Upload your flyer as a <strong>JPG, PNG, or WebP image</strong> for the best experience on all devices (iPhone, Android, desktop). PDFs may not display reliably on Android Chrome.</span>
+            </div>
             <Label>Flyer Image or PDF * (JPG, PNG, WebP, PDF — max 20MB)</Label>
             <div
               className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-accent/50 transition-colors"
