@@ -1266,10 +1266,8 @@ const MultiStepBookingWidget = () => {
                           <div className="text-right">
                             {isBookableVehicle(vehicle.name) ? (
                               <>
-                                <p className="font-semibold text-[#C5A572] text-lg">
-                                  £{vehicle.base_price_per_mile.toFixed(2)}/mile
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-0.5">Minimum 3 hours</p>
+                                <p className="font-semibold text-accent text-base">Instant Booking</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">Price calculated at checkout</p>
                               </>
                             ) : (
                               <>
