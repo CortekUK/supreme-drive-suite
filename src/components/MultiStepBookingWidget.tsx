@@ -47,7 +47,8 @@ interface PricingExtra {
 
 
 // Only this vehicle goes through standard payment; all others are enquiry-only
-const BOOKABLE_VEHICLE_NAME = "Mercedes Benz V-Class V300 LWD";
+// Match by unique identifier — checks if the vehicle name contains "v300" (case-insensitive)
+const isBookableVehicle = (name: string) => name.toLowerCase().includes("v300");
 
 const MultiStepBookingWidget = () => {
   const [currentStep, setCurrentStep] = useState(1);
