@@ -78,38 +78,12 @@ const PromoPopup = () => {
 
         {/* Flyer */}
         {isPdf ? (
-          <div
-            className="flex flex-col items-center justify-center gap-6 p-10 text-center"
-            style={{ background: "hsl(var(--background))", minHeight: "280px" }}
-          >
-            <div className="rounded-full p-5" style={{ background: "hsl(var(--accent)/0.15)" }}>
-              <FileText className="w-12 h-12" style={{ color: "hsl(var(--accent))" }} />
-            </div>
-            <div>
-              <p className="text-lg font-semibold mb-1" style={{ color: "hsl(var(--foreground))" }}>
-                {promo.title}
-              </p>
-              {promo.description && (
-                <p className="text-sm mb-4" style={{ color: "hsl(var(--muted-foreground))" }}>
-                  {promo.description}
-                </p>
-              )}
-            </div>
-            <a
-              href={promo.image_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
-              style={{
-                background: "hsl(var(--accent))",
-                color: "hsl(var(--accent-foreground))",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ExternalLink className="w-4 h-4" />
-              View Flyer
-            </a>
-          </div>
+          <iframe
+            src={`https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(promo.image_url)}`}
+            title={promo.title}
+            className="w-full block"
+            style={{ height: "90vh", border: "none" }}
+          />
         ) : (
           <div
             style={{
