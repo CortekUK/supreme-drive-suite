@@ -14,6 +14,7 @@ const STORAGE_KEY = "tiss_promo_dismissed";
 const PromoPopup = () => {
   const [promo, setPromo] = useState<Promotion | null>(null);
   const [visible, setVisible] = useState(false);
+  const [pdfError, setPdfError] = useState(false);
 
   useEffect(() => {
     const load = async () => {
