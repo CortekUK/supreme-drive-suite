@@ -226,7 +226,7 @@ const MultiStepBookingWidget = () => {
   // Determine if the selected vehicle is enquiry-only (any vehicle except the bookable one)
   const selectedVehicleObj = vehicles.find((v) => v.id === formData.vehicleId);
   const isEnquiryOnlyVehicle = selectedVehicleObj
-    ? !selectedVehicleObj.name.toLowerCase().includes(BOOKABLE_VEHICLE_NAME.toLowerCase())
+    ? !isBookableVehicle(selectedVehicleObj.name)
     : false;
 
   const handleVehicleEnquirySubmit = async () => {
