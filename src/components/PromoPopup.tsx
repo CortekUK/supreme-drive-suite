@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { X, FileText, ExternalLink } from "lucide-react";
+import { X } from "lucide-react";
 
 interface Promotion {
   id: string;
