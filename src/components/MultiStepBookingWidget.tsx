@@ -1451,13 +1451,13 @@ const MultiStepBookingWidget = () => {
                       <p className="text-sm text-muted-foreground text-center leading-relaxed">
                         Pricing for the <span className="text-foreground font-medium">{selectedVehicleObj?.name}</span> is provided on enquiry. Submit your details and a member of our team will be in touch to confirm pricing.
                       </p>
-                      <div className="border-t border-border pt-3 space-y-2 text-sm">
-                        <div className="flex justify-between text-muted-foreground">
-                          <span>Vehicle</span>
+                      <div className="border-t border-border pt-3 space-y-3 text-sm">
+                        <div className="flex flex-col gap-1 text-muted-foreground">
+                          <span className="text-xs uppercase tracking-wide">Vehicle</span>
                           <span className="text-foreground font-medium">{selectedVehicleObj?.name}</span>
                         </div>
-                        <div className="flex justify-between text-muted-foreground">
-                          <span>Date</span>
+                        <div className="flex flex-col gap-1 text-muted-foreground">
+                          <span className="text-xs uppercase tracking-wide">Date</span>
                           <span className="text-foreground font-medium">
                             {formData.pickupDate ? format(new Date(formData.pickupDate), "dd MMM yyyy") : "—"}
                           </span>
