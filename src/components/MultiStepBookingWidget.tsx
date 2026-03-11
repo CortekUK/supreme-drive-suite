@@ -1509,12 +1509,14 @@ const MultiStepBookingWidget = () => {
                             <span className="text-muted-foreground">
                               {priceBreakdown.isShortJourney
                                 ? `Minimum Fare${isSameDayReturn ? " (Return)" : " (One Way)"}`
-                                : "Mileage"}
+                                : priceBreakdown.isMidJourney
+                                  ? `Mileage (£5.50/mi${isSameDayReturn ? " × return" : ""})`
+                                  : `Mileage (£3.75/mi${isSameDayReturn ? " × return" : ""})`}
                             </span>
                             <span className="font-medium text-accent">£{priceBreakdown.mileagePrice.toFixed(2)}</span>
                           </div>
                           {priceBreakdown.isShortJourney && (
-                            <p className="text-xs text-muted-foreground -mt-1">Short journey minimum applies (≤26 miles)</p>
+                            <p className="text-xs text-muted-foreground -mt-1">Manchester/short journey minimum (≤26 miles)</p>
                           )}
                           {priceBreakdown.waitTimePrice > 0 && (
                             <div className="flex justify-between">
@@ -1544,7 +1546,7 @@ const MultiStepBookingWidget = () => {
                             <div className="flex justify-between items-center text-green-500">
                               <span className="flex items-center gap-1.5">
                                 <Tag className="w-3.5 h-3.5" />
-                                Return Discount (5%)
+                                {priceBreakdown.discountLabel}
                               </span>
                               <span className="font-medium">-£{priceBreakdown.sameDayReturnDiscount.toFixed(2)}</span>
                             </div>
