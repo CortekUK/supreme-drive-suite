@@ -47,7 +47,8 @@ interface PricingExtra {
 
 
 // Only this vehicle goes through standard payment; all others are enquiry-only
-const BOOKABLE_VEHICLE_NAME = "Mercedes Benz V-Class V300 LWD";
+// Match by unique identifier — checks if the vehicle name contains "v300" (case-insensitive)
+const isBookableVehicle = (name: string) => name.toLowerCase().includes("v300");
 
 const MultiStepBookingWidget = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -225,7 +226,7 @@ const MultiStepBookingWidget = () => {
   // Determine if the selected vehicle is enquiry-only (any vehicle except the bookable one)
   const selectedVehicleObj = vehicles.find((v) => v.id === formData.vehicleId);
   const isEnquiryOnlyVehicle = selectedVehicleObj
-    ? !selectedVehicleObj.name.toLowerCase().includes(BOOKABLE_VEHICLE_NAME.toLowerCase())
+    ? !isBookableVehicle(selectedVehicleObj.name)
     : false;
 
   const handleVehicleEnquirySubmit = async () => {
@@ -1177,7 +1178,7 @@ const MultiStepBookingWidget = () => {
                       )}
 
                       {/* Enquiry-only label */}
-                      {!vehicle.name.toLowerCase().includes(BOOKABLE_VEHICLE_NAME.toLowerCase()) && (
+                      {!isBookableVehicle(vehicle.name) && (
                         <div className="absolute z-10 bottom-[calc(100%-2.5rem)] left-4 flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-accent/40 text-xs font-medium text-accent bg-background/80 backdrop-blur-sm">
                           Enquiry Only
                         </div>
@@ -1226,7 +1227,7 @@ const MultiStepBookingWidget = () => {
                             </span>
                           </div>
                           <div className="text-right">
-                            {vehicle.name.toLowerCase().includes(BOOKABLE_VEHICLE_NAME.toLowerCase()) ? (
+                            {isBookableVehicle(vehicle.name) ? (
                               <>
                                 <p className="font-semibold text-[#C5A572] text-lg">
                                   £{vehicle.base_price_per_mile.toFixed(2)}/mile
