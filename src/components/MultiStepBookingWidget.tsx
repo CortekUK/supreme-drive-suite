@@ -784,16 +784,25 @@ const MultiStepBookingWidget = () => {
               { step: 3, label: "Details" }
             ].map(({ step, label }, index) => (
               <div key={step} className="flex flex-col items-center flex-1 relative z-10">
-                <div className={`flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full border-2 transition-all ${
-                  currentStep >= step 
-                    ? 'bg-accent border-accent text-accent-foreground shadow-lg' 
-                    : 'border-muted text-muted-foreground bg-background'
-                } ${currentStep === step ? 'animate-pulse' : ''}`}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (step < currentStep) setCurrentStep(step);
+                  }}
+                  className={`flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full border-2 transition-all ${
+                    currentStep >= step 
+                      ? 'bg-accent border-accent text-accent-foreground shadow-lg' 
+                      : 'border-muted text-muted-foreground bg-background'
+                  } ${currentStep === step ? 'animate-pulse' : ''} ${step < currentStep ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+                  disabled={step >= currentStep}
+                >
                   {currentStep > step ? <Check className="w-5 h-5 md:w-6 md:h-6" /> : <span className="text-lg md:text-xl font-semibold">{step}</span>}
-                </div>
+                </button>
                 <span className={`mt-2 text-xs md:text-sm font-medium ${
                   currentStep >= step ? 'text-accent' : 'text-muted-foreground'
-                }`}>
+                } ${step < currentStep ? 'cursor-pointer' : ''}`}
+                  onClick={() => { if (step < currentStep) setCurrentStep(step); }}
+                >
                   {label}
                 </span>
                 {index < 2 && (
