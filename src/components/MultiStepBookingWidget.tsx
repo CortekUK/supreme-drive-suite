@@ -1227,7 +1227,7 @@ const MultiStepBookingWidget = () => {
                             </span>
                           </div>
                           <div className="text-right">
-                            {vehicle.name.toLowerCase().includes(BOOKABLE_VEHICLE_NAME.toLowerCase()) ? (
+                            {isBookableVehicle(vehicle.name) ? (
                               <>
                                 <p className="font-semibold text-[#C5A572] text-lg">
                                   £{vehicle.base_price_per_mile.toFixed(2)}/mile
