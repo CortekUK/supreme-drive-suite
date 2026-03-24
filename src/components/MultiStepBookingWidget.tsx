@@ -294,7 +294,8 @@ const MultiStepBookingWidget = () => {
     if (!validateStep3()) return;
     setLoading(true);
     try {
-      const enquiryNote = `[VEHICLE ENQUIRY - Pricing TBC for: ${selectedVehicleObj?.name || 'selected vehicle'}]`;
+      const priceBreakdown = calculatePriceBreakdown();
+      const enquiryNote = `[VEHICLE ENQUIRY - ${selectedVehicleObj?.name || 'selected vehicle'}${priceBreakdown ? ` - Estimated: £${priceBreakdown.totalPrice.toFixed(2)}` : ''}]`;
       const requirements = formData.additionalRequirements
         ? `${enquiryNote}\n${formData.additionalRequirements}`
         : enquiryNote;
