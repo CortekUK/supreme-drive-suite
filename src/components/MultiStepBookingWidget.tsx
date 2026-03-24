@@ -1566,9 +1566,7 @@ const MultiStepBookingWidget = () => {
                       </p>
                     </div>
                   ) : (
-                        <p className="text-muted-foreground text-sm">Select a vehicle to see pricing</p>
-                      )}
-                    </>
+                    <p className="text-muted-foreground text-sm">Select a vehicle and enter mileage to see pricing</p>
                   )}
                 </Card>
               </div>
