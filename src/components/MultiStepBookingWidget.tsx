@@ -46,12 +46,10 @@ interface PricingExtra {
 }
 
 
-// Vehicles that go through Stripe payment with hardcoded tiered pricing
-// V300 LWD and V300 XLWB both use the Manchester tiered pricing rules
-const isBookableVehicle = (name: string) => {
-  const lower = name.toLowerCase();
-  return lower.includes("v300 lwd") || lower.includes("v300 xlwb") || lower.includes("v300 xlwd");
-};
+// ONLY the V300 XLWB uses hardcoded tiered pricing + Stripe instant payment.
+// Every other vehicle (including V300 XLWD and any future additions) uses
+// dynamic pricing from their base_price_per_mile set in the admin portal.
+const isBookableVehicle = (name: string) => name.toLowerCase().includes("xlwb");
 
 // Vehicles with hardcoded tiered pricing (same set — used for price calculation)
 const usesTieredPricing = (name: string) => isBookableVehicle(name);
