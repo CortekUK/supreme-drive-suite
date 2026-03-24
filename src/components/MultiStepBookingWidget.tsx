@@ -1500,94 +1500,72 @@ const MultiStepBookingWidget = () => {
               {/* Sticky Price Summary / Enquiry Notice (Desktop) */}
               <div className="lg:col-span-1">
                 <Card className="p-6 bg-gradient-dark border-accent/30 lg:sticky lg:top-24 lg:self-start">
-                  {isEnquiryOnlyVehicle ? (
-                    <div className="space-y-4">
-                      <div className="flex justify-center mb-2">
-                        <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center">
-                          <CheckCircle className="w-6 h-6 text-accent" />
+                  {/* All vehicles now show a price summary — tiered for V300 LWD/XLWB, dynamic for others */}
+                  {priceBreakdown ? (
+                    <div className="space-y-3">
+                      {isEnquiryOnlyVehicle && (
+                        <div className="mb-3 p-3 rounded-lg bg-accent/10 border border-accent/20">
+                          <p className="text-xs text-muted-foreground text-center">Estimated price — our team will confirm the final amount</p>
+                        </div>
+                      )}
+                      <h4 className="text-lg font-semibold text-gradient-metal mb-4">
+                        {isEnquiryOnlyVehicle ? "Price Estimate" : "Price Summary"}
+                      </h4>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">{priceBreakdown.rateLabel}</span>
+                        <span className="font-medium text-accent">£{priceBreakdown.mileagePrice.toFixed(2)}</span>
+                      </div>
+                      {priceBreakdown.isShortJourney && (
+                        <p className="text-xs text-muted-foreground -mt-1">Manchester/short journey minimum (≤26 miles)</p>
+                      )}
+                      {priceBreakdown.waitTimePrice > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Wait Time</span>
+                          <span className="font-medium text-accent">£{priceBreakdown.waitTimePrice.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {priceBreakdown.overnightFee > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Overnight</span>
+                          <span className="font-medium text-accent">£{priceBreakdown.overnightFee.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {priceBreakdown.extrasTotal > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Extras</span>
+                          <span className="font-medium text-accent">£{priceBreakdown.extrasTotal.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="border-t border-border pt-3 mt-3">
+                        <div className="flex justify-between">
+                          <span className="font-medium">Base Fare</span>
+                          <span className="font-semibold">£{priceBreakdown.baseFare.toFixed(2)}</span>
                         </div>
                       </div>
-                      <h4 className="text-lg font-semibold text-gradient-metal text-center">Enquiry Only</h4>
-                      <p className="text-sm text-muted-foreground text-center leading-relaxed">
-                        Pricing for the <span className="text-foreground font-medium">{selectedVehicleObj?.name}</span> is provided on enquiry. Submit your details and a member of our team will be in touch to confirm pricing.
-                      </p>
-                      <div className="border-t border-border pt-3 space-y-3 text-sm">
-                        <div className="flex flex-col gap-1 text-muted-foreground">
-                          <span className="text-xs uppercase tracking-wide">Vehicle</span>
-                          <span className="text-foreground font-medium">{selectedVehicleObj?.name}</span>
+                      {priceBreakdown.sameDayReturnDiscount > 0 && (
+                        <div className="flex justify-between items-center text-green-500">
+                          <span className="flex items-center gap-1.5">
+                            <Tag className="w-3.5 h-3.5" />
+                            {priceBreakdown.discountLabel}
+                          </span>
+                          <span className="font-medium">-£{priceBreakdown.sameDayReturnDiscount.toFixed(2)}</span>
                         </div>
-                        <div className="flex flex-col gap-1 text-muted-foreground">
-                          <span className="text-xs uppercase tracking-wide">Date</span>
-                          <span className="text-foreground font-medium">
-                            {formData.pickupDate ? format(new Date(formData.pickupDate), "dd MMM yyyy") : "—"}
+                      )}
+                      <div className="border-t border-accent/30 pt-3 mt-1">
+                        <div className="flex justify-between items-center">
+                          <span className="text-lg font-semibold">{isEnquiryOnlyVehicle ? "Estimated Total" : "Final Price"}</span>
+                          <span className="text-2xl font-bold text-accent">
+                            £{priceBreakdown.totalPrice.toFixed(2)}
                           </span>
                         </div>
                       </div>
+                      <p className="text-xs text-muted-foreground mt-4">
+                        {isEnquiryOnlyVehicle
+                          ? "* Estimated price based on current rate. Our team will confirm the final price."
+                          : "* Estimated price. Final price may vary based on actual distance and time."}
+                      </p>
                     </div>
                   ) : (
-                    <>
-                      <h4 className="text-lg font-semibold text-gradient-metal mb-4">Price Summary</h4>
-                      {priceBreakdown ? (
-                        <div className="space-y-3">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              {priceBreakdown.isShortJourney
-                                ? `Minimum Fare${isSameDayReturn ? " (Return)" : " (One Way)"}`
-                                : priceBreakdown.isMidJourney
-                                  ? `Mileage (£5.50/mi${isSameDayReturn ? " × return" : ""})`
-                                  : `Mileage (£3.75/mi${isSameDayReturn ? " × return" : ""})`}
-                            </span>
-                            <span className="font-medium text-accent">£{priceBreakdown.mileagePrice.toFixed(2)}</span>
-                          </div>
-                          {priceBreakdown.isShortJourney && (
-                            <p className="text-xs text-muted-foreground -mt-1">Manchester/short journey minimum (≤26 miles)</p>
-                          )}
-                          {priceBreakdown.waitTimePrice > 0 && (
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Wait Time</span>
-                              <span className="font-medium text-accent">£{priceBreakdown.waitTimePrice.toFixed(2)}</span>
-                            </div>
-                          )}
-                          {priceBreakdown.overnightFee > 0 && (
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Overnight</span>
-                              <span className="font-medium text-accent">£{priceBreakdown.overnightFee.toFixed(2)}</span>
-                            </div>
-                          )}
-                          {priceBreakdown.extrasTotal > 0 && (
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Extras</span>
-                              <span className="font-medium text-accent">£{priceBreakdown.extrasTotal.toFixed(2)}</span>
-                            </div>
-                          )}
-                          <div className="border-t border-border pt-3 mt-3">
-                            <div className="flex justify-between">
-                              <span className="font-medium">Base Fare</span>
-                              <span className="font-semibold">£{priceBreakdown.baseFare.toFixed(2)}</span>
-                            </div>
-                          </div>
-                          {priceBreakdown.sameDayReturnDiscount > 0 && (
-                            <div className="flex justify-between items-center text-green-500">
-                              <span className="flex items-center gap-1.5">
-                                <Tag className="w-3.5 h-3.5" />
-                                {priceBreakdown.discountLabel}
-                              </span>
-                              <span className="font-medium">-£{priceBreakdown.sameDayReturnDiscount.toFixed(2)}</span>
-                            </div>
-                          )}
-                          <div className="border-t border-accent/30 pt-3 mt-1">
-                            <div className="flex justify-between items-center">
-                              <span className="text-lg font-semibold">Final Price</span>
-                              <span className="text-2xl font-bold text-accent">
-                                £{priceBreakdown.totalPrice.toFixed(2)}
-                              </span>
-                            </div>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-4">
-                            * Estimated price. Final price may vary based on actual distance and time.
-                          </p>
-                        </div>
-                      ) : (
                         <p className="text-muted-foreground text-sm">Select a vehicle to see pricing</p>
                       )}
                     </>
