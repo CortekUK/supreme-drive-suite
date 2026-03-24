@@ -1295,8 +1295,8 @@ const MultiStepBookingWidget = () => {
                               </>
                             ) : (
                               <>
-                                <p className="font-semibold text-accent text-base">Price on enquiry</p>
-                                <p className="text-xs text-muted-foreground mt-0.5">Team will confirm pricing</p>
+                                <p className="font-semibold text-accent text-base">£{vehicle.base_price_per_mile.toFixed(2)}/mile</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">Estimate shown at checkout</p>
                               </>
                             )}
                           </div>
