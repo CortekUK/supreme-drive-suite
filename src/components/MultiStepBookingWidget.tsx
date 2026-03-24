@@ -46,9 +46,15 @@ interface PricingExtra {
 }
 
 
-// Only this vehicle goes through standard payment; all others are enquiry-only
-// Match by unique identifier — checks if the vehicle name contains "v300" (case-insensitive)
-const isBookableVehicle = (name: string) => name.toLowerCase().includes("v300");
+// Vehicles that go through Stripe payment with hardcoded tiered pricing
+// V300 LWD and V300 XLWB both use the Manchester tiered pricing rules
+const isBookableVehicle = (name: string) => {
+  const lower = name.toLowerCase();
+  return lower.includes("v300 lwd") || lower.includes("v300 xlwb") || lower.includes("v300 xlwd");
+};
+
+// Vehicles with hardcoded tiered pricing (same set — used for price calculation)
+const usesTieredPricing = (name: string) => isBookableVehicle(name);
 
 const MultiStepBookingWidget = () => {
   const [currentStep, setCurrentStep] = useState(1);
