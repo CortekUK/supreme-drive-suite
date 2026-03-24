@@ -186,82 +186,100 @@ const MultiStepBookingWidget = () => {
     const miles = parseFloat(formData.estimatedMiles) || 0;
     const waitHours = parseFloat(formData.waitTime) || 0;
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // PRICING TIERS (one-way miles):
-    //
-    //  Tier 1 – Manchester / Short  : 0 – 26 miles
-    //    One-way  = £200 minimum flat fare
-    //    Return   = £400 minimum flat fare
-    //    Same-day return discount: 10% off total (instead of the usual 5%)
-    //
-    //  Tier 2 – Mid-distance        : 35.5 – 95.5 miles one-way
-    //    Rate = £5.50/mile
-    //    Same-day return: 5% discount on full return price
-    //
-    //  Tier 3 – Long-distance       : 96+ miles one-way
-    //    Rate = £3.75/mile
-    //    Same-day return: 5% discount on full return price
-    // ─────────────────────────────────────────────────────────────────────────
-
-    const SHORT_THRESHOLD    = 26;      // ≤ this → tier 1
-    const MID_UPPER          = 95.5;    // ≤ this (and > 26) → tier 2 at £5.50/mi
-    const MID_RATE           = 5.50;
-    const LONG_RATE          = 3.75;
-    const SHORT_ONE_WAY_MIN  = 200;
-    const SHORT_RETURN_MIN   = 400;
-
-    const isShortJourney = miles > 0 && miles <= SHORT_THRESHOLD;
-    const isMidJourney   = miles > SHORT_THRESHOLD && miles <= MID_UPPER;
-    const isLongJourney  = miles > MID_UPPER;
-
-    let mileagePrice = 0;
-    let discountRate  = 0;
-    let discountLabel = "";
-
-    if (isShortJourney) {
-      // Flat minimum fares
-      mileagePrice  = isSameDayReturn ? SHORT_RETURN_MIN : SHORT_ONE_WAY_MIN;
-      discountRate  = isSameDayReturn ? 0.10 : 0;
-      discountLabel = "Return Discount (10%)";
-    } else if (isMidJourney) {
-      // £5.50/mile; for return, double the distance
-      const totalMiles = isSameDayReturn ? miles * 2 : miles;
-      mileagePrice  = totalMiles * MID_RATE;
-      discountRate  = isSameDayReturn ? 0.05 : 0;
-      discountLabel = "Return Discount (5%)";
-    } else if (isLongJourney) {
-      // £3.75/mile; for return, double the distance; always 5% discount on same-day return
-      const totalMiles = isSameDayReturn ? miles * 2 : miles;
-      mileagePrice  = totalMiles * LONG_RATE;
-      discountRate  = isSameDayReturn ? 0.05 : 0;
-      discountLabel = "Return Discount (5%)";
-    }
-
-    const waitTimePrice  = waitHours * 50;
-    const overnightFee   = formData.hasOvernightStop ? selectedVehicle.overnight_surcharge : 0;
-    const extrasTotal    = selectedExtras.reduce((sum, extraId) => {
+    const waitTimePrice = waitHours * 50;
+    const overnightFee  = formData.hasOvernightStop ? selectedVehicle.overnight_surcharge : 0;
+    const extrasTotal   = selectedExtras.reduce((sum, extraId) => {
       const extra = extras.find((e) => e.id === extraId);
       return sum + (extra?.price || 0);
     }, 0);
 
-    const baseFare               = mileagePrice + waitTimePrice + overnightFee + extrasTotal;
-    const sameDayReturnDiscount  = mileagePrice * discountRate;
-    const totalPrice             = baseFare - sameDayReturnDiscount;
+    // ─────────────────────────────────────────────────────────────────────────
+    // TIERED PRICING — applies to V300 LWD and V300 XLWB only
+    //
+    //  Tier 1 – Manchester / Short  : 0 – 26 miles
+    //    One-way  = £200 minimum flat fare
+    //    Return   = £400 minimum flat fare
+    //    Same-day return discount: 10%
+    //
+    //  Tier 2 – Mid-distance        : 26.1 – 95.5 miles one-way
+    //    Rate = £5.50/mile
+    //    Same-day return: 5% discount on full return price
+    //
+    //  Tier 3 – Long-distance       : 95.6+ miles one-way
+    //    Rate = £3.75/mile
+    //    Same-day return: 5% discount on full return price
+    //
+    // DYNAMIC PRICING — all other vehicles
+    //    Price = base_price_per_mile (from DB) × miles (× 2 if same-day return)
+    //    Reflects admin-set rate automatically — no hardcoded values
+    // ─────────────────────────────────────────────────────────────────────────
 
-    return {
-      mileagePrice,
-      waitTimePrice,
-      overnightFee,
-      extrasTotal,
-      baseFare,
-      sameDayReturnDiscount,
-      discountLabel,
-      discountRate,
-      isShortJourney,
-      isMidJourney,
-      isLongJourney,
-      totalPrice
-    };
+    if (usesTieredPricing(selectedVehicle.name)) {
+      const SHORT_THRESHOLD   = 26;
+      const MID_UPPER         = 95.5;
+      const MID_RATE          = 5.50;
+      const LONG_RATE         = 3.75;
+      const SHORT_ONE_WAY_MIN = 200;
+      const SHORT_RETURN_MIN  = 400;
+
+      const isShortJourney = miles > 0 && miles <= SHORT_THRESHOLD;
+      const isMidJourney   = miles > SHORT_THRESHOLD && miles <= MID_UPPER;
+      const isLongJourney  = miles > MID_UPPER;
+
+      let mileagePrice = 0;
+      let discountRate  = 0;
+      let discountLabel = "";
+
+      if (isShortJourney) {
+        mileagePrice  = isSameDayReturn ? SHORT_RETURN_MIN : SHORT_ONE_WAY_MIN;
+        discountRate  = isSameDayReturn ? 0.10 : 0;
+        discountLabel = "Return Discount (10%)";
+      } else if (isMidJourney) {
+        const totalMiles = isSameDayReturn ? miles * 2 : miles;
+        mileagePrice  = totalMiles * MID_RATE;
+        discountRate  = isSameDayReturn ? 0.05 : 0;
+        discountLabel = "Return Discount (5%)";
+      } else if (isLongJourney) {
+        const totalMiles = isSameDayReturn ? miles * 2 : miles;
+        mileagePrice  = totalMiles * LONG_RATE;
+        discountRate  = isSameDayReturn ? 0.05 : 0;
+        discountLabel = "Return Discount (5%)";
+      }
+
+      const baseFare              = mileagePrice + waitTimePrice + overnightFee + extrasTotal;
+      const sameDayReturnDiscount = mileagePrice * discountRate;
+      const totalPrice            = baseFare - sameDayReturnDiscount;
+
+      return {
+        mileagePrice, waitTimePrice, overnightFee, extrasTotal,
+        baseFare, sameDayReturnDiscount, discountLabel, discountRate,
+        isShortJourney, isMidJourney, isLongJourney,
+        totalPrice, isDynamic: false,
+        rateLabel: isShortJourney
+          ? `Minimum Fare${isSameDayReturn ? " (Return)" : " (One Way)"}`
+          : isMidJourney
+            ? `Mileage (£5.50/mi${isSameDayReturn ? " × return" : ""})`
+            : `Mileage (£3.75/mi${isSameDayReturn ? " × return" : ""})`
+      };
+    } else {
+      // Dynamic pricing: admin-set base_price_per_mile × miles
+      const ratePerMile = selectedVehicle.base_price_per_mile;
+      const totalMiles  = isSameDayReturn ? miles * 2 : miles;
+      const mileagePrice = totalMiles * ratePerMile;
+      const discountRate = isSameDayReturn ? 0.05 : 0;
+      const discountLabel = isSameDayReturn ? "Return Discount (5%)" : "";
+      const baseFare = mileagePrice + waitTimePrice + overnightFee + extrasTotal;
+      const sameDayReturnDiscount = mileagePrice * discountRate;
+      const totalPrice = baseFare - sameDayReturnDiscount;
+
+      return {
+        mileagePrice, waitTimePrice, overnightFee, extrasTotal,
+        baseFare, sameDayReturnDiscount, discountLabel, discountRate,
+        isShortJourney: false, isMidJourney: false, isLongJourney: false,
+        totalPrice, isDynamic: true,
+        rateLabel: `Mileage (£${ratePerMile.toFixed(2)}/mi${isSameDayReturn ? " × return" : ""})`
+      };
+    }
   };
 
   const isMultiStop = parseInt(numberOfStops) >= 2;
