@@ -46,9 +46,15 @@ interface PricingExtra {
 }
 
 
-// Only this vehicle goes through standard payment; all others are enquiry-only
-// Match by unique identifier — checks if the vehicle name contains "v300" (case-insensitive)
-const isBookableVehicle = (name: string) => name.toLowerCase().includes("v300");
+// Vehicles that go through Stripe payment with hardcoded tiered pricing
+// V300 LWD and V300 XLWB both use the Manchester tiered pricing rules
+const isBookableVehicle = (name: string) => {
+  const lower = name.toLowerCase();
+  return lower.includes("v300 lwd") || lower.includes("v300 xlwb") || lower.includes("v300 xlwd");
+};
+
+// Vehicles with hardcoded tiered pricing (same set — used for price calculation)
+const usesTieredPricing = (name: string) => isBookableVehicle(name);
 
 const MultiStepBookingWidget = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -180,82 +186,100 @@ const MultiStepBookingWidget = () => {
     const miles = parseFloat(formData.estimatedMiles) || 0;
     const waitHours = parseFloat(formData.waitTime) || 0;
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // PRICING TIERS (one-way miles):
-    //
-    //  Tier 1 – Manchester / Short  : 0 – 26 miles
-    //    One-way  = £200 minimum flat fare
-    //    Return   = £400 minimum flat fare
-    //    Same-day return discount: 10% off total (instead of the usual 5%)
-    //
-    //  Tier 2 – Mid-distance        : 35.5 – 95.5 miles one-way
-    //    Rate = £5.50/mile
-    //    Same-day return: 5% discount on full return price
-    //
-    //  Tier 3 – Long-distance       : 96+ miles one-way
-    //    Rate = £3.75/mile
-    //    Same-day return: 5% discount on full return price
-    // ─────────────────────────────────────────────────────────────────────────
-
-    const SHORT_THRESHOLD    = 26;      // ≤ this → tier 1
-    const MID_UPPER          = 95.5;    // ≤ this (and > 26) → tier 2 at £5.50/mi
-    const MID_RATE           = 5.50;
-    const LONG_RATE          = 3.75;
-    const SHORT_ONE_WAY_MIN  = 200;
-    const SHORT_RETURN_MIN   = 400;
-
-    const isShortJourney = miles > 0 && miles <= SHORT_THRESHOLD;
-    const isMidJourney   = miles > SHORT_THRESHOLD && miles <= MID_UPPER;
-    const isLongJourney  = miles > MID_UPPER;
-
-    let mileagePrice = 0;
-    let discountRate  = 0;
-    let discountLabel = "";
-
-    if (isShortJourney) {
-      // Flat minimum fares
-      mileagePrice  = isSameDayReturn ? SHORT_RETURN_MIN : SHORT_ONE_WAY_MIN;
-      discountRate  = isSameDayReturn ? 0.10 : 0;
-      discountLabel = "Return Discount (10%)";
-    } else if (isMidJourney) {
-      // £5.50/mile; for return, double the distance
-      const totalMiles = isSameDayReturn ? miles * 2 : miles;
-      mileagePrice  = totalMiles * MID_RATE;
-      discountRate  = isSameDayReturn ? 0.05 : 0;
-      discountLabel = "Return Discount (5%)";
-    } else if (isLongJourney) {
-      // £3.75/mile; for return, double the distance; always 5% discount on same-day return
-      const totalMiles = isSameDayReturn ? miles * 2 : miles;
-      mileagePrice  = totalMiles * LONG_RATE;
-      discountRate  = isSameDayReturn ? 0.05 : 0;
-      discountLabel = "Return Discount (5%)";
-    }
-
-    const waitTimePrice  = waitHours * 50;
-    const overnightFee   = formData.hasOvernightStop ? selectedVehicle.overnight_surcharge : 0;
-    const extrasTotal    = selectedExtras.reduce((sum, extraId) => {
+    const waitTimePrice = waitHours * 50;
+    const overnightFee  = formData.hasOvernightStop ? selectedVehicle.overnight_surcharge : 0;
+    const extrasTotal   = selectedExtras.reduce((sum, extraId) => {
       const extra = extras.find((e) => e.id === extraId);
       return sum + (extra?.price || 0);
     }, 0);
 
-    const baseFare               = mileagePrice + waitTimePrice + overnightFee + extrasTotal;
-    const sameDayReturnDiscount  = mileagePrice * discountRate;
-    const totalPrice             = baseFare - sameDayReturnDiscount;
+    // ─────────────────────────────────────────────────────────────────────────
+    // TIERED PRICING — applies to V300 LWD and V300 XLWB only
+    //
+    //  Tier 1 – Manchester / Short  : 0 – 26 miles
+    //    One-way  = £200 minimum flat fare
+    //    Return   = £400 minimum flat fare
+    //    Same-day return discount: 10%
+    //
+    //  Tier 2 – Mid-distance        : 26.1 – 95.5 miles one-way
+    //    Rate = £5.50/mile
+    //    Same-day return: 5% discount on full return price
+    //
+    //  Tier 3 – Long-distance       : 95.6+ miles one-way
+    //    Rate = £3.75/mile
+    //    Same-day return: 5% discount on full return price
+    //
+    // DYNAMIC PRICING — all other vehicles
+    //    Price = base_price_per_mile (from DB) × miles (× 2 if same-day return)
+    //    Reflects admin-set rate automatically — no hardcoded values
+    // ─────────────────────────────────────────────────────────────────────────
 
-    return {
-      mileagePrice,
-      waitTimePrice,
-      overnightFee,
-      extrasTotal,
-      baseFare,
-      sameDayReturnDiscount,
-      discountLabel,
-      discountRate,
-      isShortJourney,
-      isMidJourney,
-      isLongJourney,
-      totalPrice
-    };
+    if (usesTieredPricing(selectedVehicle.name)) {
+      const SHORT_THRESHOLD   = 26;
+      const MID_UPPER         = 95.5;
+      const MID_RATE          = 5.50;
+      const LONG_RATE         = 3.75;
+      const SHORT_ONE_WAY_MIN = 200;
+      const SHORT_RETURN_MIN  = 400;
+
+      const isShortJourney = miles > 0 && miles <= SHORT_THRESHOLD;
+      const isMidJourney   = miles > SHORT_THRESHOLD && miles <= MID_UPPER;
+      const isLongJourney  = miles > MID_UPPER;
+
+      let mileagePrice = 0;
+      let discountRate  = 0;
+      let discountLabel = "";
+
+      if (isShortJourney) {
+        mileagePrice  = isSameDayReturn ? SHORT_RETURN_MIN : SHORT_ONE_WAY_MIN;
+        discountRate  = isSameDayReturn ? 0.10 : 0;
+        discountLabel = "Return Discount (10%)";
+      } else if (isMidJourney) {
+        const totalMiles = isSameDayReturn ? miles * 2 : miles;
+        mileagePrice  = totalMiles * MID_RATE;
+        discountRate  = isSameDayReturn ? 0.05 : 0;
+        discountLabel = "Return Discount (5%)";
+      } else if (isLongJourney) {
+        const totalMiles = isSameDayReturn ? miles * 2 : miles;
+        mileagePrice  = totalMiles * LONG_RATE;
+        discountRate  = isSameDayReturn ? 0.05 : 0;
+        discountLabel = "Return Discount (5%)";
+      }
+
+      const baseFare              = mileagePrice + waitTimePrice + overnightFee + extrasTotal;
+      const sameDayReturnDiscount = mileagePrice * discountRate;
+      const totalPrice            = baseFare - sameDayReturnDiscount;
+
+      return {
+        mileagePrice, waitTimePrice, overnightFee, extrasTotal,
+        baseFare, sameDayReturnDiscount, discountLabel, discountRate,
+        isShortJourney, isMidJourney, isLongJourney,
+        totalPrice, isDynamic: false,
+        rateLabel: isShortJourney
+          ? `Minimum Fare${isSameDayReturn ? " (Return)" : " (One Way)"}`
+          : isMidJourney
+            ? `Mileage (£5.50/mi${isSameDayReturn ? " × return" : ""})`
+            : `Mileage (£3.75/mi${isSameDayReturn ? " × return" : ""})`
+      };
+    } else {
+      // Dynamic pricing: admin-set base_price_per_mile × miles
+      const ratePerMile = selectedVehicle.base_price_per_mile;
+      const totalMiles  = isSameDayReturn ? miles * 2 : miles;
+      const mileagePrice = totalMiles * ratePerMile;
+      const discountRate = isSameDayReturn ? 0.05 : 0;
+      const discountLabel = isSameDayReturn ? "Return Discount (5%)" : "";
+      const baseFare = mileagePrice + waitTimePrice + overnightFee + extrasTotal;
+      const sameDayReturnDiscount = mileagePrice * discountRate;
+      const totalPrice = baseFare - sameDayReturnDiscount;
+
+      return {
+        mileagePrice, waitTimePrice, overnightFee, extrasTotal,
+        baseFare, sameDayReturnDiscount, discountLabel, discountRate,
+        isShortJourney: false, isMidJourney: false, isLongJourney: false,
+        totalPrice, isDynamic: true,
+        rateLabel: `Mileage (£${ratePerMile.toFixed(2)}/mi${isSameDayReturn ? " × return" : ""})`
+      };
+    }
   };
 
   const isMultiStop = parseInt(numberOfStops) >= 2;
@@ -270,7 +294,8 @@ const MultiStepBookingWidget = () => {
     if (!validateStep3()) return;
     setLoading(true);
     try {
-      const enquiryNote = `[VEHICLE ENQUIRY - Pricing TBC for: ${selectedVehicleObj?.name || 'selected vehicle'}]`;
+      const priceBreakdown = calculatePriceBreakdown();
+      const enquiryNote = `[VEHICLE ENQUIRY - ${selectedVehicleObj?.name || 'selected vehicle'}${priceBreakdown ? ` - Estimated: £${priceBreakdown.totalPrice.toFixed(2)}` : ''}]`;
       const requirements = formData.additionalRequirements
         ? `${enquiryNote}\n${formData.additionalRequirements}`
         : enquiryNote;
@@ -1271,8 +1296,8 @@ const MultiStepBookingWidget = () => {
                               </>
                             ) : (
                               <>
-                                <p className="font-semibold text-accent text-base">Price on enquiry</p>
-                                <p className="text-xs text-muted-foreground mt-0.5">Team will confirm pricing</p>
+                                <p className="font-semibold text-accent text-base">£{vehicle.base_price_per_mile.toFixed(2)}/mile</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">Estimate shown at checkout</p>
                               </>
                             )}
                           </div>
@@ -1476,97 +1501,73 @@ const MultiStepBookingWidget = () => {
               {/* Sticky Price Summary / Enquiry Notice (Desktop) */}
               <div className="lg:col-span-1">
                 <Card className="p-6 bg-gradient-dark border-accent/30 lg:sticky lg:top-24 lg:self-start">
-                  {isEnquiryOnlyVehicle ? (
-                    <div className="space-y-4">
-                      <div className="flex justify-center mb-2">
-                        <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center">
-                          <CheckCircle className="w-6 h-6 text-accent" />
+                  {/* All vehicles now show a price summary — tiered for V300 LWD/XLWB, dynamic for others */}
+                  {priceBreakdown ? (
+                    <div className="space-y-3">
+                      {isEnquiryOnlyVehicle && (
+                        <div className="mb-3 p-3 rounded-lg bg-accent/10 border border-accent/20">
+                          <p className="text-xs text-muted-foreground text-center">Estimated price — our team will confirm the final amount</p>
+                        </div>
+                      )}
+                      <h4 className="text-lg font-semibold text-gradient-metal mb-4">
+                        {isEnquiryOnlyVehicle ? "Price Estimate" : "Price Summary"}
+                      </h4>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">{priceBreakdown.rateLabel}</span>
+                        <span className="font-medium text-accent">£{priceBreakdown.mileagePrice.toFixed(2)}</span>
+                      </div>
+                      {priceBreakdown.isShortJourney && (
+                        <p className="text-xs text-muted-foreground -mt-1">Manchester/short journey minimum (≤26 miles)</p>
+                      )}
+                      {priceBreakdown.waitTimePrice > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Wait Time</span>
+                          <span className="font-medium text-accent">£{priceBreakdown.waitTimePrice.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {priceBreakdown.overnightFee > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Overnight</span>
+                          <span className="font-medium text-accent">£{priceBreakdown.overnightFee.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {priceBreakdown.extrasTotal > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Extras</span>
+                          <span className="font-medium text-accent">£{priceBreakdown.extrasTotal.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="border-t border-border pt-3 mt-3">
+                        <div className="flex justify-between">
+                          <span className="font-medium">Base Fare</span>
+                          <span className="font-semibold">£{priceBreakdown.baseFare.toFixed(2)}</span>
                         </div>
                       </div>
-                      <h4 className="text-lg font-semibold text-gradient-metal text-center">Enquiry Only</h4>
-                      <p className="text-sm text-muted-foreground text-center leading-relaxed">
-                        Pricing for the <span className="text-foreground font-medium">{selectedVehicleObj?.name}</span> is provided on enquiry. Submit your details and a member of our team will be in touch to confirm pricing.
-                      </p>
-                      <div className="border-t border-border pt-3 space-y-3 text-sm">
-                        <div className="flex flex-col gap-1 text-muted-foreground">
-                          <span className="text-xs uppercase tracking-wide">Vehicle</span>
-                          <span className="text-foreground font-medium">{selectedVehicleObj?.name}</span>
+                      {priceBreakdown.sameDayReturnDiscount > 0 && (
+                        <div className="flex justify-between items-center text-green-500">
+                          <span className="flex items-center gap-1.5">
+                            <Tag className="w-3.5 h-3.5" />
+                            {priceBreakdown.discountLabel}
+                          </span>
+                          <span className="font-medium">-£{priceBreakdown.sameDayReturnDiscount.toFixed(2)}</span>
                         </div>
-                        <div className="flex flex-col gap-1 text-muted-foreground">
-                          <span className="text-xs uppercase tracking-wide">Date</span>
-                          <span className="text-foreground font-medium">
-                            {formData.pickupDate ? format(new Date(formData.pickupDate), "dd MMM yyyy") : "—"}
+                      )}
+                      <div className="border-t border-accent/30 pt-3 mt-1">
+                        <div className="flex justify-between items-center">
+                          <span className="text-lg font-semibold">{isEnquiryOnlyVehicle ? "Estimated Total" : "Final Price"}</span>
+                          <span className="text-2xl font-bold text-accent">
+                            £{priceBreakdown.totalPrice.toFixed(2)}
                           </span>
                         </div>
                       </div>
+                      <p className="text-xs text-muted-foreground mt-4">
+                        {isEnquiryOnlyVehicle
+                          ? "* Estimated price based on current rate. Our team will confirm the final price."
+                          : "* Estimated price. Final price may vary based on actual distance and time."}
+                      </p>
                     </div>
                   ) : (
-                    <>
-                      <h4 className="text-lg font-semibold text-gradient-metal mb-4">Price Summary</h4>
-                      {priceBreakdown ? (
-                        <div className="space-y-3">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              {priceBreakdown.isShortJourney
-                                ? `Minimum Fare${isSameDayReturn ? " (Return)" : " (One Way)"}`
-                                : priceBreakdown.isMidJourney
-                                  ? `Mileage (£5.50/mi${isSameDayReturn ? " × return" : ""})`
-                                  : `Mileage (£3.75/mi${isSameDayReturn ? " × return" : ""})`}
-                            </span>
-                            <span className="font-medium text-accent">£{priceBreakdown.mileagePrice.toFixed(2)}</span>
-                          </div>
-                          {priceBreakdown.isShortJourney && (
-                            <p className="text-xs text-muted-foreground -mt-1">Manchester/short journey minimum (≤26 miles)</p>
-                          )}
-                          {priceBreakdown.waitTimePrice > 0 && (
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Wait Time</span>
-                              <span className="font-medium text-accent">£{priceBreakdown.waitTimePrice.toFixed(2)}</span>
-                            </div>
-                          )}
-                          {priceBreakdown.overnightFee > 0 && (
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Overnight</span>
-                              <span className="font-medium text-accent">£{priceBreakdown.overnightFee.toFixed(2)}</span>
-                            </div>
-                          )}
-                          {priceBreakdown.extrasTotal > 0 && (
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Extras</span>
-                              <span className="font-medium text-accent">£{priceBreakdown.extrasTotal.toFixed(2)}</span>
-                            </div>
-                          )}
-                          <div className="border-t border-border pt-3 mt-3">
-                            <div className="flex justify-between">
-                              <span className="font-medium">Base Fare</span>
-                              <span className="font-semibold">£{priceBreakdown.baseFare.toFixed(2)}</span>
-                            </div>
-                          </div>
-                          {priceBreakdown.sameDayReturnDiscount > 0 && (
-                            <div className="flex justify-between items-center text-green-500">
-                              <span className="flex items-center gap-1.5">
-                                <Tag className="w-3.5 h-3.5" />
-                                {priceBreakdown.discountLabel}
-                              </span>
-                              <span className="font-medium">-£{priceBreakdown.sameDayReturnDiscount.toFixed(2)}</span>
-                            </div>
-                          )}
-                          <div className="border-t border-accent/30 pt-3 mt-1">
-                            <div className="flex justify-between items-center">
-                              <span className="text-lg font-semibold">Final Price</span>
-                              <span className="text-2xl font-bold text-accent">
-                                £{priceBreakdown.totalPrice.toFixed(2)}
-                              </span>
-                            </div>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-4">
-                            * Estimated price. Final price may vary based on actual distance and time.
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground text-sm">Select a vehicle to see pricing</p>
-                      )}
-                    </>
+                    <p className="text-muted-foreground text-sm">Select a vehicle and enter mileage to see pricing</p>
                   )}
                 </Card>
               </div>
