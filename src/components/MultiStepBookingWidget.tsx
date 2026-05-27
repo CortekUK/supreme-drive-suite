@@ -574,6 +574,8 @@ const MultiStepBookingWidget = () => {
     setIsCorporateBooking(false);
     setIsSameDayReturn(false);
     setIsBlockedDateEnquiry(false);
+    setIsMultiVehicleBooking(false);
+    setVehicleQuantities({});
   };
 
   // Calculate distance using Haversine formula (great-circle distance)
