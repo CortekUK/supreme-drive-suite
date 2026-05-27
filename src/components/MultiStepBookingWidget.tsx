@@ -415,6 +415,53 @@ const MultiStepBookingWidget = () => {
     }
   };
 
+  const handleMultiVehicleEnquirySubmit = async () => {
+    if (!validateStep3()) return;
+    setLoading(true);
+    try {
+      const vehicleLines = Object.entries(vehicleQuantities)
+        .filter(([, qty]) => qty > 0)
+        .map(([id, qty]) => {
+          const v = vehicles.find((x) => x.id === id);
+          return `${qty}× ${v?.name || "Vehicle"}`;
+        })
+        .join(", ");
+      const enquiryNote = `[MULTI-VEHICLE ENQUIRY - ${totalVehicleQty} vehicles: ${vehicleLines}]`;
+      const requirements = formData.additionalRequirements
+        ? `${enquiryNote}\n${formData.additionalRequirements}`
+        : enquiryNote;
+
+      const { error } = await supabase.from("bookings").insert({
+        pickup_location: formData.pickupLocation,
+        dropoff_location: formData.dropoffLocation,
+        pickup_date: formData.pickupDate,
+        pickup_time: formData.pickupTime,
+        passengers: parseInt(formData.passengers),
+        luggage: parseInt(formData.luggage),
+        additional_requirements: requirements,
+        vehicle_id: null,
+        estimated_miles: parseFloat(formData.estimatedMiles) || null,
+        is_long_drive: formData.isLongDrive,
+        has_overnight_stop: formData.hasOvernightStop,
+        total_price: null,
+        customer_name: formData.customerName,
+        customer_email: formData.customerEmail,
+        customer_phone: formData.customerPhone,
+        payment_status: 'enquiry',
+        service_type: isCorporateBooking ? 'Corporate travel' : (cpInterested ? 'close_protection' : 'chauffeur'),
+        source: 'multi_vehicle_enquiry',
+      });
+
+      if (error) throw error;
+      setShowMultiVehicleEnquiryDialog(true);
+    } catch (error) {
+      toast.error("Failed to submit enquiry. Please try again.");
+      console.error("Multi-vehicle enquiry error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!validateStep3()) {
       return;
