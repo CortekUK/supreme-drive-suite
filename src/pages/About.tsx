@@ -71,62 +71,58 @@ const About = () => {
                 nationwide and across Europe.
               </p>
               <p>
-                What began as a boutique chauffeur service has grown into the
-                trusted choice for executives, celebrities, and discerning
+                What began as a boutique chauffeur service has grown into a
+                trusted choice for executives, celebrities and discerning
                 clients across the UK.
               </p>
               <p>
-                Our founder and X military professional with over five years of
-                experience serving high-profile clients recognised the need for
-                a service that truly understood the unique requirements of
-                luxury travel and close protection.
+                Our founder and ex-military professional with over five years
+                of experience serving high-profile clients recognised the need
+                for a service that truly understood the unique requirements of
+                luxury travel and close protection. Discretion, reliability and
+                uncompromising quality became the pillars upon which Travel in
+                Supreme Style was built.
               </p>
               <p>
-                {" "}
-                Discretion, reliability, and uncompromising quality became the
-                pillars upon which Travel in Supreme Style was built.
-              </p>
-              <p>
-                Travel in supreme style operate a fleet of the finest vehicles,
+                Travel in Supreme Style operates a fleet of the finest vehicles
                 each maintained to the highest standards and equipped with
                 premium amenities.
               </p>
               <p>
-                Beyond our luxury chauffeur services, we also provide specialist
-                vehicle transportation across Europe, with return dates tailored
-                to each client’s needs and requirements.
+                Beyond our luxury chauffeur services we also provide specialist
+                vehicle transportation across Europe with return dates tailored
+                to each client's individual needs and requirements.
               </p>
               <p>
-                Our team of professional chauffeurs are trained to provide safe,
-                reliable transportation with a focus on customer service.
+                Our team of professional chauffeurs are trained to deliver
+                safe reliable transportation with an exceptional focus on
+                customer service.
               </p>
               <p>
-                We will never claim to be the biggest company — but what we are,
+                We will never claim to be the biggest company — but what we are
                 is the pinnacle of excellence.
               </p>
               <p>
-                After studying the marketplace extensively, we recognised the
-                need to create something stronger, more capable, and truly
-                nationwide. That's why we have joined forces with two other
-                leading names in the industry:
+                After studying the marketplace extensively we recognised the
+                need to create something stronger more capable and equipped to
+                deliver exceptional service throughout the UK and Europe.
               </p>
-              <ul className="list-disc list-inside pl-4">
-                <li>Roger McKoy at Travel in Supreme Style Limited</li>
-                <li>Jake Ankers at S Line Limited</li>
-                <li>Louis Kyriacou at LK Executive</li>
-              </ul>
               <p>
-                Together, we have formed a robust concierge chauffeur group — a
-                powerful alliance of three unique companies.
+                Through strategic industry partnerships and a commitment to
+                excellence we have built a robust concierge chauffeur network
+                designed to deliver a service that is second to none.
               </p>
-              <p>This partnership creates a service that is second to none:</p>
+              <p>This allows us to offer:</p>
               <ul className="list-disc list-inside pl-4">
                 <li>Nationwide strength and capability</li>
-                <li>The best vehicles in the industry</li>
-                <li>Unmatched service at the most competitive prices</li>
-                <li>The ability to deliver on the biggest of jobs with precision and care</li>
+                <li>The finest vehicles in the industry</li>
+                <li>Unmatched service at competitive prices</li>
+                <li>The ability to deliver even the largest bookings with precision and care</li>
               </ul>
-              <p>This is more than collaboration — it's a new standard.</p>
+              <p>
+                This is more than a strategic partnership — it is a new
+                standard in luxury travel.
+              </p>
             </div>
           </Card>
 
