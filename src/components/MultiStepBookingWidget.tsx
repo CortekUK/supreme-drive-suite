@@ -1749,7 +1749,8 @@ const MultiStepBookingWidget = () => {
                 </Button>
                 <Button
                   onClick={
-                    isMultiStop ? handleCorporateEnquirySubmit
+                    isMultiVehicleBooking ? handleMultiVehicleEnquirySubmit
+                    : isMultiStop ? handleCorporateEnquirySubmit
                     : isBlockedDateEnquiry ? handleBlockedDateEnquirySubmit
                     : isEnquiryOnlyVehicle ? handleVehicleEnquirySubmit
                     : handleSubmit
@@ -1759,6 +1760,7 @@ const MultiStepBookingWidget = () => {
                   size="lg"
                 >
                   {loading ? "Submitting..."
+                    : isMultiVehicleBooking ? "Submit Multi-Vehicle Enquiry"
                     : isMultiStop ? "Submit Enquiry"
                     : isBlockedDateEnquiry ? "Submit Enquiry"
                     : isEnquiryOnlyVehicle ? "Submit Enquiry"
