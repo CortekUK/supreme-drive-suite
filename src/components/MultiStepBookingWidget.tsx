@@ -1639,8 +1639,33 @@ const MultiStepBookingWidget = () => {
               {/* Sticky Price Summary / Enquiry Notice (Desktop) */}
               <div className="lg:col-span-1">
                 <Card className="p-6 bg-gradient-dark border-accent/30 lg:sticky lg:top-24 lg:self-start">
-                  {/* All vehicles now show a price summary — tiered for V300 LWD/XLWB, dynamic for others */}
-                  {priceBreakdown ? (
+                  {isMultiVehicleBooking ? (
+                    <div className="space-y-3">
+                      <h4 className="text-lg font-semibold text-gradient-metal mb-2">Multi-Vehicle Enquiry</h4>
+                      <div className="p-3 rounded-lg bg-accent/10 border border-accent/20">
+                        <p className="text-xs text-muted-foreground text-center">
+                          Pricing for multi-vehicle bookings is confirmed by our team after enquiry.
+                        </p>
+                      </div>
+                      <div className="space-y-2 pt-2">
+                        {Object.entries(vehicleQuantities)
+                          .filter(([, qty]) => qty > 0)
+                          .map(([id, qty]) => {
+                            const v = vehicles.find((x) => x.id === id);
+                            return (
+                              <div key={id} className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">{v?.name || "Vehicle"}</span>
+                                <span className="font-semibold">×{qty}</span>
+                              </div>
+                            );
+                          })}
+                        <div className="border-t border-accent/30 pt-3 mt-1 flex justify-between items-center">
+                          <span className="text-base font-semibold">Total Vehicles</span>
+                          <span className="text-xl font-bold text-accent">{totalVehicleQty}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : priceBreakdown ? (
                     <div className="space-y-3">
                       {isEnquiryOnlyVehicle && (
                         <div className="mb-3 p-3 rounded-lg bg-accent/10 border border-accent/20">
