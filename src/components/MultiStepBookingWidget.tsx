@@ -1407,8 +1407,49 @@ const MultiStepBookingWidget = () => {
                           </div>
                         )}
 
+                        {/* Quantity stepper (multi-vehicle mode) */}
+                        {isMultiVehicleBooking && (
+                          <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
+                            <span className="text-sm font-medium">Quantity</span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const current = vehicleQuantities[vehicle.id] || 0;
+                                  const next = Math.max(0, current - 1);
+                                  setVehicleQuantities({ ...vehicleQuantities, [vehicle.id]: next });
+                                  if (errors.vehicleId) setErrors({ ...errors, vehicleId: "" });
+                                }}
+                              >
+                                −
+                              </Button>
+                              <span className="w-8 text-center font-semibold">
+                                {vehicleQuantities[vehicle.id] || 0}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const current = vehicleQuantities[vehicle.id] || 0;
+                                  setVehicleQuantities({ ...vehicleQuantities, [vehicle.id]: current + 1 });
+                                  if (errors.vehicleId) setErrors({ ...errors, vehicleId: "" });
+                                }}
+                              >
+                                +
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Selected Indicator */}
-                        {formData.vehicleId === vehicle.id && (
+                        {!isMultiVehicleBooking && formData.vehicleId === vehicle.id && (
                           <div className="flex items-center gap-2 text-accent font-medium text-sm pt-2">
                             <CheckCircle className="w-4 h-4" />
                             Selected
