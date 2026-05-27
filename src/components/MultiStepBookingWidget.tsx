@@ -78,6 +78,11 @@ const MultiStepBookingWidget = () => {
   const [isBlockedDateEnquiry, setIsBlockedDateEnquiry] = useState(false);
   const [showBlockedDateEnquiryDialog, setShowBlockedDateEnquiryDialog] = useState(false);
   const [showVehicleEnquiryDialog, setShowVehicleEnquiryDialog] = useState(false);
+  const [showMultiVehicleEnquiryDialog, setShowMultiVehicleEnquiryDialog] = useState(false);
+  const [isMultiVehicleBooking, setIsMultiVehicleBooking] = useState(false);
+  const [vehicleQuantities, setVehicleQuantities] = useState<Record<string, number>>({});
+
+  const totalVehicleQty = Object.values(vehicleQuantities).reduce((s, n) => s + (n || 0), 0);
 
   const [formData, setFormData] = useState({
     pickupLocation: "",
@@ -410,6 +415,53 @@ const MultiStepBookingWidget = () => {
     }
   };
 
+  const handleMultiVehicleEnquirySubmit = async () => {
+    if (!validateStep3()) return;
+    setLoading(true);
+    try {
+      const vehicleLines = Object.entries(vehicleQuantities)
+        .filter(([, qty]) => qty > 0)
+        .map(([id, qty]) => {
+          const v = vehicles.find((x) => x.id === id);
+          return `${qty}× ${v?.name || "Vehicle"}`;
+        })
+        .join(", ");
+      const enquiryNote = `[MULTI-VEHICLE ENQUIRY - ${totalVehicleQty} vehicles: ${vehicleLines}]`;
+      const requirements = formData.additionalRequirements
+        ? `${enquiryNote}\n${formData.additionalRequirements}`
+        : enquiryNote;
+
+      const { error } = await supabase.from("bookings").insert({
+        pickup_location: formData.pickupLocation,
+        dropoff_location: formData.dropoffLocation,
+        pickup_date: formData.pickupDate,
+        pickup_time: formData.pickupTime,
+        passengers: parseInt(formData.passengers),
+        luggage: parseInt(formData.luggage),
+        additional_requirements: requirements,
+        vehicle_id: null,
+        estimated_miles: parseFloat(formData.estimatedMiles) || null,
+        is_long_drive: formData.isLongDrive,
+        has_overnight_stop: formData.hasOvernightStop,
+        total_price: null,
+        customer_name: formData.customerName,
+        customer_email: formData.customerEmail,
+        customer_phone: formData.customerPhone,
+        payment_status: 'enquiry',
+        service_type: isCorporateBooking ? 'Corporate travel' : (cpInterested ? 'close_protection' : 'chauffeur'),
+        source: 'multi_vehicle_enquiry',
+      });
+
+      if (error) throw error;
+      setShowMultiVehicleEnquiryDialog(true);
+    } catch (error) {
+      toast.error("Failed to submit enquiry. Please try again.");
+      console.error("Multi-vehicle enquiry error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!validateStep3()) {
       return;
@@ -522,6 +574,8 @@ const MultiStepBookingWidget = () => {
     setIsCorporateBooking(false);
     setIsSameDayReturn(false);
     setIsBlockedDateEnquiry(false);
+    setIsMultiVehicleBooking(false);
+    setVehicleQuantities({});
   };
 
   // Calculate distance using Haversine formula (great-circle distance)
@@ -761,7 +815,12 @@ const MultiStepBookingWidget = () => {
   const validateStep2 = () => {
     const newErrors: {[key: string]: string} = {};
 
-    if (!formData.vehicleId) {
+    if (isMultiVehicleBooking) {
+      if (totalVehicleQty < 2) {
+        newErrors.vehicleId = "Please select at least 2 vehicles for a multi-vehicle booking";
+        toast.error("Multi-vehicle bookings require 2 or more vehicles");
+      }
+    } else if (!formData.vehicleId) {
       newErrors.vehicleId = "Please select a vehicle";
       toast.error("Please select a vehicle to continue");
     }
@@ -1196,6 +1255,43 @@ const MultiStepBookingWidget = () => {
           <div className="space-y-6 animate-fade-in">
             <h3 className="text-2xl md:text-3xl font-display font-semibold text-gradient-metal">Select Your Vehicle</h3>
 
+            {/* Multi-vehicle booking toggle */}
+            <div className="p-4 rounded-lg border border-accent/30 bg-accent/5 flex items-start gap-3">
+              <div className="p-2 rounded-lg bg-accent/10">
+                <Car className="w-5 h-5 text-accent" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div>
+                    <p className="font-semibold">Booking multiple vehicles?</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Group bookings (2+ vehicles) are sent as an enquiry — our team will confirm pricing and availability.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="multi-vehicle-toggle"
+                      checked={isMultiVehicleBooking}
+                      onCheckedChange={(checked) => {
+                        setIsMultiVehicleBooking(checked);
+                        setVehicleQuantities({});
+                        setFormData({ ...formData, vehicleId: "" });
+                        setErrors({ ...errors, vehicleId: "" });
+                      }}
+                    />
+                    <Label htmlFor="multi-vehicle-toggle" className="cursor-pointer text-sm">
+                      {isMultiVehicleBooking ? "On" : "Off"}
+                    </Label>
+                  </div>
+                </div>
+                {isMultiVehicleBooking && (
+                  <p className="text-xs mt-2 font-medium text-accent">
+                    Selected: {totalVehicleQty} {totalVehicleQty === 1 ? "vehicle" : "vehicles"} {totalVehicleQty < 2 && "(minimum 2 required)"}
+                  </p>
+                )}
+              </div>
+            </div>
+
             {errors.vehicleId && (
               <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
                 <p className="text-sm text-destructive">{errors.vehicleId}</p>
@@ -1217,12 +1313,15 @@ const MultiStepBookingWidget = () => {
                   return (
                     <Card
                       key={vehicle.id}
-                      className={`p-6 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] relative ${
-                        formData.vehicleId === vehicle.id
+                      className={`p-6 transition-all duration-300 hover:shadow-xl relative ${
+                        !isMultiVehicleBooking ? 'cursor-pointer hover:scale-[1.02]' : ''
+                      } ${
+                        (isMultiVehicleBooking ? (vehicleQuantities[vehicle.id] || 0) > 0 : formData.vehicleId === vehicle.id)
                           ? 'border-accent bg-accent/10 shadow-lg'
                           : 'border-border hover:border-accent/50'
                       } ${isRollsRoyce ? 'border-[#C5A572] shadow-[0_0_20px_rgba(197,165,114,0.2)]' : ''}`}
                       onClick={() => {
+                        if (isMultiVehicleBooking) return;
                         setFormData({ ...formData, vehicleId: vehicle.id });
                         if (errors.vehicleId) {
                           setErrors({ ...errors, vehicleId: "" });
@@ -1308,8 +1407,49 @@ const MultiStepBookingWidget = () => {
                           </div>
                         )}
 
+                        {/* Quantity stepper (multi-vehicle mode) */}
+                        {isMultiVehicleBooking && (
+                          <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
+                            <span className="text-sm font-medium">Quantity</span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const current = vehicleQuantities[vehicle.id] || 0;
+                                  const next = Math.max(0, current - 1);
+                                  setVehicleQuantities({ ...vehicleQuantities, [vehicle.id]: next });
+                                  if (errors.vehicleId) setErrors({ ...errors, vehicleId: "" });
+                                }}
+                              >
+                                −
+                              </Button>
+                              <span className="w-8 text-center font-semibold">
+                                {vehicleQuantities[vehicle.id] || 0}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const current = vehicleQuantities[vehicle.id] || 0;
+                                  setVehicleQuantities({ ...vehicleQuantities, [vehicle.id]: current + 1 });
+                                  if (errors.vehicleId) setErrors({ ...errors, vehicleId: "" });
+                                }}
+                              >
+                                +
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Selected Indicator */}
-                        {formData.vehicleId === vehicle.id && (
+                        {!isMultiVehicleBooking && formData.vehicleId === vehicle.id && (
                           <div className="flex items-center gap-2 text-accent font-medium text-sm pt-2">
                             <CheckCircle className="w-4 h-4" />
                             Selected
@@ -1499,8 +1639,33 @@ const MultiStepBookingWidget = () => {
               {/* Sticky Price Summary / Enquiry Notice (Desktop) */}
               <div className="lg:col-span-1">
                 <Card className="p-6 bg-gradient-dark border-accent/30 lg:sticky lg:top-24 lg:self-start">
-                  {/* All vehicles now show a price summary — tiered for V300 LWD/XLWB, dynamic for others */}
-                  {priceBreakdown ? (
+                  {isMultiVehicleBooking ? (
+                    <div className="space-y-3">
+                      <h4 className="text-lg font-semibold text-gradient-metal mb-2">Multi-Vehicle Enquiry</h4>
+                      <div className="p-3 rounded-lg bg-accent/10 border border-accent/20">
+                        <p className="text-xs text-muted-foreground text-center">
+                          Pricing for multi-vehicle bookings is confirmed by our team after enquiry.
+                        </p>
+                      </div>
+                      <div className="space-y-2 pt-2">
+                        {Object.entries(vehicleQuantities)
+                          .filter(([, qty]) => qty > 0)
+                          .map(([id, qty]) => {
+                            const v = vehicles.find((x) => x.id === id);
+                            return (
+                              <div key={id} className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">{v?.name || "Vehicle"}</span>
+                                <span className="font-semibold">×{qty}</span>
+                              </div>
+                            );
+                          })}
+                        <div className="border-t border-accent/30 pt-3 mt-1 flex justify-between items-center">
+                          <span className="text-base font-semibold">Total Vehicles</span>
+                          <span className="text-xl font-bold text-accent">{totalVehicleQty}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : priceBreakdown ? (
                     <div className="space-y-3">
                       {isEnquiryOnlyVehicle && (
                         <div className="mb-3 p-3 rounded-lg bg-accent/10 border border-accent/20">
@@ -1584,7 +1749,8 @@ const MultiStepBookingWidget = () => {
                 </Button>
                 <Button
                   onClick={
-                    isMultiStop ? handleCorporateEnquirySubmit
+                    isMultiVehicleBooking ? handleMultiVehicleEnquirySubmit
+                    : isMultiStop ? handleCorporateEnquirySubmit
                     : isBlockedDateEnquiry ? handleBlockedDateEnquirySubmit
                     : isEnquiryOnlyVehicle ? handleVehicleEnquirySubmit
                     : handleSubmit
@@ -1594,6 +1760,7 @@ const MultiStepBookingWidget = () => {
                   size="lg"
                 >
                   {loading ? "Submitting..."
+                    : isMultiVehicleBooking ? "Submit Multi-Vehicle Enquiry"
                     : isMultiStop ? "Submit Enquiry"
                     : isBlockedDateEnquiry ? "Submit Enquiry"
                     : isEnquiryOnlyVehicle ? "Submit Enquiry"
@@ -1761,6 +1928,44 @@ const MultiStepBookingWidget = () => {
             </div>
             <DialogFooter>
               <Button onClick={() => { setShowVehicleEnquiryDialog(false); handleCloseConfirmation(); }} className="w-full gradient-accent">
+                Done
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Multi-Vehicle Enquiry Confirmation Dialog */}
+        <Dialog open={showMultiVehicleEnquiryDialog} onOpenChange={setShowMultiVehicleEnquiryDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
+                  <CheckCircle className="w-8 h-8 text-accent" />
+                </div>
+              </div>
+              <DialogTitle className="text-center text-xl font-display">
+                Multi-Vehicle Enquiry Submitted
+              </DialogTitle>
+              <DialogDescription className="text-center text-base pt-2">
+                Thanks for your enquiry. Our team will review your group booking and be in touch shortly to confirm pricing and availability.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 py-4 text-sm text-muted-foreground">
+              <div className="flex justify-between border-b border-border pb-2">
+                <span>Journey</span>
+                <span className="text-foreground font-medium text-right max-w-[60%]">{formData.pickupLocation} → {formData.dropoffLocation}</span>
+              </div>
+              <div className="flex justify-between border-b border-border pb-2">
+                <span>Total Vehicles</span>
+                <span className="text-foreground font-medium">{totalVehicleQty}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Contact</span>
+                <span className="text-foreground font-medium">{formData.customerEmail}</span>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => { setShowMultiVehicleEnquiryDialog(false); handleCloseConfirmation(); }} className="w-full gradient-accent">
                 Done
               </Button>
             </DialogFooter>
