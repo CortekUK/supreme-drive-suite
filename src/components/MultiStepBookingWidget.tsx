@@ -1255,6 +1255,43 @@ const MultiStepBookingWidget = () => {
           <div className="space-y-6 animate-fade-in">
             <h3 className="text-2xl md:text-3xl font-display font-semibold text-gradient-metal">Select Your Vehicle</h3>
 
+            {/* Multi-vehicle booking toggle */}
+            <div className="p-4 rounded-lg border border-accent/30 bg-accent/5 flex items-start gap-3">
+              <div className="p-2 rounded-lg bg-accent/10">
+                <Car className="w-5 h-5 text-accent" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div>
+                    <p className="font-semibold">Booking multiple vehicles?</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Group bookings (2+ vehicles) are sent as an enquiry — our team will confirm pricing and availability.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="multi-vehicle-toggle"
+                      checked={isMultiVehicleBooking}
+                      onCheckedChange={(checked) => {
+                        setIsMultiVehicleBooking(checked);
+                        setVehicleQuantities({});
+                        setFormData({ ...formData, vehicleId: "" });
+                        setErrors({ ...errors, vehicleId: "" });
+                      }}
+                    />
+                    <Label htmlFor="multi-vehicle-toggle" className="cursor-pointer text-sm">
+                      {isMultiVehicleBooking ? "On" : "Off"}
+                    </Label>
+                  </div>
+                </div>
+                {isMultiVehicleBooking && (
+                  <p className="text-xs mt-2 font-medium text-accent">
+                    Selected: {totalVehicleQty} {totalVehicleQty === 1 ? "vehicle" : "vehicles"} {totalVehicleQty < 2 && "(minimum 2 required)"}
+                  </p>
+                )}
+              </div>
+            </div>
+
             {errors.vehicleId && (
               <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
                 <p className="text-sm text-destructive">{errors.vehicleId}</p>
