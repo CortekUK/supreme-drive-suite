@@ -78,6 +78,11 @@ const MultiStepBookingWidget = () => {
   const [isBlockedDateEnquiry, setIsBlockedDateEnquiry] = useState(false);
   const [showBlockedDateEnquiryDialog, setShowBlockedDateEnquiryDialog] = useState(false);
   const [showVehicleEnquiryDialog, setShowVehicleEnquiryDialog] = useState(false);
+  const [showMultiVehicleEnquiryDialog, setShowMultiVehicleEnquiryDialog] = useState(false);
+  const [isMultiVehicleBooking, setIsMultiVehicleBooking] = useState(false);
+  const [vehicleQuantities, setVehicleQuantities] = useState<Record<string, number>>({});
+
+  const totalVehicleQty = Object.values(vehicleQuantities).reduce((s, n) => s + (n || 0), 0);
 
   const [formData, setFormData] = useState({
     pickupLocation: "",
