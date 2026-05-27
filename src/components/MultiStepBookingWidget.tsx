@@ -1933,6 +1933,44 @@ const MultiStepBookingWidget = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Multi-Vehicle Enquiry Confirmation Dialog */}
+        <Dialog open={showMultiVehicleEnquiryDialog} onOpenChange={setShowMultiVehicleEnquiryDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
+                  <CheckCircle className="w-8 h-8 text-accent" />
+                </div>
+              </div>
+              <DialogTitle className="text-center text-xl font-display">
+                Multi-Vehicle Enquiry Submitted
+              </DialogTitle>
+              <DialogDescription className="text-center text-base pt-2">
+                Thanks for your enquiry. Our team will review your group booking and be in touch shortly to confirm pricing and availability.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 py-4 text-sm text-muted-foreground">
+              <div className="flex justify-between border-b border-border pb-2">
+                <span>Journey</span>
+                <span className="text-foreground font-medium text-right max-w-[60%]">{formData.pickupLocation} → {formData.dropoffLocation}</span>
+              </div>
+              <div className="flex justify-between border-b border-border pb-2">
+                <span>Total Vehicles</span>
+                <span className="text-foreground font-medium">{totalVehicleQty}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Contact</span>
+                <span className="text-foreground font-medium">{formData.customerEmail}</span>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => { setShowMultiVehicleEnquiryDialog(false); handleCloseConfirmation(); }} className="w-full gradient-accent">
+                Done
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </Card>
   );
