@@ -1313,12 +1313,15 @@ const MultiStepBookingWidget = () => {
                   return (
                     <Card
                       key={vehicle.id}
-                      className={`p-6 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] relative ${
-                        formData.vehicleId === vehicle.id
+                      className={`p-6 transition-all duration-300 hover:shadow-xl relative ${
+                        !isMultiVehicleBooking ? 'cursor-pointer hover:scale-[1.02]' : ''
+                      } ${
+                        (isMultiVehicleBooking ? (vehicleQuantities[vehicle.id] || 0) > 0 : formData.vehicleId === vehicle.id)
                           ? 'border-accent bg-accent/10 shadow-lg'
                           : 'border-border hover:border-accent/50'
                       } ${isRollsRoyce ? 'border-[#C5A572] shadow-[0_0_20px_rgba(197,165,114,0.2)]' : ''}`}
                       onClick={() => {
+                        if (isMultiVehicleBooking) return;
                         setFormData({ ...formData, vehicleId: vehicle.id });
                         if (errors.vehicleId) {
                           setErrors({ ...errors, vehicleId: "" });
