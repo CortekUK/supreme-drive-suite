@@ -766,7 +766,12 @@ const MultiStepBookingWidget = () => {
   const validateStep2 = () => {
     const newErrors: {[key: string]: string} = {};
 
-    if (!formData.vehicleId) {
+    if (isMultiVehicleBooking) {
+      if (totalVehicleQty < 2) {
+        newErrors.vehicleId = "Please select at least 2 vehicles for a multi-vehicle booking";
+        toast.error("Multi-vehicle bookings require 2 or more vehicles");
+      }
+    } else if (!formData.vehicleId) {
       newErrors.vehicleId = "Please select a vehicle";
       toast.error("Please select a vehicle to continue");
     }
