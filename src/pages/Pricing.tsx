@@ -194,7 +194,7 @@ const Pricing = () => {
   const loadData = async () => {
     const [vehiclesRes, imagesRes, inclusionsRes, faqsRes] = await Promise.all([
       supabase.from("vehicles").select("*").eq("is_active", true).order("display_order", { ascending: true, nullsFirst: false }),
-      supabase.from("vehicle_images").select("*").order("display_order"),
+      supabase.from("vehicle_images").select("*").order("is_cover", { ascending: false }).order("display_order"),
       supabase.from("service_inclusions").select("*").eq("is_active", true).order("category, display_order"),
       supabase.from("faqs").select("*").eq("is_active", true).eq("category", "Pricing").order("display_order"),
     ]);
