@@ -74,7 +74,9 @@ const MultiStepBookingWidget = () => {
   const [isCorporateBooking, setIsCorporateBooking] = useState(false);
   const [numberOfStops, setNumberOfStops] = useState("1");
   const [showCorporateEnquiryDialog, setShowCorporateEnquiryDialog] = useState(false);
-  const [isSameDayReturn, setIsSameDayReturn] = useState(false);
+  const [isReturn, setIsReturn] = useState(false);
+  const [returnDate, setReturnDate] = useState("");
+  const [returnTime, setReturnTime] = useState("");
   const [isBlockedDateEnquiry, setIsBlockedDateEnquiry] = useState(false);
   const [showBlockedDateEnquiryDialog, setShowBlockedDateEnquiryDialog] = useState(false);
   const [showVehicleEnquiryDialog, setShowVehicleEnquiryDialog] = useState(false);
@@ -108,6 +110,8 @@ const MultiStepBookingWidget = () => {
     dropoffLat: null as number | null,
     dropoffLon: null as number | null,
   });
+
+  const isSameDayReturn = isReturn && !!returnDate && returnDate === formData.pickupDate;
 
   useEffect(() => {
     loadData();
@@ -234,19 +238,19 @@ const MultiStepBookingWidget = () => {
       let discountLabel = "";
 
       if (isShortJourney) {
-        mileagePrice  = isSameDayReturn ? SHORT_RETURN_MIN : SHORT_ONE_WAY_MIN;
+        mileagePrice  = isReturn ? SHORT_RETURN_MIN : SHORT_ONE_WAY_MIN;
         discountRate  = isSameDayReturn ? 0.10 : 0;
-        discountLabel = "Return Discount (10%)";
+        discountLabel = "Same-day Return Discount (10%)";
       } else if (isMidJourney) {
-        const totalMiles = isSameDayReturn ? miles * 2 : miles;
+        const totalMiles = isReturn ? miles * 2 : miles;
         mileagePrice  = totalMiles * MID_RATE;
         discountRate  = isSameDayReturn ? 0.05 : 0;
-        discountLabel = "Return Discount (5%)";
+        discountLabel = "Same-day Return Discount (5%)";
       } else if (isLongJourney) {
-        const totalMiles = isSameDayReturn ? miles * 2 : miles;
+        const totalMiles = isReturn ? miles * 2 : miles;
         mileagePrice  = totalMiles * LONG_RATE;
         discountRate  = isSameDayReturn ? 0.05 : 0;
-        discountLabel = "Return Discount (5%)";
+        discountLabel = "Same-day Return Discount (5%)";
       }
 
       const baseFare              = mileagePrice + waitTimePrice + overnightFee + extrasTotal;
@@ -259,18 +263,18 @@ const MultiStepBookingWidget = () => {
         isShortJourney, isMidJourney, isLongJourney,
         totalPrice, isDynamic: false,
         rateLabel: isShortJourney
-          ? `Minimum Fare${isSameDayReturn ? " (Return)" : " (One Way)"}`
+          ? `Minimum Fare${isReturn ? " (Return)" : " (One Way)"}`
           : isMidJourney
-            ? `Mileage (£5.50/mi${isSameDayReturn ? " × return" : ""})`
-            : `Mileage (£3.75/mi${isSameDayReturn ? " × return" : ""})`
+            ? `Mileage (£5.50/mi${isReturn ? " × return" : ""})`
+            : `Mileage (£3.75/mi${isReturn ? " × return" : ""})`
       };
     } else {
       // Dynamic pricing: admin-set base_price_per_mile × miles
       const ratePerMile = selectedVehicle.base_price_per_mile;
-      const totalMiles  = isSameDayReturn ? miles * 2 : miles;
+      const totalMiles  = isReturn ? miles * 2 : miles;
       const mileagePrice = totalMiles * ratePerMile;
       const discountRate = isSameDayReturn ? 0.05 : 0;
-      const discountLabel = isSameDayReturn ? "Return Discount (5%)" : "";
+      const discountLabel = isSameDayReturn ? "Same-day Return Discount (5%)" : "";
       const baseFare = mileagePrice + waitTimePrice + overnightFee + extrasTotal;
       const sameDayReturnDiscount = mileagePrice * discountRate;
       const totalPrice = baseFare - sameDayReturnDiscount;
@@ -280,12 +284,19 @@ const MultiStepBookingWidget = () => {
         baseFare, sameDayReturnDiscount, discountLabel, discountRate,
         isShortJourney: false, isMidJourney: false, isLongJourney: false,
         totalPrice, isDynamic: true,
-        rateLabel: `Mileage (£${ratePerMile.toFixed(2)}/mi${isSameDayReturn ? " × return" : ""})`
+        rateLabel: `Mileage (£${ratePerMile.toFixed(2)}/mi${isReturn ? " × return" : ""})`
       };
     }
   };
 
   const isMultiStop = parseInt(numberOfStops) >= 2;
+
+  // Prepend a return-journey note to additional requirements so it's persisted in the booking record.
+  const withReturnNote = (base: string) => {
+    if (!isReturn || !returnDate || !returnTime) return base;
+    const note = `[RETURN JOURNEY - ${returnDate} at ${returnTime}${isSameDayReturn ? " (same-day)" : ""}]`;
+    return base && base.trim() ? `${note}\n${base}` : note;
+  };
 
   // Determine if the selected vehicle is enquiry-only (any vehicle except the bookable one)
   const selectedVehicleObj = vehicles.find((v) => v.id === formData.vehicleId);
@@ -310,7 +321,7 @@ const MultiStepBookingWidget = () => {
         pickup_time: formData.pickupTime,
         passengers: parseInt(formData.passengers),
         luggage: parseInt(formData.luggage),
-        additional_requirements: requirements,
+        additional_requirements: withReturnNote(requirements),
         vehicle_id: formData.vehicleId || null,
         estimated_miles: parseFloat(formData.estimatedMiles) || null,
         is_long_drive: formData.isLongDrive,
@@ -350,7 +361,7 @@ const MultiStepBookingWidget = () => {
         pickup_time: formData.pickupTime,
         passengers: parseInt(formData.passengers),
         luggage: parseInt(formData.luggage),
-        additional_requirements: requirements,
+        additional_requirements: withReturnNote(requirements),
         vehicle_id: formData.vehicleId || null,
         estimated_miles: parseFloat(formData.estimatedMiles) || null,
         is_long_drive: formData.isLongDrive,
@@ -390,7 +401,7 @@ const MultiStepBookingWidget = () => {
         pickup_time: formData.pickupTime,
         passengers: parseInt(formData.passengers),
         luggage: parseInt(formData.luggage),
-        additional_requirements: requirements,
+        additional_requirements: withReturnNote(requirements),
         vehicle_id: formData.vehicleId || null,
         estimated_miles: parseFloat(formData.estimatedMiles) || null,
         is_long_drive: formData.isLongDrive,
@@ -438,7 +449,7 @@ const MultiStepBookingWidget = () => {
         pickup_time: formData.pickupTime,
         passengers: parseInt(formData.passengers),
         luggage: parseInt(formData.luggage),
-        additional_requirements: requirements,
+        additional_requirements: withReturnNote(requirements),
         vehicle_id: null,
         estimated_miles: parseFloat(formData.estimatedMiles) || null,
         is_long_drive: formData.isLongDrive,
@@ -479,7 +490,7 @@ const MultiStepBookingWidget = () => {
         pickup_time: formData.pickupTime,
         passengers: parseInt(formData.passengers),
         luggage: parseInt(formData.luggage),
-        additional_requirements: formData.additionalRequirements,
+        additional_requirements: withReturnNote(formData.additionalRequirements),
         vehicle_id: formData.vehicleId || null,
         estimated_miles: parseFloat(formData.estimatedMiles) || null,
         is_long_drive: formData.isLongDrive,
@@ -572,7 +583,9 @@ const MultiStepBookingWidget = () => {
     setCpInterested(false);
     setNumberOfStops("1");
     setIsCorporateBooking(false);
-    setIsSameDayReturn(false);
+    setIsReturn(false);
+    setReturnDate("");
+    setReturnTime("");
     setIsBlockedDateEnquiry(false);
     setIsMultiVehicleBooking(false);
     setVehicleQuantities({});
@@ -767,6 +780,23 @@ const MultiStepBookingWidget = () => {
     }
     if (!formData.pickupTime) {
       newErrors.pickupTime = "Pickup time is required";
+    }
+    if (isReturn) {
+      if (!returnDate) {
+        newErrors.returnDate = "Return date is required";
+      } else if (formData.pickupDate && returnDate < formData.pickupDate) {
+        newErrors.returnDate = "Return date cannot be before pickup date";
+      }
+      if (!returnTime) {
+        newErrors.returnTime = "Return time is required";
+      } else if (
+        formData.pickupDate &&
+        returnDate === formData.pickupDate &&
+        formData.pickupTime &&
+        returnTime <= formData.pickupTime
+      ) {
+        newErrors.returnTime = "Return time must be after pickup time";
+      }
     }
     if (!formData.passengers) {
       newErrors.passengers = "Number of passengers is required";
@@ -1092,19 +1122,97 @@ const MultiStepBookingWidget = () => {
                 </div>
               </div>
 
-              {/* Same Day Return */}
-              <div className="flex items-center justify-between gap-4 p-4 border border-accent/20 rounded-lg bg-accent/5">
-                <Label htmlFor="sameDayReturn" className="cursor-pointer font-medium">
-                  Is this a same-day return journey?
-                </Label>
-                <div className="flex items-center gap-3">
-                  <Switch
-                    id="sameDayReturn"
-                    checked={isSameDayReturn}
-                    onCheckedChange={setIsSameDayReturn}
-                  />
-                  <span className="text-sm font-medium w-6">{isSameDayReturn ? "Yes" : "No"}</span>
+              {/* Return Journey */}
+              <div className="space-y-4 p-4 border border-accent/20 rounded-lg bg-accent/5">
+                <div className="flex items-center justify-between gap-4">
+                  <Label htmlFor="returnJourney" className="cursor-pointer font-medium">
+                    Add a return journey?
+                  </Label>
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      id="returnJourney"
+                      checked={isReturn}
+                      onCheckedChange={(checked) => {
+                        setIsReturn(checked);
+                        if (!checked) {
+                          setReturnDate("");
+                          setReturnTime("");
+                          setErrors({ ...errors, returnDate: "", returnTime: "" });
+                        }
+                      }}
+                    />
+                    <span className="text-sm font-medium w-6">{isReturn ? "Yes" : "No"}</span>
+                  </div>
                 </div>
+
+                {isReturn && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-accent/20">
+                    <div className="space-y-2">
+                      <Label htmlFor="returnDate">Return Date *</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            id="returnDate"
+                            type="button"
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !returnDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {returnDate ? format(new Date(returnDate), "PPP") : <span>Pick a return date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={returnDate ? new Date(returnDate) : undefined}
+                            onSelect={(date) => {
+                              if (date) {
+                                setReturnDate(format(date, "yyyy-MM-dd"));
+                                if (errors.returnDate) setErrors({ ...errors, returnDate: "" });
+                              }
+                            }}
+                            disabled={(date) => {
+                              const today = new Date(new Date().setHours(0, 0, 0, 0));
+                              const pickup = formData.pickupDate ? new Date(formData.pickupDate) : today;
+                              const minDate = pickup > today ? pickup : today;
+                              const oneMonthFromNow = new Date(today);
+                              oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+                              return date < minDate || date > oneMonthFromNow;
+                            }}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      {errors.returnDate && (
+                        <p className="text-sm text-destructive">{errors.returnDate}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="returnTime">Return Time *</Label>
+                      <TimePicker
+                        id="returnTime"
+                        value={returnTime}
+                        onChange={(value) => {
+                          setReturnTime(value);
+                          if (errors.returnTime) setErrors({ ...errors, returnTime: "" });
+                        }}
+                        className="focus-visible:ring-[#C5A572]"
+                      />
+                      {errors.returnTime && (
+                        <p className="text-sm text-destructive">{errors.returnTime}</p>
+                      )}
+                    </div>
+                    {isSameDayReturn && (
+                      <p className="md:col-span-2 text-xs text-green-500">
+                        ✓ Same-day return — discount will be applied automatically.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
             </div>
