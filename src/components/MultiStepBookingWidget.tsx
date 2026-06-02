@@ -786,6 +786,12 @@ const MultiStepBookingWidget = () => {
       newErrors.pickupTime = "Pickup time is required";
     }
     if (isReturn) {
+      if (!returnPickupLocation.trim()) {
+        newErrors.returnPickupLocation = "Return pickup location is required";
+      }
+      if (!returnDropoffLocation.trim()) {
+        newErrors.returnDropoffLocation = "Return drop-off location is required";
+      }
       if (!returnDate) {
         newErrors.returnDate = "Return date is required";
       } else if (formData.pickupDate && returnDate < formData.pickupDate) {
