@@ -1138,10 +1138,16 @@ const MultiStepBookingWidget = () => {
                       checked={isReturn}
                       onCheckedChange={(checked) => {
                         setIsReturn(checked);
-                        if (!checked) {
+                        if (checked) {
+                          // Pre-fill the return leg as the reverse of the outbound by default
+                          setReturnPickupLocation((prev) => prev || formData.dropoffLocation);
+                          setReturnDropoffLocation((prev) => prev || formData.pickupLocation);
+                        } else {
                           setReturnDate("");
                           setReturnTime("");
-                          setErrors({ ...errors, returnDate: "", returnTime: "" });
+                          setReturnPickupLocation("");
+                          setReturnDropoffLocation("");
+                          setErrors({ ...errors, returnDate: "", returnTime: "", returnPickupLocation: "", returnDropoffLocation: "" });
                         }
                       }}
                     />
