@@ -1156,8 +1156,43 @@ const MultiStepBookingWidget = () => {
                 </div>
 
                 {isReturn && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-accent/20">
-                    <div className="space-y-2">
+                  <div className="space-y-4 pt-2 border-t border-accent/20">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="returnPickupLocation">Return Pickup Location *</Label>
+                        <LocationAutocomplete
+                          id="returnPickupLocation"
+                          value={returnPickupLocation}
+                          onChange={(value) => {
+                            setReturnPickupLocation(value);
+                            if (errors.returnPickupLocation) setErrors({ ...errors, returnPickupLocation: "" });
+                          }}
+                          placeholder="Enter return pickup address"
+                          className="p-4 focus-visible:ring-[#C5A572]"
+                        />
+                        {errors.returnPickupLocation && (
+                          <p className="text-sm text-destructive">{errors.returnPickupLocation}</p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="returnDropoffLocation">Return Drop-off Location *</Label>
+                        <LocationAutocomplete
+                          id="returnDropoffLocation"
+                          value={returnDropoffLocation}
+                          onChange={(value) => {
+                            setReturnDropoffLocation(value);
+                            if (errors.returnDropoffLocation) setErrors({ ...errors, returnDropoffLocation: "" });
+                          }}
+                          placeholder="Enter return destination"
+                          className="p-4 focus-visible:ring-[#C5A572]"
+                        />
+                        {errors.returnDropoffLocation && (
+                          <p className="text-sm text-destructive">{errors.returnDropoffLocation}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
                       <Label htmlFor="returnDate">Return Date *</Label>
                       <Popover>
                         <PopoverTrigger asChild>
