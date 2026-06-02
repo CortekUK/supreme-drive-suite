@@ -291,6 +291,13 @@ const MultiStepBookingWidget = () => {
 
   const isMultiStop = parseInt(numberOfStops) >= 2;
 
+  // Prepend a return-journey note to additional requirements so it's persisted in the booking record.
+  const withReturnNote = (base: string) => {
+    if (!isReturn || !returnDate || !returnTime) return base;
+    const note = `[RETURN JOURNEY - ${returnDate} at ${returnTime}${isSameDayReturn ? " (same-day)" : ""}]`;
+    return base && base.trim() ? `${note}\n${base}` : note;
+  };
+
   // Determine if the selected vehicle is enquiry-only (any vehicle except the bookable one)
   const selectedVehicleObj = vehicles.find((v) => v.id === formData.vehicleId);
   const isEnquiryOnlyVehicle = selectedVehicleObj
