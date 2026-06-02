@@ -544,9 +544,23 @@ const VehiclesManagement = () => {
               return (
                 <Card
                   key={vehicle.id}
-                  className="relative overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_0_30px_rgba(244,197,66,0.15)] hover:scale-[1.02] hover:border-accent/40 border-2 animate-fade-in"
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
+                  className={`relative overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_0_30px_rgba(244,197,66,0.15)] hover:border-accent/40 border-2 animate-fade-in cursor-move ${
+                    dragIndex === index ? "opacity-50" : ""
+                  } ${dragOverIndex === index && dragIndex !== index ? "border-accent ring-2 ring-accent/50" : ""}`}
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
+                  {/* Position number + drag handle */}
+                  <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 bg-background/90 backdrop-blur border border-accent/40 rounded-full px-3 py-1.5 shadow-lg">
+                      <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-sm font-bold text-accent">#{index + 1}</span>
+                    </div>
+                  </div>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Badge
@@ -557,6 +571,7 @@ const VehiclesManagement = () => {
                       </Badge>
                     </TooltipTrigger>
                   </Tooltip>
+
 
                   {/* Image with count badge */}
                   <div className="h-48 w-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden relative">
