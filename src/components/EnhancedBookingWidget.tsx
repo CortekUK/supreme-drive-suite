@@ -67,7 +67,7 @@ const EnhancedBookingWidget = () => {
 
   const loadData = async () => {
     const [vehiclesRes, extrasRes] = await Promise.all([
-      supabase.from("vehicles").select("*").eq("is_active", true).order("base_price_per_mile"),
+      supabase.from("vehicles").select("*").eq("is_active", true).order("display_order", { ascending: true, nullsFirst: false }),
       supabase.from("pricing_extras").select("*").eq("is_active", true)
     ]);
 

@@ -25,6 +25,7 @@ interface Vehicle {
   overnight_surcharge: number;
   is_active: boolean;
   image_url: string | null;
+  display_order: number | null;
 }
 
 interface VehicleImage {
@@ -75,7 +76,7 @@ const VehiclesManagement = () => {
   const loadVehicles = async () => {
     setLoading(true);
     const [vehiclesRes, imagesRes] = await Promise.all([
-      supabase.from("vehicles").select("*").order("name"),
+      supabase.from("vehicles").select("*").order("display_order", { ascending: true, nullsFirst: false }),
       supabase.from("vehicle_images").select("*").order("display_order"),
     ]);
 
@@ -95,6 +96,47 @@ const VehiclesManagement = () => {
       setVehicleImages(grouped);
     }
     setLoading(false);
+  };
+
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  const persistOrder = async (ordered: Vehicle[]) => {
+    const updates = ordered.map((v, i) =>
+      supabase.from("vehicles").update({ display_order: i + 1 }).eq("id", v.id)
+    );
+    const results = await Promise.all(updates);
+    if (results.some(r => r.error)) {
+      toast.error("Failed to save vehicle order");
+      loadVehicles();
+    } else {
+      toast.success("Vehicle order updated");
+    }
+  };
+
+  const handleDragStart = (index: number) => setDragIndex(index);
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  };
+  const handleDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === index) {
+      setDragIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+    const reordered = [...vehicles];
+    const [moved] = reordered.splice(dragIndex, 1);
+    reordered.splice(index, 0, moved);
+    setVehicles(reordered);
+    setDragIndex(null);
+    setDragOverIndex(null);
+    persistOrder(reordered);
+  };
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setDragOverIndex(null);
   };
 
   const uploadImageFile = async (file: File): Promise<string | null> => {
@@ -171,7 +213,8 @@ const VehiclesManagement = () => {
         const { error } = await supabase.from("vehicles").update(formData).eq("id", editingVehicle.id);
         if (error) { toast.error("Failed to update vehicle"); setUploading(false); return; }
       } else {
-        const { data, error } = await supabase.from("vehicles").insert({ ...formData, image_url: null }).select().single();
+        const nextOrder = (vehicles.reduce((m, v) => Math.max(m, v.display_order || 0), 0)) + 1;
+        const { data, error } = await supabase.from("vehicles").insert({ ...formData, image_url: null, display_order: nextOrder }).select().single();
         if (error) { toast.error("Failed to create vehicle"); setUploading(false); return; }
         vehicleId = data.id;
       }
@@ -311,7 +354,7 @@ const VehiclesManagement = () => {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-display font-bold text-gradient-metal mb-2">Vehicles Management</h1>
-            <p className="text-muted-foreground">Maintain and manage your active vehicle fleet for bookings and operations.</p>
+            <p className="text-muted-foreground">Maintain and manage your active vehicle fleet. Drag cards to reorder — this controls the order shown to customers across the site.</p>
           </div>
           <div className="flex gap-2">
             <Tooltip>
@@ -501,9 +544,23 @@ const VehiclesManagement = () => {
               return (
                 <Card
                   key={vehicle.id}
-                  className="relative overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_0_30px_rgba(244,197,66,0.15)] hover:scale-[1.02] hover:border-accent/40 border-2 animate-fade-in"
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
+                  className={`relative overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_0_30px_rgba(244,197,66,0.15)] hover:border-accent/40 border-2 animate-fade-in cursor-move ${
+                    dragIndex === index ? "opacity-50" : ""
+                  } ${dragOverIndex === index && dragIndex !== index ? "border-accent ring-2 ring-accent/50" : ""}`}
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
+                  {/* Position number + drag handle */}
+                  <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 bg-background/90 backdrop-blur border border-accent/40 rounded-full px-3 py-1.5 shadow-lg">
+                      <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-sm font-bold text-accent">#{index + 1}</span>
+                    </div>
+                  </div>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Badge
@@ -514,6 +571,7 @@ const VehiclesManagement = () => {
                       </Badge>
                     </TooltipTrigger>
                   </Tooltip>
+
 
                   {/* Image with count badge */}
                   <div className="h-48 w-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden relative">
