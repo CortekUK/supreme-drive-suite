@@ -77,6 +77,8 @@ const MultiStepBookingWidget = () => {
   const [isReturn, setIsReturn] = useState(false);
   const [returnDate, setReturnDate] = useState("");
   const [returnTime, setReturnTime] = useState("");
+  const [returnPickupLocation, setReturnPickupLocation] = useState("");
+  const [returnDropoffLocation, setReturnDropoffLocation] = useState("");
   const [isBlockedDateEnquiry, setIsBlockedDateEnquiry] = useState(false);
   const [showBlockedDateEnquiryDialog, setShowBlockedDateEnquiryDialog] = useState(false);
   const [showVehicleEnquiryDialog, setShowVehicleEnquiryDialog] = useState(false);
@@ -294,7 +296,9 @@ const MultiStepBookingWidget = () => {
   // Prepend a return-journey note to additional requirements so it's persisted in the booking record.
   const withReturnNote = (base: string) => {
     if (!isReturn || !returnDate || !returnTime) return base;
-    const note = `[RETURN JOURNEY - ${returnDate} at ${returnTime}${isSameDayReturn ? " (same-day)" : ""}]`;
+    const rp = returnPickupLocation.trim() || formData.dropoffLocation;
+    const rd = returnDropoffLocation.trim() || formData.pickupLocation;
+    const note = `[RETURN JOURNEY - ${returnDate} at ${returnTime}${isSameDayReturn ? " (same-day)" : ""} | Pickup: ${rp} → Drop-off: ${rd}]`;
     return base && base.trim() ? `${note}\n${base}` : note;
   };
 
@@ -586,6 +590,8 @@ const MultiStepBookingWidget = () => {
     setIsReturn(false);
     setReturnDate("");
     setReturnTime("");
+    setReturnPickupLocation("");
+    setReturnDropoffLocation("");
     setIsBlockedDateEnquiry(false);
     setIsMultiVehicleBooking(false);
     setVehicleQuantities({});
@@ -782,6 +788,12 @@ const MultiStepBookingWidget = () => {
       newErrors.pickupTime = "Pickup time is required";
     }
     if (isReturn) {
+      if (!returnPickupLocation.trim()) {
+        newErrors.returnPickupLocation = "Return pickup location is required";
+      }
+      if (!returnDropoffLocation.trim()) {
+        newErrors.returnDropoffLocation = "Return drop-off location is required";
+      }
       if (!returnDate) {
         newErrors.returnDate = "Return date is required";
       } else if (formData.pickupDate && returnDate < formData.pickupDate) {
@@ -1134,10 +1146,16 @@ const MultiStepBookingWidget = () => {
                       checked={isReturn}
                       onCheckedChange={(checked) => {
                         setIsReturn(checked);
-                        if (!checked) {
+                        if (checked) {
+                          // Pre-fill the return leg as the reverse of the outbound by default
+                          setReturnPickupLocation((prev) => prev || formData.dropoffLocation);
+                          setReturnDropoffLocation((prev) => prev || formData.pickupLocation);
+                        } else {
                           setReturnDate("");
                           setReturnTime("");
-                          setErrors({ ...errors, returnDate: "", returnTime: "" });
+                          setReturnPickupLocation("");
+                          setReturnDropoffLocation("");
+                          setErrors({ ...errors, returnDate: "", returnTime: "", returnPickupLocation: "", returnDropoffLocation: "" });
                         }
                       }}
                     />
@@ -1146,8 +1164,43 @@ const MultiStepBookingWidget = () => {
                 </div>
 
                 {isReturn && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-accent/20">
-                    <div className="space-y-2">
+                  <div className="space-y-4 pt-2 border-t border-accent/20">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="returnPickupLocation">Return Pickup Location *</Label>
+                        <LocationAutocomplete
+                          id="returnPickupLocation"
+                          value={returnPickupLocation}
+                          onChange={(value) => {
+                            setReturnPickupLocation(value);
+                            if (errors.returnPickupLocation) setErrors({ ...errors, returnPickupLocation: "" });
+                          }}
+                          placeholder="Enter return pickup address"
+                          className="p-4 focus-visible:ring-[#C5A572]"
+                        />
+                        {errors.returnPickupLocation && (
+                          <p className="text-sm text-destructive">{errors.returnPickupLocation}</p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="returnDropoffLocation">Return Drop-off Location *</Label>
+                        <LocationAutocomplete
+                          id="returnDropoffLocation"
+                          value={returnDropoffLocation}
+                          onChange={(value) => {
+                            setReturnDropoffLocation(value);
+                            if (errors.returnDropoffLocation) setErrors({ ...errors, returnDropoffLocation: "" });
+                          }}
+                          placeholder="Enter return destination"
+                          className="p-4 focus-visible:ring-[#C5A572]"
+                        />
+                        {errors.returnDropoffLocation && (
+                          <p className="text-sm text-destructive">{errors.returnDropoffLocation}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
                       <Label htmlFor="returnDate">Return Date *</Label>
                       <Popover>
                         <PopoverTrigger asChild>
@@ -1211,6 +1264,7 @@ const MultiStepBookingWidget = () => {
                         ✓ Same-day return — discount will be applied automatically.
                       </p>
                     )}
+                    </div>
                   </div>
                 )}
               </div>
