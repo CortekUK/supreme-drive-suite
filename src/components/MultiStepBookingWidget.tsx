@@ -774,6 +774,23 @@ const MultiStepBookingWidget = () => {
     if (!formData.pickupTime) {
       newErrors.pickupTime = "Pickup time is required";
     }
+    if (isReturn) {
+      if (!returnDate) {
+        newErrors.returnDate = "Return date is required";
+      } else if (formData.pickupDate && returnDate < formData.pickupDate) {
+        newErrors.returnDate = "Return date cannot be before pickup date";
+      }
+      if (!returnTime) {
+        newErrors.returnTime = "Return time is required";
+      } else if (
+        formData.pickupDate &&
+        returnDate === formData.pickupDate &&
+        formData.pickupTime &&
+        returnTime <= formData.pickupTime
+      ) {
+        newErrors.returnTime = "Return time must be after pickup time";
+      }
+    }
     if (!formData.passengers) {
       newErrors.passengers = "Number of passengers is required";
     } else if (parseInt(formData.passengers) < 1) {
