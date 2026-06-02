@@ -590,6 +590,8 @@ const MultiStepBookingWidget = () => {
     setIsReturn(false);
     setReturnDate("");
     setReturnTime("");
+    setReturnPickupLocation("");
+    setReturnDropoffLocation("");
     setIsBlockedDateEnquiry(false);
     setIsMultiVehicleBooking(false);
     setVehicleQuantities({});
