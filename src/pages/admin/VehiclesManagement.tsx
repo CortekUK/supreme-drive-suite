@@ -354,7 +354,7 @@ const VehiclesManagement = () => {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-display font-bold text-gradient-metal mb-2">Vehicles Management</h1>
-            <p className="text-muted-foreground">Maintain and manage your active vehicle fleet for bookings and operations.</p>
+            <p className="text-muted-foreground">Maintain and manage your active vehicle fleet. Drag cards to reorder — this controls the order shown to customers across the site.</p>
           </div>
           <div className="flex gap-2">
             <Tooltip>
