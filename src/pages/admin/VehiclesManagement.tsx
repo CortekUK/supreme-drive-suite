@@ -25,6 +25,7 @@ interface Vehicle {
   overnight_surcharge: number;
   is_active: boolean;
   image_url: string | null;
+  display_order: number | null;
 }
 
 interface VehicleImage {
@@ -75,7 +76,7 @@ const VehiclesManagement = () => {
   const loadVehicles = async () => {
     setLoading(true);
     const [vehiclesRes, imagesRes] = await Promise.all([
-      supabase.from("vehicles").select("*").order("name"),
+      supabase.from("vehicles").select("*").order("display_order", { ascending: true, nullsFirst: false }),
       supabase.from("vehicle_images").select("*").order("display_order"),
     ]);
 
@@ -95,6 +96,47 @@ const VehiclesManagement = () => {
       setVehicleImages(grouped);
     }
     setLoading(false);
+  };
+
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  const persistOrder = async (ordered: Vehicle[]) => {
+    const updates = ordered.map((v, i) =>
+      supabase.from("vehicles").update({ display_order: i + 1 }).eq("id", v.id)
+    );
+    const results = await Promise.all(updates);
+    if (results.some(r => r.error)) {
+      toast.error("Failed to save vehicle order");
+      loadVehicles();
+    } else {
+      toast.success("Vehicle order updated");
+    }
+  };
+
+  const handleDragStart = (index: number) => setDragIndex(index);
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  };
+  const handleDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === index) {
+      setDragIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+    const reordered = [...vehicles];
+    const [moved] = reordered.splice(dragIndex, 1);
+    reordered.splice(index, 0, moved);
+    setVehicles(reordered);
+    setDragIndex(null);
+    setDragOverIndex(null);
+    persistOrder(reordered);
+  };
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setDragOverIndex(null);
   };
 
   const uploadImageFile = async (file: File): Promise<string | null> => {
