@@ -111,6 +111,8 @@ const MultiStepBookingWidget = () => {
     dropoffLon: null as number | null,
   });
 
+  const isSameDayReturn = isReturn && !!returnDate && returnDate === formData.pickupDate;
+
   useEffect(() => {
     loadData();
   }, []);
