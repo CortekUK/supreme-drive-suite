@@ -1256,6 +1256,7 @@ const MultiStepBookingWidget = () => {
                         ✓ Same-day return — discount will be applied automatically.
                       </p>
                     )}
+                    </div>
                   </div>
                 )}
               </div>
