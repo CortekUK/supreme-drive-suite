@@ -1196,6 +1196,7 @@ export type Database = {
           created_at: string | null
           current_mileage: number | null
           description: string | null
+          display_order: number | null
           features: string[] | null
           id: string
           image_url: string | null
@@ -1214,6 +1215,7 @@ export type Database = {
           created_at?: string | null
           current_mileage?: number | null
           description?: string | null
+          display_order?: number | null
           features?: string[] | null
           id?: string
           image_url?: string | null
@@ -1232,6 +1234,7 @@ export type Database = {
           created_at?: string | null
           current_mileage?: number | null
           description?: string | null
+          display_order?: number | null
           features?: string[] | null
           id?: string
           image_url?: string | null

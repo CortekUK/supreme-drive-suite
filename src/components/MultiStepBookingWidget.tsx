@@ -159,7 +159,7 @@ const MultiStepBookingWidget = () => {
       .from("vehicles")
       .select("*")
       .eq("is_active", true)
-      .order("category");
+      .order("display_order", { ascending: true, nullsFirst: false });
 
     const { data: extrasData } = await supabase
       .from("pricing_extras")
