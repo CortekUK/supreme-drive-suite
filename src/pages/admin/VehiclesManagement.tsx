@@ -213,7 +213,8 @@ const VehiclesManagement = () => {
         const { error } = await supabase.from("vehicles").update(formData).eq("id", editingVehicle.id);
         if (error) { toast.error("Failed to update vehicle"); setUploading(false); return; }
       } else {
-        const { data, error } = await supabase.from("vehicles").insert({ ...formData, image_url: null }).select().single();
+        const nextOrder = (vehicles.reduce((m, v) => Math.max(m, v.display_order || 0), 0)) + 1;
+        const { data, error } = await supabase.from("vehicles").insert({ ...formData, image_url: null, display_order: nextOrder }).select().single();
         if (error) { toast.error("Failed to create vehicle"); setUploading(false); return; }
         vehicleId = data.id;
       }
