@@ -576,7 +576,9 @@ const MultiStepBookingWidget = () => {
     setCpInterested(false);
     setNumberOfStops("1");
     setIsCorporateBooking(false);
-    setIsSameDayReturn(false);
+    setIsReturn(false);
+    setReturnDate("");
+    setReturnTime("");
     setIsBlockedDateEnquiry(false);
     setIsMultiVehicleBooking(false);
     setVehicleQuantities({});
