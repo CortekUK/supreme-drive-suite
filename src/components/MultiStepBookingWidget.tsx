@@ -296,7 +296,9 @@ const MultiStepBookingWidget = () => {
   // Prepend a return-journey note to additional requirements so it's persisted in the booking record.
   const withReturnNote = (base: string) => {
     if (!isReturn || !returnDate || !returnTime) return base;
-    const note = `[RETURN JOURNEY - ${returnDate} at ${returnTime}${isSameDayReturn ? " (same-day)" : ""}]`;
+    const rp = returnPickupLocation.trim() || formData.dropoffLocation;
+    const rd = returnDropoffLocation.trim() || formData.pickupLocation;
+    const note = `[RETURN JOURNEY - ${returnDate} at ${returnTime}${isSameDayReturn ? " (same-day)" : ""} | Pickup: ${rp} → Drop-off: ${rd}]`;
     return base && base.trim() ? `${note}\n${base}` : note;
   };
 
