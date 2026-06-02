@@ -1098,19 +1098,97 @@ const MultiStepBookingWidget = () => {
                 </div>
               </div>
 
-              {/* Same Day Return */}
-              <div className="flex items-center justify-between gap-4 p-4 border border-accent/20 rounded-lg bg-accent/5">
-                <Label htmlFor="sameDayReturn" className="cursor-pointer font-medium">
-                  Is this a same-day return journey?
-                </Label>
-                <div className="flex items-center gap-3">
-                  <Switch
-                    id="sameDayReturn"
-                    checked={isSameDayReturn}
-                    onCheckedChange={setIsSameDayReturn}
-                  />
-                  <span className="text-sm font-medium w-6">{isSameDayReturn ? "Yes" : "No"}</span>
+              {/* Return Journey */}
+              <div className="space-y-4 p-4 border border-accent/20 rounded-lg bg-accent/5">
+                <div className="flex items-center justify-between gap-4">
+                  <Label htmlFor="returnJourney" className="cursor-pointer font-medium">
+                    Add a return journey?
+                  </Label>
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      id="returnJourney"
+                      checked={isReturn}
+                      onCheckedChange={(checked) => {
+                        setIsReturn(checked);
+                        if (!checked) {
+                          setReturnDate("");
+                          setReturnTime("");
+                          setErrors({ ...errors, returnDate: "", returnTime: "" });
+                        }
+                      }}
+                    />
+                    <span className="text-sm font-medium w-6">{isReturn ? "Yes" : "No"}</span>
+                  </div>
                 </div>
+
+                {isReturn && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-accent/20">
+                    <div className="space-y-2">
+                      <Label htmlFor="returnDate">Return Date *</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            id="returnDate"
+                            type="button"
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !returnDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {returnDate ? format(new Date(returnDate), "PPP") : <span>Pick a return date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={returnDate ? new Date(returnDate) : undefined}
+                            onSelect={(date) => {
+                              if (date) {
+                                setReturnDate(format(date, "yyyy-MM-dd"));
+                                if (errors.returnDate) setErrors({ ...errors, returnDate: "" });
+                              }
+                            }}
+                            disabled={(date) => {
+                              const today = new Date(new Date().setHours(0, 0, 0, 0));
+                              const pickup = formData.pickupDate ? new Date(formData.pickupDate) : today;
+                              const minDate = pickup > today ? pickup : today;
+                              const oneMonthFromNow = new Date(today);
+                              oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+                              return date < minDate || date > oneMonthFromNow;
+                            }}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      {errors.returnDate && (
+                        <p className="text-sm text-destructive">{errors.returnDate}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="returnTime">Return Time *</Label>
+                      <TimePicker
+                        id="returnTime"
+                        value={returnTime}
+                        onChange={(value) => {
+                          setReturnTime(value);
+                          if (errors.returnTime) setErrors({ ...errors, returnTime: "" });
+                        }}
+                        className="focus-visible:ring-[#C5A572]"
+                      />
+                      {errors.returnTime && (
+                        <p className="text-sm text-destructive">{errors.returnTime}</p>
+                      )}
+                    </div>
+                    {isSameDayReturn && (
+                      <p className="md:col-span-2 text-xs text-green-500">
+                        ✓ Same-day return — discount will be applied automatically.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
             </div>
