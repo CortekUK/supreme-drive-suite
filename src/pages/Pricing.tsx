@@ -143,29 +143,44 @@ const VehicleImageCarousel = ({ images, vehicleName }: { images: VehicleImage[];
           onClick={() => setLightboxOpen(false)}
         >
           <button
-            onClick={() => setLightboxOpen(false)}
-            className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 rounded-full p-2 transition-colors"
+            onClick={(e) => { e.stopPropagation(); setLightboxOpen(false); }}
+            className="absolute top-4 right-4 z-[60] text-white/70 hover:text-white bg-white/10 rounded-full p-2 transition-colors"
+            aria-label="Close"
           >
             <X className="w-6 h-6" />
           </button>
           <div className="relative max-w-5xl w-full" onClick={e => e.stopPropagation()}>
-            <img
-              src={images[current].image_url}
-              alt={`${vehicleName} - photo ${current + 1}`}
-              className="w-full max-h-[80vh] object-contain rounded-lg"
-            />
+            <div className="relative">
+              <img
+                src={images[current].image_url}
+                alt={`${vehicleName} - photo ${current + 1}`}
+                className="w-full max-h-[80vh] object-contain rounded-lg select-none"
+                draggable={false}
+              />
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); prev(); }}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-3 transition-colors"
+                    aria-label="Previous"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); next(); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-3 transition-colors"
+                    aria-label="Next"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                </>
+              )}
+            </div>
             {images.length > 1 && (
               <>
-                <button onClick={prev} className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 bg-white/10 hover:bg-white/20 text-white rounded-full p-3 transition-colors">
-                  <ChevronLeft className="w-6 h-6" />
-                </button>
-                <button onClick={next} className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 bg-white/10 hover:bg-white/20 text-white rounded-full p-3 transition-colors">
-                  <ChevronRight className="w-6 h-6" />
-                </button>
-                {/* Thumbnails */}
                 <div className="flex gap-2 mt-4 justify-center flex-wrap">
                   {images.map((img, i) => (
-                    <button key={img.id} onClick={() => setCurrent(i)}
+                    <button key={img.id} onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
                       className={`w-16 h-12 rounded overflow-hidden border-2 transition-all ${i === current ? 'border-accent' : 'border-transparent opacity-60 hover:opacity-100'}`}>
                       <img src={img.image_url} alt="" className="w-full h-full object-cover" />
                     </button>

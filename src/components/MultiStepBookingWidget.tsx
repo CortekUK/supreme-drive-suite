@@ -38,6 +38,75 @@ interface Vehicle {
   features: string[];
 }
 
+interface VehicleImage {
+  id: string;
+  vehicle_id: string;
+  image_url: string;
+  display_order: number;
+  is_cover: boolean;
+}
+
+// Inline mini-carousel for vehicle selection cards — does NOT open a lightbox,
+// arrows/dots stop propagation so the card doesn't get selected when navigating.
+const VehicleCardCarousel = ({ images, alt }: { images: string[]; alt: string }) => {
+  const [current, setCurrent] = useState(0);
+  const safeImages = images.filter(Boolean);
+  const count = safeImages.length;
+
+  if (count === 0) return null;
+
+  const go = (e: React.MouseEvent, dir: 1 | -1) => {
+    e.stopPropagation();
+    setCurrent((c) => (c + dir + count) % count);
+  };
+
+  return (
+    <div className="relative w-full h-full">
+      {safeImages.map((src, i) => (
+        <img
+          key={i}
+          src={src}
+          alt={`${alt} - photo ${i + 1}`}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${i === current ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          loading="lazy"
+          draggable={false}
+        />
+      ))}
+      {count > 1 && (
+        <>
+          <button
+            type="button"
+            aria-label="Previous photo"
+            onClick={(e) => go(e, -1)}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/80 text-white rounded-full p-1.5 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            aria-label="Next photo"
+            onClick={(e) => go(e, 1)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/80 text-white rounded-full p-1.5 transition-colors"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 flex gap-1">
+            {safeImages.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-label={`Go to photo ${i + 1}`}
+                onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
+                className={`rounded-full transition-all ${i === current ? 'w-4 h-1.5 bg-accent' : 'w-1.5 h-1.5 bg-white/60 hover:bg-white'}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 interface PricingExtra {
   id: string;
   extra_name: string;
@@ -57,6 +126,7 @@ const usesTieredPricing = (name: string) => isBookableVehicle(name);
 const MultiStepBookingWidget = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehicleImages, setVehicleImages] = useState<Record<string, string[]>>({});
   const [extras, setExtras] = useState<PricingExtra[]>([]);
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -175,7 +245,21 @@ const MultiStepBookingWidget = () => {
       .from("blocked_dates")
       .select("date");
 
+    const { data: imagesData } = await supabase
+      .from("vehicle_images")
+      .select("*")
+      .order("is_cover", { ascending: false })
+      .order("display_order", { ascending: true });
+
     if (vehiclesData) setVehicles(vehiclesData);
+    if (imagesData) {
+      const grouped: Record<string, string[]> = {};
+      imagesData.forEach((img: any) => {
+        if (!grouped[img.vehicle_id]) grouped[img.vehicle_id] = [];
+        grouped[img.vehicle_id].push(img.image_url);
+      });
+      setVehicleImages(grouped);
+    }
     if (extrasData) setExtras(extrasData);
     if (blockedDatesData) {
       const formattedDates = blockedDatesData.map(d => {
@@ -1461,22 +1545,18 @@ const MultiStepBookingWidget = () => {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-              {vehicles
-                .sort((a, b) => {
-                  // Rolls-Royce Phantom first
-                  if (a.name.toLowerCase().includes("rolls") || a.name.toLowerCase().includes("phantom")) return -1;
-                  if (b.name.toLowerCase().includes("rolls") || b.name.toLowerCase().includes("phantom")) return 1;
-                  return 0;
-                })
-                .map((vehicle) => {
+              {vehicles.map((vehicle) => {
                   const badge = getVehicleBadge(vehicle.name, vehicle.category);
                   const isRollsRoyce = vehicle.name.toLowerCase().includes("rolls") || vehicle.name.toLowerCase().includes("phantom");
-                  
+                  const galleryImages = vehicleImages[vehicle.id]?.length
+                    ? vehicleImages[vehicle.id]
+                    : (vehicle.image_url ? [vehicle.image_url] : []);
+
                   return (
                     <Card
                       key={vehicle.id}
-                      className={`p-6 transition-all duration-300 hover:shadow-xl relative ${
-                        !isMultiVehicleBooking ? 'cursor-pointer hover:scale-[1.02]' : ''
+                      className={`p-6 transition-colors duration-200 hover:shadow-xl relative ${
+                        !isMultiVehicleBooking ? 'cursor-pointer' : ''
                       } ${
                         (isMultiVehicleBooking ? (vehicleQuantities[vehicle.id] || 0) > 0 : formData.vehicleId === vehicle.id)
                           ? 'border-accent bg-accent/10 shadow-lg'
@@ -1506,28 +1586,20 @@ const MultiStepBookingWidget = () => {
                       )}
 
                       <div className="space-y-4">
-                        {/* Vehicle Image */}
-                        <div className={`relative flex items-center justify-center h-48 rounded-lg overflow-hidden ${
-                          isRollsRoyce 
-                            ? 'bg-gradient-to-br from-[#C5A572]/20 to-[#8B7355]/20' 
+                        {/* Vehicle Image(s) */}
+                        <div className={`relative h-48 rounded-lg overflow-hidden ${
+                          isRollsRoyce
+                            ? 'bg-gradient-to-br from-[#C5A572]/20 to-[#8B7355]/20'
                             : 'bg-accent/5'
                         }`}>
-                          {vehicle.image_url ? (
-                            <img 
-                              src={vehicle.image_url} 
-                              alt={vehicle.name}
-                              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                              loading="lazy"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                              }}
-                            />
-                          ) : null}
-                          <div className={`${vehicle.image_url ? 'hidden' : 'flex'} absolute inset-0 flex-col items-center justify-center bg-muted/30 backdrop-blur-sm`}>
-                            <Car className={`w-16 h-16 mb-2 ${isRollsRoyce ? 'text-[#C5A572]' : 'text-accent'} opacity-40`} />
-                            <span className="text-xs text-muted-foreground/70">Image coming soon</span>
-                          </div>
+                          {galleryImages.length > 0 ? (
+                            <VehicleCardCarousel images={galleryImages} alt={vehicle.name} />
+                          ) : (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/30 backdrop-blur-sm">
+                              <Car className={`w-16 h-16 mb-2 ${isRollsRoyce ? 'text-[#C5A572]' : 'text-accent'} opacity-40`} />
+                              <span className="text-xs text-muted-foreground/70">Image coming soon</span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Vehicle Details */}
