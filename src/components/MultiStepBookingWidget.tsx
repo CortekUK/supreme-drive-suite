@@ -459,7 +459,7 @@ const MultiStepBookingWidget = () => {
         customer_email: formData.customerEmail,
         customer_phone: formData.customerPhone,
         payment_status: 'enquiry',
-        service_type: isCorporateBooking ? 'Corporate travel' : (cpInterested ? 'close_protection' : 'chauffeur'),
+        service_type: isCorporateBooking ? 'corporate' : (cpInterested ? 'close_protection' : 'chauffeur'),
       });
 
       if (error) throw error;
