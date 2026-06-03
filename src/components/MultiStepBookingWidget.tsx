@@ -153,7 +153,7 @@ const MultiStepBookingWidget = () => {
   const [showVehicleEnquiryDialog, setShowVehicleEnquiryDialog] = useState(false);
   const [showMultiVehicleEnquiryDialog, setShowMultiVehicleEnquiryDialog] = useState(false);
   const [isMultiVehicleBooking, setIsMultiVehicleBooking] = useState(false);
-  const [vehicleQuantities, setVehicleQuantities] = useState<Record<string, number>>({});
+  const [vehicleImages, setVehicleImages] = useState<Record<string, string[]>>({});
 
   const totalVehicleQty = Object.values(vehicleQuantities).reduce((s, n) => s + (n || 0), 0);
 
