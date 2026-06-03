@@ -245,7 +245,21 @@ const MultiStepBookingWidget = () => {
       .from("blocked_dates")
       .select("date");
 
+    const { data: imagesData } = await supabase
+      .from("vehicle_images")
+      .select("*")
+      .order("is_cover", { ascending: false })
+      .order("display_order", { ascending: true });
+
     if (vehiclesData) setVehicles(vehiclesData);
+    if (imagesData) {
+      const grouped: Record<string, string[]> = {};
+      imagesData.forEach((img: any) => {
+        if (!grouped[img.vehicle_id]) grouped[img.vehicle_id] = [];
+        grouped[img.vehicle_id].push(img.image_url);
+      });
+      setVehicleImages(grouped);
+    }
     if (extrasData) setExtras(extrasData);
     if (blockedDatesData) {
       const formattedDates = blockedDatesData.map(d => {
