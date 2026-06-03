@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useEffect, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
@@ -72,13 +73,18 @@ const VehicleImageCarousel = ({ images, vehicleName }: { images: VehicleImage[];
 
   useEffect(() => {
     if (!lightboxOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') prev();
       if (e.key === 'ArrowRight') next();
       if (e.key === 'Escape') setLightboxOpen(false);
     };
     window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handler);
+    };
   }, [lightboxOpen, prev, next]);
 
   if (images.length === 0) return null;
@@ -94,6 +100,7 @@ const VehicleImageCarousel = ({ images, vehicleName }: { images: VehicleImage[];
               alt={`${vehicleName} - photo ${i + 1}`}
               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${i === current ? 'opacity-100' : 'opacity-0'}`}
               loading="lazy"
+              draggable={false}
             />
           ))}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -137,9 +144,9 @@ const VehicleImageCarousel = ({ images, vehicleName }: { images: VehicleImage[];
       </div>
 
       {/* Lightbox */}
-      {lightboxOpen && (
+      {lightboxOpen && createPortal(
         <div
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-background/95 flex items-center justify-center p-4 cursor-zoom-out"
           onClick={() => setLightboxOpen(false)}
         >
           <button
@@ -149,26 +156,27 @@ const VehicleImageCarousel = ({ images, vehicleName }: { images: VehicleImage[];
           >
             <X className="w-6 h-6" />
           </button>
-          <div className="relative max-w-5xl w-full" onClick={e => e.stopPropagation()}>
+          <div className="relative max-w-5xl w-full pointer-events-none">
             <div className="relative">
               <img
                 src={images[current].image_url}
                 alt={`${vehicleName} - photo ${current + 1}`}
-                className="w-full max-h-[80vh] object-contain rounded-lg select-none"
+                className="w-full max-h-[80vh] object-contain rounded-lg select-none pointer-events-auto cursor-default"
                 draggable={false}
+                onClick={(e) => e.stopPropagation()}
               />
               {images.length > 1 && (
                 <>
                   <button
-                    onClick={(e) => { e.stopPropagation(); prev(); }}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-3 transition-colors"
+                    onClick={prev}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-secondary/80 hover:bg-secondary text-foreground rounded-full p-3 transition-colors pointer-events-auto cursor-pointer"
                     aria-label="Previous"
                   >
                     <ChevronLeft className="w-6 h-6" />
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); next(); }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-3 transition-colors"
+                    onClick={next}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-secondary/80 hover:bg-secondary text-foreground rounded-full p-3 transition-colors pointer-events-auto cursor-pointer"
                     aria-label="Next"
                   >
                     <ChevronRight className="w-6 h-6" />
@@ -181,7 +189,7 @@ const VehicleImageCarousel = ({ images, vehicleName }: { images: VehicleImage[];
                 <div className="flex gap-2 mt-4 justify-center flex-wrap">
                   {images.map((img, i) => (
                     <button key={img.id} onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
-                      className={`w-16 h-12 rounded overflow-hidden border-2 transition-all ${i === current ? 'border-accent' : 'border-transparent opacity-60 hover:opacity-100'}`}>
+                      className={`w-16 h-12 rounded overflow-hidden border-2 transition-opacity pointer-events-auto cursor-pointer ${i === current ? 'border-accent' : 'border-transparent opacity-60 hover:opacity-100'}`}>
                       <img src={img.image_url} alt="" className="w-full h-full object-cover" />
                     </button>
                   ))}
@@ -190,7 +198,8 @@ const VehicleImageCarousel = ({ images, vehicleName }: { images: VehicleImage[];
               </>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
@@ -266,8 +275,8 @@ const Pricing = () => {
 
               return (
                 <Card
-                  key={index}
-                  className="group relative overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-glow"
+                  key={vehicle.id}
+                  className="relative overflow-hidden transition-shadow duration-300 hover:shadow-glow"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-card via-card to-secondary/20 opacity-80" />
                   <div className="relative p-8 md:p-10">
