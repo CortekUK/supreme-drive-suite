@@ -126,6 +126,7 @@ const usesTieredPricing = (name: string) => isBookableVehicle(name);
 const MultiStepBookingWidget = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehicleImages, setVehicleImages] = useState<Record<string, string[]>>({});
   const [extras, setExtras] = useState<PricingExtra[]>([]);
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
