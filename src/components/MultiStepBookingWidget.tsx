@@ -38,6 +38,75 @@ interface Vehicle {
   features: string[];
 }
 
+interface VehicleImage {
+  id: string;
+  vehicle_id: string;
+  image_url: string;
+  display_order: number;
+  is_cover: boolean;
+}
+
+// Inline mini-carousel for vehicle selection cards — does NOT open a lightbox,
+// arrows/dots stop propagation so the card doesn't get selected when navigating.
+const VehicleCardCarousel = ({ images, alt }: { images: string[]; alt: string }) => {
+  const [current, setCurrent] = useState(0);
+  const safeImages = images.filter(Boolean);
+  const count = safeImages.length;
+
+  if (count === 0) return null;
+
+  const go = (e: React.MouseEvent, dir: 1 | -1) => {
+    e.stopPropagation();
+    setCurrent((c) => (c + dir + count) % count);
+  };
+
+  return (
+    <div className="relative w-full h-full">
+      {safeImages.map((src, i) => (
+        <img
+          key={i}
+          src={src}
+          alt={`${alt} - photo ${i + 1}`}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${i === current ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          loading="lazy"
+          draggable={false}
+        />
+      ))}
+      {count > 1 && (
+        <>
+          <button
+            type="button"
+            aria-label="Previous photo"
+            onClick={(e) => go(e, -1)}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/80 text-white rounded-full p-1.5 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            aria-label="Next photo"
+            onClick={(e) => go(e, 1)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/80 text-white rounded-full p-1.5 transition-colors"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 flex gap-1">
+            {safeImages.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-label={`Go to photo ${i + 1}`}
+                onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
+                className={`rounded-full transition-all ${i === current ? 'w-4 h-1.5 bg-accent' : 'w-1.5 h-1.5 bg-white/60 hover:bg-white'}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 interface PricingExtra {
   id: string;
   extra_name: string;
