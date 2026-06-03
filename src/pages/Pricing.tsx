@@ -307,7 +307,7 @@ const Pricing = () => {
                             </p>
                           </div>
                         </div>
-                        <p className="text-muted-foreground leading-relaxed text-base">{vehicle.description}</p>
+                        <p className="text-muted-foreground leading-relaxed text-base whitespace-pre-line">{vehicle.description}</p>
                         <div className="flex flex-wrap gap-2">
                           {vehicle.features?.map((feature, idx) => (
                             <Badge key={idx} variant="outline"

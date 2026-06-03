@@ -125,6 +125,14 @@ const usesTieredPricing = (name: string) => isBookableVehicle(name);
 
 const MultiStepBookingWidget = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const widgetRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (widgetRef.current) {
+      const top = widgetRef.current.getBoundingClientRect().top + window.scrollY - 80;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+  }, [currentStep]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [vehicleImages, setVehicleImages] = useState<Record<string, string[]>>({});
   const [extras, setExtras] = useState<PricingExtra[]>([]);
@@ -1019,7 +1027,7 @@ const MultiStepBookingWidget = () => {
   }
 
   return (
-    <Card className="p-4 md:p-8 bg-card/90 backdrop-blur-sm border-primary/30 shadow-metal">
+    <Card ref={widgetRef} className="p-4 md:p-8 bg-card/90 backdrop-blur-sm border-primary/30 shadow-metal">
       <div className="space-y-8">
         {/* Enhanced Progress Indicator */}
         <div className="w-full">
