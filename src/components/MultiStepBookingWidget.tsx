@@ -1545,22 +1545,18 @@ const MultiStepBookingWidget = () => {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-              {vehicles
-                .sort((a, b) => {
-                  // Rolls-Royce Phantom first
-                  if (a.name.toLowerCase().includes("rolls") || a.name.toLowerCase().includes("phantom")) return -1;
-                  if (b.name.toLowerCase().includes("rolls") || b.name.toLowerCase().includes("phantom")) return 1;
-                  return 0;
-                })
-                .map((vehicle) => {
+              {vehicles.map((vehicle) => {
                   const badge = getVehicleBadge(vehicle.name, vehicle.category);
                   const isRollsRoyce = vehicle.name.toLowerCase().includes("rolls") || vehicle.name.toLowerCase().includes("phantom");
-                  
+                  const galleryImages = vehicleImages[vehicle.id]?.length
+                    ? vehicleImages[vehicle.id]
+                    : (vehicle.image_url ? [vehicle.image_url] : []);
+
                   return (
                     <Card
                       key={vehicle.id}
-                      className={`p-6 transition-all duration-300 hover:shadow-xl relative ${
-                        !isMultiVehicleBooking ? 'cursor-pointer hover:scale-[1.02]' : ''
+                      className={`p-6 transition-colors duration-200 hover:shadow-xl relative ${
+                        !isMultiVehicleBooking ? 'cursor-pointer' : ''
                       } ${
                         (isMultiVehicleBooking ? (vehicleQuantities[vehicle.id] || 0) > 0 : formData.vehicleId === vehicle.id)
                           ? 'border-accent bg-accent/10 shadow-lg'
@@ -1590,28 +1586,20 @@ const MultiStepBookingWidget = () => {
                       )}
 
                       <div className="space-y-4">
-                        {/* Vehicle Image */}
-                        <div className={`relative flex items-center justify-center h-48 rounded-lg overflow-hidden ${
-                          isRollsRoyce 
-                            ? 'bg-gradient-to-br from-[#C5A572]/20 to-[#8B7355]/20' 
+                        {/* Vehicle Image(s) */}
+                        <div className={`relative h-48 rounded-lg overflow-hidden ${
+                          isRollsRoyce
+                            ? 'bg-gradient-to-br from-[#C5A572]/20 to-[#8B7355]/20'
                             : 'bg-accent/5'
                         }`}>
-                          {vehicle.image_url ? (
-                            <img 
-                              src={vehicle.image_url} 
-                              alt={vehicle.name}
-                              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                              loading="lazy"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                              }}
-                            />
-                          ) : null}
-                          <div className={`${vehicle.image_url ? 'hidden' : 'flex'} absolute inset-0 flex-col items-center justify-center bg-muted/30 backdrop-blur-sm`}>
-                            <Car className={`w-16 h-16 mb-2 ${isRollsRoyce ? 'text-[#C5A572]' : 'text-accent'} opacity-40`} />
-                            <span className="text-xs text-muted-foreground/70">Image coming soon</span>
-                          </div>
+                          {galleryImages.length > 0 ? (
+                            <VehicleCardCarousel images={galleryImages} alt={vehicle.name} />
+                          ) : (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/30 backdrop-blur-sm">
+                              <Car className={`w-16 h-16 mb-2 ${isRollsRoyce ? 'text-[#C5A572]' : 'text-accent'} opacity-40`} />
+                              <span className="text-xs text-muted-foreground/70">Image coming soon</span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Vehicle Details */}
