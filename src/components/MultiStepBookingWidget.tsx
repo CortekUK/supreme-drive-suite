@@ -1027,7 +1027,7 @@ const MultiStepBookingWidget = () => {
   }
 
   return (
-    <Card className="p-4 md:p-8 bg-card/90 backdrop-blur-sm border-primary/30 shadow-metal">
+    <Card ref={widgetRef} className="p-4 md:p-8 bg-card/90 backdrop-blur-sm border-primary/30 shadow-metal">
       <div className="space-y-8">
         {/* Enhanced Progress Indicator */}
         <div className="w-full">
