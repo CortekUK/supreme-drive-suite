@@ -1320,12 +1320,20 @@ const MultiStepBookingWidget = () => {
                               }
                             }}
                             disabled={(date) => {
-                              const today = new Date(new Date().setHours(0, 0, 0, 0));
-                              const pickup = formData.pickupDate ? new Date(formData.pickupDate) : today;
+                              const d = new Date(date);
+                              d.setHours(0, 0, 0, 0);
+                              const today = new Date();
+                              today.setHours(0, 0, 0, 0);
+                              let pickup = today;
+                              if (formData.pickupDate) {
+                                const [y, m, dd] = formData.pickupDate.split("-").map(Number);
+                                pickup = new Date(y, (m || 1) - 1, dd || 1);
+                                pickup.setHours(0, 0, 0, 0);
+                              }
                               const minDate = pickup > today ? pickup : today;
                               const oneMonthFromNow = new Date(today);
                               oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
-                              return date < minDate || date > oneMonthFromNow;
+                              return d < minDate || d > oneMonthFromNow;
                             }}
                             initialFocus
                             className={cn("p-3 pointer-events-auto")}
