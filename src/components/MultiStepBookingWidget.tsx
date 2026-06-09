@@ -390,7 +390,11 @@ const MultiStepBookingWidget = () => {
         isShortJourney: false, isMidJourney: false, isLongJourney: false,
         totalPrice, isDynamic: true,
         rateLabel: `Mileage (£${ratePerMile.toFixed(2)}/mi${isReturn ? " × return" : ""})`
+      };
+    }
   };
+
+
 
   // Compute mileage-only price for a given vehicle (used for multi-vehicle combined pricing)
   const calculateVehicleMileagePrice = (vehicle: Vehicle): number => {
