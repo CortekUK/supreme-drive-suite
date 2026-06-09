@@ -386,7 +386,7 @@ const MultiStepBookingWidget = () => {
         baseFare, sameDayReturnDiscount, discountLabel, discountRate,
         isShortJourney: false, isMidJourney: false, isLongJourney: false,
         totalPrice, isDynamic: true,
-        rateLabel: `Mileage (£${ratePerMile.toFixed(2)}/mi${isReturn ? " × return" : ""})`
+        rateLabel: `Mileage${isReturn ? " (Return)" : " (One Way)"}`
       };
     }
   };
