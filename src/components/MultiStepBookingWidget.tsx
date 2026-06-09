@@ -413,8 +413,6 @@ const MultiStepBookingWidget = () => {
     const price = totalMiles * vehicle.base_price_per_mile;
     return isSameDayReturn ? price * 0.95 : price;
   };
-    }
-  };
 
   const isMultiStop = parseInt(numberOfStops) >= 2;
 
