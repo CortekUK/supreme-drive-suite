@@ -120,18 +120,44 @@ interface PricingExtra {
 // dynamic pricing from their base_price_per_mile set in the admin portal.
 const isBookableVehicle = (name: string) => name.toLowerCase().includes("xlwb");
 
-// Vehicles with hardcoded tiered pricing (same set — used for price calculation)
-const usesTieredPricing = (name: string) => isBookableVehicle(name);
+const isTieredPriceVehicleName = (name: string) => {
+  const lower = name.toLowerCase();
+  return (lower.includes("v-class") && lower.includes("xlwb")) || lower.includes("s-class");
+};
+
+const getTieredPricingProfile = (vehicle: Vehicle) => {
+  if (!isTieredPriceVehicleName(vehicle.name)) return null;
+
+  const isLuxury = vehicle.category.toLowerCase().includes("luxury");
+
+  return {
+    shortThreshold: 26,
+    nearThreshold: 50,
+    regionalThreshold: 100,
+    shortOneWay: 200,
+    shortReturn: 400,
+    shortReturnDiscount: 0.10,
+    nearRate: isLuxury ? 7.50 : 6.50,
+    regionalRate: isLuxury ? 6.50 : 5.50,
+    longRate: isLuxury ? 4.00 : 3.70,
+  };
+};
 
 const MultiStepBookingWidget = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const widgetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (widgetRef.current) {
-      const top = widgetRef.current.getBoundingClientRect().top + window.scrollY - 80;
-      window.scrollTo({ top, behavior: "smooth" });
-    }
+    const scrollToStepTop = () => {
+      if (widgetRef.current) {
+        const top = widgetRef.current.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top: Math.max(top, 0), behavior: "smooth" });
+      }
+    };
+
+    scrollToStepTop();
+    const timer = window.setTimeout(scrollToStepTop, 80);
+    return () => window.clearTimeout(timer);
   }, [currentStep]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [vehicleImages, setVehicleImages] = useState<Record<string, string[]>>({});
