@@ -367,11 +367,8 @@ const MultiStepBookingWidget = () => {
         totalPrice, isDynamic: false,
         rateLabel: isShortJourney
           ? `Minimum Fare${isReturn ? " (Return)" : " (One Way)"}`
-          : isNearJourney
-            ? `Mileage (£${tieredPricing.nearRate.toFixed(2)}/mi${isReturn ? " × return" : ""})`
-            : isRegionalJourney
-              ? `Mileage (£${tieredPricing.regionalRate.toFixed(2)}/mi${isReturn ? " × return" : ""})`
-              : `Mileage (£${tieredPricing.longRate.toFixed(2)}/mi${isReturn ? " × return" : ""})`
+          : `Mileage${isReturn ? " (Return)" : " (One Way)"}`
+
       };
     } else {
       // Dynamic pricing: admin-set base_price_per_mile × miles
