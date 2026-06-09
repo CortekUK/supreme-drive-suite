@@ -367,11 +367,8 @@ const MultiStepBookingWidget = () => {
         totalPrice, isDynamic: false,
         rateLabel: isShortJourney
           ? `Minimum Fare${isReturn ? " (Return)" : " (One Way)"}`
-          : isNearJourney
-            ? `Mileage (£${tieredPricing.nearRate.toFixed(2)}/mi${isReturn ? " × return" : ""})`
-            : isRegionalJourney
-              ? `Mileage (£${tieredPricing.regionalRate.toFixed(2)}/mi${isReturn ? " × return" : ""})`
-              : `Mileage (£${tieredPricing.longRate.toFixed(2)}/mi${isReturn ? " × return" : ""})`
+          : `Mileage${isReturn ? " (Return)" : " (One Way)"}`
+
       };
     } else {
       // Dynamic pricing: admin-set base_price_per_mile × miles
@@ -389,7 +386,7 @@ const MultiStepBookingWidget = () => {
         baseFare, sameDayReturnDiscount, discountLabel, discountRate,
         isShortJourney: false, isMidJourney: false, isLongJourney: false,
         totalPrice, isDynamic: true,
-        rateLabel: `Mileage (£${ratePerMile.toFixed(2)}/mi${isReturn ? " × return" : ""})`
+        rateLabel: `Mileage${isReturn ? " (Return)" : " (One Way)"}`
       };
     }
   };
@@ -397,25 +394,41 @@ const MultiStepBookingWidget = () => {
 
 
   // Compute mileage-only price for a given vehicle (used for multi-vehicle combined pricing)
-  const calculateVehicleMileagePrice = (vehicle: Vehicle): number => {
+  const calculateVehicleMileagePrice = (vehicle: Vehicle): { base: number; discountRate: number; discountLabel: string; final: number } => {
+    const empty = { base: 0, discountRate: 0, discountLabel: "", final: 0 };
     const miles = parseFloat(formData.estimatedMiles) || 0;
-    if (miles <= 0) return 0;
+    if (miles <= 0) return empty;
     const tiered = getTieredPricingProfile(vehicle);
+    let base = 0;
+    let discountRate = 0;
+    let discountLabel = "";
     if (tiered) {
       if (miles <= tiered.shortThreshold) {
-        const base = isReturn ? tiered.shortReturn : tiered.shortOneWay;
-        return isSameDayReturn ? base * (1 - tiered.shortReturnDiscount) : base;
+        base = isReturn ? tiered.shortReturn : tiered.shortOneWay;
+        if (isSameDayReturn) {
+          discountRate = tiered.shortReturnDiscount;
+          discountLabel = `Same-day Return Discount (${Math.round(tiered.shortReturnDiscount * 100)}%)`;
+        }
+      } else {
+        const totalMiles = isReturn ? miles * 2 : miles;
+        let rate = tiered.longRate;
+        if (miles <= tiered.nearThreshold) rate = tiered.nearRate;
+        else if (miles <= tiered.regionalThreshold) rate = tiered.regionalRate;
+        base = totalMiles * rate;
+        if (isSameDayReturn) {
+          discountRate = 0.05;
+          discountLabel = "Same-day Return Discount (5%)";
+        }
       }
+    } else {
       const totalMiles = isReturn ? miles * 2 : miles;
-      let rate = tiered.longRate;
-      if (miles <= tiered.nearThreshold) rate = tiered.nearRate;
-      else if (miles <= tiered.regionalThreshold) rate = tiered.regionalRate;
-      const price = totalMiles * rate;
-      return isSameDayReturn ? price * 0.95 : price;
+      base = totalMiles * vehicle.base_price_per_mile;
+      if (isSameDayReturn) {
+        discountRate = 0.05;
+        discountLabel = "Same-day Return Discount (5%)";
+      }
     }
-    const totalMiles = isReturn ? miles * 2 : miles;
-    const price = totalMiles * vehicle.base_price_per_mile;
-    return isSameDayReturn ? price * 0.95 : price;
+    return { base, discountRate, discountLabel, final: base * (1 - discountRate) };
   };
 
   const isMultiStop = parseInt(numberOfStops) >= 2;
@@ -1930,10 +1943,21 @@ const MultiStepBookingWidget = () => {
                       .filter(([, qty]) => qty > 0)
                       .map(([id, qty]) => {
                         const v = vehicles.find((x) => x.id === id);
-                        const unit = v ? calculateVehicleMileagePrice(v) : 0;
-                        return { id, qty, vehicle: v, unit, subtotal: unit * qty };
+                        const p = v ? calculateVehicleMileagePrice(v) : { base: 0, discountRate: 0, discountLabel: "", final: 0 };
+                        return {
+                          id, qty, vehicle: v,
+                          unitBase: p.base,
+                          unitFinal: p.final,
+                          discountLabel: p.discountLabel,
+                          subtotalBase: p.base * qty,
+                          subtotalDiscount: (p.base - p.final) * qty,
+                          subtotal: p.final * qty,
+                        };
                       });
+                    const combinedBase = lineItems.reduce((s, i) => s + i.subtotalBase, 0);
+                    const combinedDiscount = lineItems.reduce((s, i) => s + i.subtotalDiscount, 0);
                     const combinedTotal = lineItems.reduce((s, i) => s + i.subtotal, 0);
+                    const discountLabel = lineItems.find((i) => i.discountLabel)?.discountLabel || "";
                     const hasPricing = miles > 0 && combinedTotal > 0;
                     return (
                       <div className="space-y-3">
@@ -1948,21 +1972,26 @@ const MultiStepBookingWidget = () => {
                           </div>
                         )}
                         <div className="space-y-2 pt-2">
-                          {lineItems.map(({ id, qty, vehicle: v, unit, subtotal }) => (
-                            <div key={id} className="flex flex-col gap-1 pb-2 border-b border-accent/10 last:border-0">
-                              <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">{v?.name || "Vehicle"} ×{qty}</span>
-                                {hasPricing && (
-                                  <span className="font-semibold text-accent">£{subtotal.toFixed(2)}</span>
-                                )}
-                              </div>
-                              {hasPricing && qty > 1 && (
-                                <div className="text-xs text-muted-foreground/70 text-right">
-                                  £{unit.toFixed(2)} each
-                                </div>
+                          {lineItems.map(({ id, qty, vehicle: v, subtotal }) => (
+                            <div key={id} className="flex justify-between text-sm pb-2 border-b border-accent/10 last:border-0">
+                              <span className="text-muted-foreground">{v?.name || "Vehicle"} ×{qty}</span>
+                              {hasPricing && (
+                                <span className="font-semibold text-accent">£{subtotal.toFixed(2)}</span>
                               )}
                             </div>
                           ))}
+                          {hasPricing && combinedDiscount > 0 && (
+                            <>
+                              <div className="flex justify-between text-sm pt-1">
+                                <span className="text-muted-foreground">Subtotal</span>
+                                <span className="font-medium">£{combinedBase.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between text-sm text-green-500">
+                                <span>{discountLabel}</span>
+                                <span>-£{combinedDiscount.toFixed(2)}</span>
+                              </div>
+                            </>
+                          )}
                           <div className="border-t border-accent/30 pt-3 mt-1 flex justify-between items-center">
                             <span className="text-base font-semibold">
                               {hasPricing ? "Combined Estimate" : "Total Vehicles"}
