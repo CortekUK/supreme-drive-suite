@@ -1922,33 +1922,62 @@ const MultiStepBookingWidget = () => {
               {/* Sticky Price Summary / Enquiry Notice (Desktop) */}
               <div className="lg:col-span-1">
                 <Card className="p-6 bg-gradient-dark border-accent/30 lg:sticky lg:top-24 lg:self-start">
-                  {isMultiVehicleBooking ? (
-                    <div className="space-y-3">
-                      <h4 className="text-lg font-semibold text-gradient-metal mb-2">Multi-Vehicle Enquiry</h4>
-                      <div className="p-3 rounded-lg bg-accent/10 border border-accent/20">
-                        <p className="text-xs text-muted-foreground text-center">
-                          Pricing for multi-vehicle bookings is confirmed by our team after enquiry.
-                        </p>
-                      </div>
-                      <div className="space-y-2 pt-2">
-                        {Object.entries(vehicleQuantities)
-                          .filter(([, qty]) => qty > 0)
-                          .map(([id, qty]) => {
-                            const v = vehicles.find((x) => x.id === id);
-                            return (
-                              <div key={id} className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">{v?.name || "Vehicle"}</span>
-                                <span className="font-semibold">×{qty}</span>
+                  {isMultiVehicleBooking ? (() => {
+                    const miles = parseFloat(formData.estimatedMiles) || 0;
+                    const lineItems = Object.entries(vehicleQuantities)
+                      .filter(([, qty]) => qty > 0)
+                      .map(([id, qty]) => {
+                        const v = vehicles.find((x) => x.id === id);
+                        const unit = v ? calculateVehicleMileagePrice(v) : 0;
+                        return { id, qty, vehicle: v, unit, subtotal: unit * qty };
+                      });
+                    const combinedTotal = lineItems.reduce((s, i) => s + i.subtotal, 0);
+                    const hasPricing = miles > 0 && combinedTotal > 0;
+                    return (
+                      <div className="space-y-3">
+                        <h4 className="text-lg font-semibold text-gradient-metal mb-2">
+                          {hasPricing ? "Multi-Vehicle Estimate" : "Multi-Vehicle Enquiry"}
+                        </h4>
+                        {!hasPricing && (
+                          <div className="p-3 rounded-lg bg-accent/10 border border-accent/20">
+                            <p className="text-xs text-muted-foreground text-center">
+                              Enter journey miles to see a combined estimate. Final pricing confirmed by our team.
+                            </p>
+                          </div>
+                        )}
+                        <div className="space-y-2 pt-2">
+                          {lineItems.map(({ id, qty, vehicle: v, unit, subtotal }) => (
+                            <div key={id} className="flex flex-col gap-1 pb-2 border-b border-accent/10 last:border-0">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">{v?.name || "Vehicle"} ×{qty}</span>
+                                {hasPricing && (
+                                  <span className="font-semibold text-accent">£{subtotal.toFixed(2)}</span>
+                                )}
                               </div>
-                            );
-                          })}
-                        <div className="border-t border-accent/30 pt-3 mt-1 flex justify-between items-center">
-                          <span className="text-base font-semibold">Total Vehicles</span>
-                          <span className="text-xl font-bold text-accent">{totalVehicleQty}</span>
+                              {hasPricing && qty > 1 && (
+                                <div className="text-xs text-muted-foreground/70 text-right">
+                                  £{unit.toFixed(2)} each
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                          <div className="border-t border-accent/30 pt-3 mt-1 flex justify-between items-center">
+                            <span className="text-base font-semibold">
+                              {hasPricing ? "Combined Estimate" : "Total Vehicles"}
+                            </span>
+                            <span className="text-xl font-bold text-accent">
+                              {hasPricing ? `£${combinedTotal.toFixed(2)}` : totalVehicleQty}
+                            </span>
+                          </div>
+                          {hasPricing && (
+                            <p className="text-xs text-muted-foreground text-center pt-1">
+                              Estimate based on {miles} miles{isReturn ? " (return)" : ""}. Final price confirmed by our team.
+                            </p>
+                          )}
                         </div>
                       </div>
-                    </div>
-                  ) : priceBreakdown ? (
+                    );
+                  })() : priceBreakdown ? (
                     <div className="space-y-3">
                       {isEnquiryOnlyVehicle && (
                         <div className="mb-3 p-3 rounded-lg bg-accent/10 border border-accent/20">
