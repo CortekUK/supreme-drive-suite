@@ -394,25 +394,41 @@ const MultiStepBookingWidget = () => {
 
 
   // Compute mileage-only price for a given vehicle (used for multi-vehicle combined pricing)
-  const calculateVehicleMileagePrice = (vehicle: Vehicle): number => {
+  const calculateVehicleMileagePrice = (vehicle: Vehicle): { base: number; discountRate: number; discountLabel: string; final: number } => {
+    const empty = { base: 0, discountRate: 0, discountLabel: "", final: 0 };
     const miles = parseFloat(formData.estimatedMiles) || 0;
-    if (miles <= 0) return 0;
+    if (miles <= 0) return empty;
     const tiered = getTieredPricingProfile(vehicle);
+    let base = 0;
+    let discountRate = 0;
+    let discountLabel = "";
     if (tiered) {
       if (miles <= tiered.shortThreshold) {
-        const base = isReturn ? tiered.shortReturn : tiered.shortOneWay;
-        return isSameDayReturn ? base * (1 - tiered.shortReturnDiscount) : base;
+        base = isReturn ? tiered.shortReturn : tiered.shortOneWay;
+        if (isSameDayReturn) {
+          discountRate = tiered.shortReturnDiscount;
+          discountLabel = `Same-day Return Discount (${Math.round(tiered.shortReturnDiscount * 100)}%)`;
+        }
+      } else {
+        const totalMiles = isReturn ? miles * 2 : miles;
+        let rate = tiered.longRate;
+        if (miles <= tiered.nearThreshold) rate = tiered.nearRate;
+        else if (miles <= tiered.regionalThreshold) rate = tiered.regionalRate;
+        base = totalMiles * rate;
+        if (isSameDayReturn) {
+          discountRate = 0.05;
+          discountLabel = "Same-day Return Discount (5%)";
+        }
       }
+    } else {
       const totalMiles = isReturn ? miles * 2 : miles;
-      let rate = tiered.longRate;
-      if (miles <= tiered.nearThreshold) rate = tiered.nearRate;
-      else if (miles <= tiered.regionalThreshold) rate = tiered.regionalRate;
-      const price = totalMiles * rate;
-      return isSameDayReturn ? price * 0.95 : price;
+      base = totalMiles * vehicle.base_price_per_mile;
+      if (isSameDayReturn) {
+        discountRate = 0.05;
+        discountLabel = "Same-day Return Discount (5%)";
+      }
     }
-    const totalMiles = isReturn ? miles * 2 : miles;
-    const price = totalMiles * vehicle.base_price_per_mile;
-    return isSameDayReturn ? price * 0.95 : price;
+    return { base, discountRate, discountLabel, final: base * (1 - discountRate) };
   };
 
   const isMultiStop = parseInt(numberOfStops) >= 2;
