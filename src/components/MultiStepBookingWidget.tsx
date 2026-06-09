@@ -118,7 +118,10 @@ interface PricingExtra {
 // ONLY the V300 XLWB uses hardcoded tiered pricing + Stripe instant payment.
 // Every other vehicle (including V300 XLWD and any future additions) uses
 // dynamic pricing from their base_price_per_mile set in the admin portal.
-const isBookableVehicle = (name: string) => name.toLowerCase().includes("xlwb");
+const isBookableVehicle = (name: string) => {
+  const lower = name.toLowerCase();
+  return lower.includes("xlwb") || lower.includes("s-class") || lower.includes("s class");
+};
 
 const isTieredPriceVehicleName = (name: string) => {
   const lower = name.toLowerCase();
