@@ -1943,10 +1943,21 @@ const MultiStepBookingWidget = () => {
                       .filter(([, qty]) => qty > 0)
                       .map(([id, qty]) => {
                         const v = vehicles.find((x) => x.id === id);
-                        const unit = v ? calculateVehicleMileagePrice(v) : 0;
-                        return { id, qty, vehicle: v, unit, subtotal: unit * qty };
+                        const p = v ? calculateVehicleMileagePrice(v) : { base: 0, discountRate: 0, discountLabel: "", final: 0 };
+                        return {
+                          id, qty, vehicle: v,
+                          unitBase: p.base,
+                          unitFinal: p.final,
+                          discountLabel: p.discountLabel,
+                          subtotalBase: p.base * qty,
+                          subtotalDiscount: (p.base - p.final) * qty,
+                          subtotal: p.final * qty,
+                        };
                       });
+                    const combinedBase = lineItems.reduce((s, i) => s + i.subtotalBase, 0);
+                    const combinedDiscount = lineItems.reduce((s, i) => s + i.subtotalDiscount, 0);
                     const combinedTotal = lineItems.reduce((s, i) => s + i.subtotal, 0);
+                    const discountLabel = lineItems.find((i) => i.discountLabel)?.discountLabel || "";
                     const hasPricing = miles > 0 && combinedTotal > 0;
                     return (
                       <div className="space-y-3">
@@ -1961,21 +1972,26 @@ const MultiStepBookingWidget = () => {
                           </div>
                         )}
                         <div className="space-y-2 pt-2">
-                          {lineItems.map(({ id, qty, vehicle: v, unit, subtotal }) => (
-                            <div key={id} className="flex flex-col gap-1 pb-2 border-b border-accent/10 last:border-0">
-                              <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">{v?.name || "Vehicle"} ×{qty}</span>
-                                {hasPricing && (
-                                  <span className="font-semibold text-accent">£{subtotal.toFixed(2)}</span>
-                                )}
-                              </div>
-                              {hasPricing && qty > 1 && (
-                                <div className="text-xs text-muted-foreground/70 text-right">
-                                  £{unit.toFixed(2)} each
-                                </div>
+                          {lineItems.map(({ id, qty, vehicle: v, subtotal }) => (
+                            <div key={id} className="flex justify-between text-sm pb-2 border-b border-accent/10 last:border-0">
+                              <span className="text-muted-foreground">{v?.name || "Vehicle"} ×{qty}</span>
+                              {hasPricing && (
+                                <span className="font-semibold text-accent">£{subtotal.toFixed(2)}</span>
                               )}
                             </div>
                           ))}
+                          {hasPricing && combinedDiscount > 0 && (
+                            <>
+                              <div className="flex justify-between text-sm pt-1">
+                                <span className="text-muted-foreground">Subtotal</span>
+                                <span className="font-medium">£{combinedBase.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between text-sm text-green-500">
+                                <span>{discountLabel}</span>
+                                <span>-£{combinedDiscount.toFixed(2)}</span>
+                              </div>
+                            </>
+                          )}
                           <div className="border-t border-accent/30 pt-3 mt-1 flex justify-between items-center">
                             <span className="text-base font-semibold">
                               {hasPricing ? "Combined Estimate" : "Total Vehicles"}
