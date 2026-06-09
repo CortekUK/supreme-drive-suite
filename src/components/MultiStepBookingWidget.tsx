@@ -390,7 +390,29 @@ const MultiStepBookingWidget = () => {
         isShortJourney: false, isMidJourney: false, isLongJourney: false,
         totalPrice, isDynamic: true,
         rateLabel: `Mileage (£${ratePerMile.toFixed(2)}/mi${isReturn ? " × return" : ""})`
-      };
+  };
+
+  // Compute mileage-only price for a given vehicle (used for multi-vehicle combined pricing)
+  const calculateVehicleMileagePrice = (vehicle: Vehicle): number => {
+    const miles = parseFloat(formData.estimatedMiles) || 0;
+    if (miles <= 0) return 0;
+    const tiered = getTieredPricingProfile(vehicle);
+    if (tiered) {
+      if (miles <= tiered.shortThreshold) {
+        const base = isReturn ? tiered.shortReturn : tiered.shortOneWay;
+        return isSameDayReturn ? base * (1 - tiered.shortReturnDiscount) : base;
+      }
+      const totalMiles = isReturn ? miles * 2 : miles;
+      let rate = tiered.longRate;
+      if (miles <= tiered.nearThreshold) rate = tiered.nearRate;
+      else if (miles <= tiered.regionalThreshold) rate = tiered.regionalRate;
+      const price = totalMiles * rate;
+      return isSameDayReturn ? price * 0.95 : price;
+    }
+    const totalMiles = isReturn ? miles * 2 : miles;
+    const price = totalMiles * vehicle.base_price_per_mile;
+    return isSameDayReturn ? price * 0.95 : price;
+  };
     }
   };
 
