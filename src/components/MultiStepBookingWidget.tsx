@@ -320,55 +320,35 @@ const MultiStepBookingWidget = () => {
       return sum + (extra?.price || 0);
     }, 0);
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // TIERED PRICING — applies to V300 LWD and V300 XLWB only
-    //
-    //  Tier 1 – Manchester / Short  : 0 – 26 miles
-    //    One-way  = £200 minimum flat fare
-    //    Return   = £400 minimum flat fare
-    //    Same-day return discount: 10%
-    //
-    //  Tier 2 – Mid-distance        : 26.1 – 95.5 miles one-way
-    //    Rate = £5.50/mile
-    //    Same-day return: 5% discount on full return price
-    //
-    //  Tier 3 – Long-distance       : 95.6+ miles one-way
-    //    Rate = £3.75/mile
-    //    Same-day return: 5% discount on full return price
-    //
-    // DYNAMIC PRICING — all other vehicles
-    //    Price = base_price_per_mile (from DB) × miles (× 2 if same-day return)
-    //    Reflects admin-set rate automatically — no hardcoded values
-    // ─────────────────────────────────────────────────────────────────────────
+    const tieredPricing = getTieredPricingProfile(selectedVehicle);
 
-    if (usesTieredPricing(selectedVehicle.name)) {
-      const SHORT_THRESHOLD   = 26;
-      const MID_UPPER         = 95.5;
-      const MID_RATE          = 5.50;
-      const LONG_RATE         = 3.75;
-      const SHORT_ONE_WAY_MIN = 200;
-      const SHORT_RETURN_MIN  = 400;
-
-      const isShortJourney = miles > 0 && miles <= SHORT_THRESHOLD;
-      const isMidJourney   = miles > SHORT_THRESHOLD && miles <= MID_UPPER;
-      const isLongJourney  = miles > MID_UPPER;
+    if (tieredPricing) {
+      const isShortJourney = miles > 0 && miles <= tieredPricing.shortThreshold;
+      const isNearJourney = miles > tieredPricing.shortThreshold && miles <= tieredPricing.nearThreshold;
+      const isRegionalJourney = miles > tieredPricing.nearThreshold && miles <= tieredPricing.regionalThreshold;
+      const isLongJourney = miles > tieredPricing.regionalThreshold;
 
       let mileagePrice = 0;
       let discountRate  = 0;
       let discountLabel = "";
 
       if (isShortJourney) {
-        mileagePrice  = isReturn ? SHORT_RETURN_MIN : SHORT_ONE_WAY_MIN;
-        discountRate  = isSameDayReturn ? 0.10 : 0;
+        mileagePrice  = isReturn ? tieredPricing.shortReturn : tieredPricing.shortOneWay;
+        discountRate  = isSameDayReturn ? tieredPricing.shortReturnDiscount : 0;
         discountLabel = "Same-day Return Discount (10%)";
-      } else if (isMidJourney) {
+      } else if (isNearJourney) {
         const totalMiles = isReturn ? miles * 2 : miles;
-        mileagePrice  = totalMiles * MID_RATE;
+        mileagePrice  = totalMiles * tieredPricing.nearRate;
+        discountRate  = isSameDayReturn ? 0.05 : 0;
+        discountLabel = "Same-day Return Discount (5%)";
+      } else if (isRegionalJourney) {
+        const totalMiles = isReturn ? miles * 2 : miles;
+        mileagePrice  = totalMiles * tieredPricing.regionalRate;
         discountRate  = isSameDayReturn ? 0.05 : 0;
         discountLabel = "Same-day Return Discount (5%)";
       } else if (isLongJourney) {
         const totalMiles = isReturn ? miles * 2 : miles;
-        mileagePrice  = totalMiles * LONG_RATE;
+        mileagePrice  = totalMiles * tieredPricing.longRate;
         discountRate  = isSameDayReturn ? 0.05 : 0;
         discountLabel = "Same-day Return Discount (5%)";
       }
@@ -380,13 +360,15 @@ const MultiStepBookingWidget = () => {
       return {
         mileagePrice, waitTimePrice, overnightFee, extrasTotal,
         baseFare, sameDayReturnDiscount, discountLabel, discountRate,
-        isShortJourney, isMidJourney, isLongJourney,
+        isShortJourney, isMidJourney: isNearJourney || isRegionalJourney, isLongJourney,
         totalPrice, isDynamic: false,
         rateLabel: isShortJourney
           ? `Minimum Fare${isReturn ? " (Return)" : " (One Way)"}`
-          : isMidJourney
-            ? `Mileage (£5.50/mi${isReturn ? " × return" : ""})`
-            : `Mileage (£3.75/mi${isReturn ? " × return" : ""})`
+          : isNearJourney
+            ? `Mileage (£${tieredPricing.nearRate.toFixed(2)}/mi${isReturn ? " × return" : ""})`
+            : isRegionalJourney
+              ? `Mileage (£${tieredPricing.regionalRate.toFixed(2)}/mi${isReturn ? " × return" : ""})`
+              : `Mileage (£${tieredPricing.longRate.toFixed(2)}/mi${isReturn ? " × return" : ""})`
       };
     } else {
       // Dynamic pricing: admin-set base_price_per_mile × miles
