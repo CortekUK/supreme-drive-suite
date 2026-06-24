@@ -131,7 +131,26 @@ const isTieredPriceVehicleName = (name: string) => {
 const getTieredPricingProfile = (vehicle: Vehicle) => {
   if (!isTieredPriceVehicleName(vehicle.name)) return null;
 
+  const lowerName = vehicle.name.toLowerCase();
   const isLuxury = vehicle.category.toLowerCase().includes("luxury");
+  const isSClassStandard = lowerName.includes("s-class") && !isLuxury;
+
+  // S-Class Standard has its own bespoke rate card with no same-day discount
+  // on journeys above the 26-mile base radius.
+  if (isSClassStandard) {
+    return {
+      shortThreshold: 26,
+      nearThreshold: 50,
+      regionalThreshold: 100,
+      shortOneWay: 200,
+      shortReturn: 400,
+      shortReturnDiscount: 0.10,
+      nearRate: 6.00,
+      regionalRate: 5.00,
+      longRate: 3.25,
+      midDiscount: 0,
+    };
+  }
 
   return {
     shortThreshold: 26,
@@ -143,6 +162,7 @@ const getTieredPricingProfile = (vehicle: Vehicle) => {
     nearRate: isLuxury ? 7.50 : 6.50,
     regionalRate: isLuxury ? 6.50 : 5.50,
     longRate: isLuxury ? 4.00 : 3.70,
+    midDiscount: 0.05,
   };
 };
 
@@ -342,18 +362,18 @@ const MultiStepBookingWidget = () => {
       } else if (isNearJourney) {
         const totalMiles = isReturn ? miles * 2 : miles;
         mileagePrice  = totalMiles * tieredPricing.nearRate;
-        discountRate  = isSameDayReturn ? 0.05 : 0;
-        discountLabel = "Same-day Return Discount (5%)";
+        discountRate  = isSameDayReturn ? tieredPricing.midDiscount : 0;
+        discountLabel = tieredPricing.midDiscount > 0 ? `Same-day Return Discount (${Math.round(tieredPricing.midDiscount * 100)}%)` : "";
       } else if (isRegionalJourney) {
         const totalMiles = isReturn ? miles * 2 : miles;
         mileagePrice  = totalMiles * tieredPricing.regionalRate;
-        discountRate  = isSameDayReturn ? 0.05 : 0;
-        discountLabel = "Same-day Return Discount (5%)";
+        discountRate  = isSameDayReturn ? tieredPricing.midDiscount : 0;
+        discountLabel = tieredPricing.midDiscount > 0 ? `Same-day Return Discount (${Math.round(tieredPricing.midDiscount * 100)}%)` : "";
       } else if (isLongJourney) {
         const totalMiles = isReturn ? miles * 2 : miles;
         mileagePrice  = totalMiles * tieredPricing.longRate;
-        discountRate  = isSameDayReturn ? 0.05 : 0;
-        discountLabel = "Same-day Return Discount (5%)";
+        discountRate  = isSameDayReturn ? tieredPricing.midDiscount : 0;
+        discountLabel = tieredPricing.midDiscount > 0 ? `Same-day Return Discount (${Math.round(tieredPricing.midDiscount * 100)}%)` : "";
       }
 
       const baseFare              = mileagePrice + waitTimePrice + overnightFee + extrasTotal;
@@ -415,9 +435,9 @@ const MultiStepBookingWidget = () => {
         if (miles <= tiered.nearThreshold) rate = tiered.nearRate;
         else if (miles <= tiered.regionalThreshold) rate = tiered.regionalRate;
         base = totalMiles * rate;
-        if (isSameDayReturn) {
-          discountRate = 0.05;
-          discountLabel = "Same-day Return Discount (5%)";
+        if (isSameDayReturn && tiered.midDiscount > 0) {
+          discountRate = tiered.midDiscount;
+          discountLabel = `Same-day Return Discount (${Math.round(tiered.midDiscount * 100)}%)`;
         }
       }
     } else {
