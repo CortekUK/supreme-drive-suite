@@ -435,9 +435,9 @@ const MultiStepBookingWidget = () => {
         if (miles <= tiered.nearThreshold) rate = tiered.nearRate;
         else if (miles <= tiered.regionalThreshold) rate = tiered.regionalRate;
         base = totalMiles * rate;
-        if (isSameDayReturn) {
-          discountRate = 0.05;
-          discountLabel = "Same-day Return Discount (5%)";
+        if (isSameDayReturn && tiered.midDiscount > 0) {
+          discountRate = tiered.midDiscount;
+          discountLabel = `Same-day Return Discount (${Math.round(tiered.midDiscount * 100)}%)`;
         }
       }
     } else {
