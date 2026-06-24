@@ -1,8 +1,11 @@
 import { loadStripe } from '@stripe/stripe-js';
 
-// Initialize Stripe with your publishable key
-// TODO: Move this to environment variable
-export const stripePromise = loadStripe(
-  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
-  'pk_test_51SRwkb2ZtM9M31YYqLIU1GZK04IjUO1f8AEBYCLENR18wkKSXi8Sa9D4LAmAT9eQb56QVniEfnr52tPvs4yDNcf0004fJhqPeD'
-);
+const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+
+if (!publishableKey) {
+  // Fail loud rather than silently falling back to a test key in production
+  console.error('VITE_STRIPE_PUBLISHABLE_KEY is not set — payments will not work.');
+}
+
+// Initialize Stripe with the publishable key from the environment
+export const stripePromise = loadStripe(publishableKey ?? '');
