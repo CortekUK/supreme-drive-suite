@@ -362,18 +362,18 @@ const MultiStepBookingWidget = () => {
       } else if (isNearJourney) {
         const totalMiles = isReturn ? miles * 2 : miles;
         mileagePrice  = totalMiles * tieredPricing.nearRate;
-        discountRate  = isSameDayReturn ? 0.05 : 0;
-        discountLabel = "Same-day Return Discount (5%)";
+        discountRate  = isSameDayReturn ? tieredPricing.midDiscount : 0;
+        discountLabel = tieredPricing.midDiscount > 0 ? `Same-day Return Discount (${Math.round(tieredPricing.midDiscount * 100)}%)` : "";
       } else if (isRegionalJourney) {
         const totalMiles = isReturn ? miles * 2 : miles;
         mileagePrice  = totalMiles * tieredPricing.regionalRate;
-        discountRate  = isSameDayReturn ? 0.05 : 0;
-        discountLabel = "Same-day Return Discount (5%)";
+        discountRate  = isSameDayReturn ? tieredPricing.midDiscount : 0;
+        discountLabel = tieredPricing.midDiscount > 0 ? `Same-day Return Discount (${Math.round(tieredPricing.midDiscount * 100)}%)` : "";
       } else if (isLongJourney) {
         const totalMiles = isReturn ? miles * 2 : miles;
         mileagePrice  = totalMiles * tieredPricing.longRate;
-        discountRate  = isSameDayReturn ? 0.05 : 0;
-        discountLabel = "Same-day Return Discount (5%)";
+        discountRate  = isSameDayReturn ? tieredPricing.midDiscount : 0;
+        discountLabel = tieredPricing.midDiscount > 0 ? `Same-day Return Discount (${Math.round(tieredPricing.midDiscount * 100)}%)` : "";
       }
 
       const baseFare              = mileagePrice + waitTimePrice + overnightFee + extrasTotal;
