@@ -131,7 +131,26 @@ const isTieredPriceVehicleName = (name: string) => {
 const getTieredPricingProfile = (vehicle: Vehicle) => {
   if (!isTieredPriceVehicleName(vehicle.name)) return null;
 
+  const lowerName = vehicle.name.toLowerCase();
   const isLuxury = vehicle.category.toLowerCase().includes("luxury");
+  const isSClassStandard = lowerName.includes("s-class") && !isLuxury;
+
+  // S-Class Standard has its own bespoke rate card with no same-day discount
+  // on journeys above the 26-mile base radius.
+  if (isSClassStandard) {
+    return {
+      shortThreshold: 26,
+      nearThreshold: 50,
+      regionalThreshold: 100,
+      shortOneWay: 200,
+      shortReturn: 400,
+      shortReturnDiscount: 0.10,
+      nearRate: 6.00,
+      regionalRate: 5.00,
+      longRate: 3.25,
+      midDiscount: 0,
+    };
+  }
 
   return {
     shortThreshold: 26,
@@ -143,6 +162,7 @@ const getTieredPricingProfile = (vehicle: Vehicle) => {
     nearRate: isLuxury ? 7.50 : 6.50,
     regionalRate: isLuxury ? 6.50 : 5.50,
     longRate: isLuxury ? 4.00 : 3.70,
+    midDiscount: 0.05,
   };
 };
 
