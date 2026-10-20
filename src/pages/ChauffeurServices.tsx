@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Plane, Briefcase, Sparkles, Map, UserCheck, Car, Shield, Clock, Star, Phone } from "lucide-react";
 import chauffeurHero from "@/assets/chauffeur-hero.webp";
 import EnhancedTestimonials from "@/components/EnhancedTestimonials";
-import MultiStepBookingWidget from "@/components/MultiStepBookingWidget";
+import MyLimoBizBooking from "@/components/MyLimoBizBooking";
 import SEO from "@/components/SEO";
 import { PortfolioCarousel } from "@/components/portfolio/PortfolioCarousel";
 
@@ -228,12 +228,12 @@ const ChauffeurServices = () => {
               Book Your Chauffeur Service
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Complete your booking in three simple steps
+              Reserve your journey online in minutes
             </p>
           </div>
           
           <div className="animate-fade-in animation-delay-200">
-            <MultiStepBookingWidget />
+            <MyLimoBizBooking />
           </div>
         </div>
       </section>

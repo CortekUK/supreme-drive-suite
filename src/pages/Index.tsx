@@ -4,7 +4,7 @@ import TrustBadges from "@/components/TrustBadges";
 import rollsRoyceHero from "@/assets/rolls-royce-city-hero.jpg";
 import { Phone } from "lucide-react";
 import EnhancedServiceHighlights from "@/components/EnhancedServiceHighlights";
-import MultiStepBookingWidget from "@/components/MultiStepBookingWidget";
+import MyLimoBizBooking from "@/components/MyLimoBizBooking";
 import EnhancedTestimonials from "@/components/EnhancedTestimonials";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
@@ -112,11 +112,11 @@ const Index = () => {
               Book Your Journey
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Complete your booking in three simple steps
+              Reserve your journey online in minutes
             </p>
           </div>
           <div className="max-w-6xl mx-auto animate-fade-in animation-delay-200">
-            <MultiStepBookingWidget />
+            <MyLimoBizBooking />
           </div>
         </div>
       </section>
