@@ -32,7 +32,7 @@ const MyLimoBizBooking = () => {
       <a
         href="https://book.mylimobiz.com/v4/travelinsupremestyle"
         data-ores-widget="website"
-        data-ores-alias="travelinsupreme"
+        data-ores-alias="travelinsupremestyle"
         className="flex items-center justify-center h-40 text-sm uppercase tracking-widest text-muted-foreground"
       >
         Online Reservations
