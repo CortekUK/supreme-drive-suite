@@ -30,7 +30,7 @@ const MyLimoBizBooking = () => {
   return (
     <div className="w-full min-h-[640px] rounded-2xl overflow-hidden bg-card/40 border border-primary/20 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
       <a
-        href="https://book.mylimobiz.com/v4/travelinsupreme"
+        href="https://book.mylimobiz.com/v4/travelinsupremestyle"
         data-ores-widget="website"
         data-ores-alias="travelinsupreme"
         className="flex items-center justify-center h-40 text-sm uppercase tracking-widest text-muted-foreground"
